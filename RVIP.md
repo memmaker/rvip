@@ -508,7 +508,15 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
 
 ### R4. Tiles
 - Look for a Windows/graphical port of the same variant first and extract
-  its tiles (Rogue PC: ClassicRogue). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+  its tiles (Rogue PC: ClassicRogue).
+- **Oryx/ClassicRogue first, if it covers everything** (user rule,
+  2026-09-25): use `~/Games/roguepc/port/classicrogue` when every monster
+  and item class of the variant has a matching sprite; otherwise NetHack. It
+  has exactly Rogue PC's 26 monsters (A–Z with slime, ur-vile), the
+  Rogue 5.x weapons/armour and one sprite per other item class; 1-bit,
+  coloured by the text colour. Checked: Rogue 5.4 misses snake and black
+  unicorn (24/26); Rogue 3.6 only 12/26; Super-Rogue (52 monsters),
+  UltraRogue, Advanced Rogue 5.8 (120) and 7.7 (125) far off → NetHack. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random
