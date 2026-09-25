@@ -698,6 +698,33 @@ was different.
   ButtonPress) tests mouse rows. Game letters from `xsend` land in the
   profession menu if sent too early (`X` = Xel'Naga).
 
+### O-Linley (Linley's Dungeon Crawl 4.00b26, C++; `~/Games/crawl-linley`)
+- **Look for an old tile fork before backporting from a descendant.**
+  RogueBasin linked Itakura's "Dungeon Crawl Tile Version" (a patch on exactly
+  4.00b26, with an X11 frontend and Darshan's travel/explore patches). The
+  site is dead, but the Wayback Machine has the zips (`web.archive.org/web/2006id_/…`).
+  The user chose it over backporting DCSS tiles.
+- `crawl/crawl-ancient` on GitHub is whitespace-reformatted: patches from the
+  period don't apply to it. Base on the original tarball instead.
+- Build: `-std=gnu++98` (avoids narrowing errors), `kill::kill` → `class kill`,
+  const comparators, `<iostream>`, libpng 1.6 accessors, and no `packed`
+  structs with pointers (arm64 ld: "pointer not aligned").
+- ASan: `plyrspell_list[SPELL_NO_SPELL]`, the text redraw read past the row,
+  `make_filename` terminator, float marshalling through an 8-byte `long`.
+- `MULTIUSER` reads `~/.crawlrc`, **not** `init.txt`: `play.sh` sets
+  `CRAWL_RC=init.txt CRAWL_DIR=save/`. Without `SAVE_PACKAGE_CMD`, the save
+  and restore paths disagreed (fixed in `files.cc` / `newgame.cc`).
+- All RVIP code is in `source/rvip.cc`. `rvip_getkey()` replaces the command
+  key read (queue, Enter menu, stairs arrival). Item actions use Itakura's
+  `push_inven_idx()` preselect plus a queued command key; stale preselects
+  are cleared before the next real key.
+- X11 keypad digits arrive as `CMD_MOVE_*`, so lists can tell them from
+  top-row digits (counts). Cursor keys and keypad Enter were unmapped.
+- Testing: `CRAWL_SEED` fixes the dungeon. Wizard `{` (magic map) can't be
+  sent on this keyboard layout (no keycode for braceleft). Travel won't move
+  with a hostile in view, so fight first.
+- No sound (upstream ships no samples), no web port yet.
+
 ---
 
 # Part 2 — Common to all cases

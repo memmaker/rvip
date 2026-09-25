@@ -134,6 +134,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | Umoria | `~/Games/umoria` | memmaker/umoria |
 | Omega | `~/Games/omega` | memmaker/omega |
 | ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
+| Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
 | Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
 | Sil-Q | `~/Games/sil-q-1.5.0` (remote `memmaker`) | memmaker/sil-q |
 | Tactical Angband | `~/Games/tactical-angband` (remote `memmaker`) | memmaker/tactical-angbandX |
