@@ -1081,8 +1081,9 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
 - curses games (case R, curses Moria): `~/Games/rogue3.6/web/` or
   `~/Games/xrogue/web/` + `port/be_web.c` (curses shim, fixed-size panes,
   no z-term). Rogue 3.6 is the reference for windows and map scrolling.
-- Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`
-  (`build.sh` copies it into `dist`).
+- Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`, the
+  only copy: `build.sh` copies it straight into `dist`; never keep or patch
+  one in a game's `web/`.
 
 ### W0. Presentation lives in the game (rule)
 - **Presentation changes originate in the game's native/WASM code.** The JS
@@ -1203,6 +1204,13 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   state, save, layout(rects), font(id,d), onReset})`, windows are `#t-<id>`
   with a `.t .name` title bar and a `.body`. It gives the tiling layout,
   gutters, Windows drop-down, rename/A−/A+ on hover, one/multi-window toggle.
+- Message history: repeats fold to `message (xN)` in the game code (its
+  message routine / history, e.g. `hist()` in `port/wcurses.c`), which tells
+  the page to replace its last line. A div-list log uses
+  `RvipWM.log(listEl, line[, replace])` (append, or replace the last line) or
+  `RvipWM.setLog(listEl, lines)` (all of it); lines are strings or
+  `{t, cls, color}` with the colour from the game. Both keep 500, follow the
+  end and fold repeats themselves for a game that doesn't.
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
   text over the map in a pop-up.

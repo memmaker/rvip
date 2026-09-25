@@ -258,4 +258,24 @@
 			});
 		});
 	};
+	/* Message window, a div per line in list l, last 500 kept, following the end
+	 * if it was there. A line is a string or {t, cls, color} (colour from the
+	 * game). A repeat of the line above becomes "line (xN)", for games that
+	 * don't fold their own; dataset.s holds the line as sent.
+	 * RvipWM.log(l, line) appends, RvipWM.log(l, line, true) replaces the last
+	 * line (a game that folds its own repeats), RvipWM.setLog(l, lines) replaces
+	 * them all. */
+	function logAdd(l, m) {
+		if (typeof m === 'string') m = { t: m };
+		var d = l.lastChild;
+		if (d && d.dataset.s === m.t && d.className === (m.cls || '')) { d.textContent = m.t + ' (x' + (d.dataset.n = +d.dataset.n + 1) + ')'; return; }
+		d = document.createElement('div'); d.dataset.s = m.t; d.dataset.n = 1; d.textContent = m.t;
+		if (m.cls) d.className = m.cls;
+		if (m.color) d.style.color = m.color;
+		l.appendChild(d);
+		if (l.childNodes.length > 500) l.removeChild(l.firstChild);
+	}
+	function logEnd(l, f) { var end = l.scrollTop + l.clientHeight >= l.scrollHeight - 4; f(); if (end) l.scrollTop = l.scrollHeight; }
+	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
+	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
 })();
