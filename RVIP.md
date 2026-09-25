@@ -153,6 +153,9 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   type; Angband colour conventions as fallback when the game defines
   none), **Equipment** (unless already in the inventory), **Visible**
   (enemies + items in view), **Recall** (if the game has it).
+- **Item colours everywhere** (Inventory, Visible): the game's own; none →
+  Angband's colours by kind, decided in the game code where it knows the
+  item type (BOSS `rl_colour`), else `RvipWM.itemColor(name)`.
 - **Default on:** Map, Inventory, Visible, Log messages; the rest via the
   drop-down.
 - **Zoomed in, the map scrolls** to keep the player centred instead of
@@ -496,7 +499,9 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   column, status, message line) and sends each one's cells while the game says
   the dungeon view is up (`crt_view(true)` at the command prompt; `clrscr`,
   `clear(1..2, …)` and `rl_choose` turn it off = pop-up). `msg_print` feeds
-  the history, `rl_lists` the Inventory/Visible windows.
+  the history, `rl_lists` the Inventory/Visible windows (Angband colours by
+  tval, `rl_colour`). Layout: `web-layout.json` in the WASI root, persisted
+  with the saves.
 - Web: no Emscripten. FPC trunk (3.3.1) targets `wasm32-wasip1`: built once
   from `~/Games/fpc-src` into `~/Games/fpc-wasm` (`make crossall
   crossinstall OS_TARGET=wasip1 CPU_TARGET=wasm32`,
