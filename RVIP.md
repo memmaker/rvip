@@ -158,6 +158,11 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   (BOSS `rl_colour`). See W0.
 - **Default on:** Map, Inventory, Visible, Log messages; the rest via the
   drop-down.
+- **Prompt line over the map** (`RvipWM.prompt`, every game): the game's
+  live message row (questions, `-more-`, the newest message) is shown in a
+  box at the top left of the Map window. A key hides it only when the game
+  waits for a command, so a question (`[yn]`, item letter, direction) stays
+  up until answered. How: Part W, W4.
 - **The map camera keeps the player centred** (clamped at the map edges)
   instead of shrinking or clipping. A game that scrolls/centres its map
   itself gets that on by default (Angband's `center_player`); every other
@@ -1212,6 +1217,17 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `RvipWM.setLog(listEl, lines)` (all of it); lines are strings or
   `{t, cls, color}` with the colour from the game. Both keep 500, follow the
   end and fold repeats themselves for a game that doesn't.
+- **Prompt line (step 5):** `RvipWM.prompt.text(s)` with the live message
+  row whenever it changes (the game sends it: `be_prompt(r)` from the
+  shim's message refresh, the pane row for a Rogue-style row 0, term 0 row
+  0 in the z-term family), and `RvipWM.prompt.wait(atCmd)` from every key
+  poll with the game's own "waiting for a command" flag (`wc_cmd_prompt`,
+  `rl_at_prompt`, `RvipAtPrompt`, `inkey_flag && character_generated`,
+  NetHack 5.0 `program_state.input_state == commandInp`, BOSS
+  `crt_at_cmd`). rvip-wm.js creates the box in `#t-map .body`, hides it on
+  a key only while `atCmd`, and shows it again when a poll comes from
+  inside a question. No per-game hide logic, no game-side element.
+  Exempt: Decker, AlphaMan (whole-screen games).
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
   text over the map in a pop-up.

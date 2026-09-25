@@ -290,6 +290,26 @@
 		cv.style.marginLeft = -o.x + 'px'; cv.style.marginTop = -o.y + 'px';
 		return o;
 	};
+	/* Prompt line over the map (RVIP.md 5 / W4): the game's live message row (questions,
+	 * -more-, the newest message). Shown while it has text. A key hides it only when the
+	 * game waits for a command, so a question stays up until answered; a poll from inside
+	 * a question brings it back. The game feeds both: RvipWM.prompt.text(s) whenever its
+	 * message row changes, RvipWM.prompt.wait(atCmd) from every key poll. */
+	window.RvipWM.prompt = (function () {
+		var node = null, txt = '', atCmd = true;
+		function box() {
+			if (node) return node;
+			var body = document.querySelector('#t-map .body, #t-main .body') || document.body;
+			if (getComputedStyle(body).position === 'static') body.style.position = 'relative';
+			node = el('div', 'wm-topl'); node.hidden = true; body.appendChild(node);
+			return node;
+		}
+		document.addEventListener('keydown', function () { if (atCmd && node) node.hidden = true; });
+		return {
+			text: function (s) { s = (s || '').replace(/\s+$/, ''); if (s === txt) return; txt = s; box().textContent = s; box().hidden = !s; },
+			wait: function (a) { atCmd = !!a; if (!atCmd && txt) box().hidden = false; }
+		};
+	})();
 	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
 	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
 })();
