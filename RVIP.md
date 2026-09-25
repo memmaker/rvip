@@ -970,6 +970,14 @@ was different.
   int) and `long long` vs `long` across files trap at run time; grep the
   externs.
 - Cooked-mode prompts (name) need local echo in the VT layer.
+- **NetHack 1.3d (`~/Games/nethack13d`) reuses this port** (`port/`, `web/`
+  copied from Hack). Extra wasm traps there: varargs `pline`/`panic`/
+  `impossible`/`error` → convert to stdarg; collect prototypes in
+  `port/proto.h` (included from `compat.h`). No `link()` in MEMFS → macro
+  in `unixunix.c`. The page must set `ENV.HACKDIR`. Autosave: restore
+  object description order (`oc_descr`) before `dorecover`.
+- `gh repo create` (public) is blocked by the auto-mode classifier: ask the
+  user to run it, then continue.
 
 # Part 2 — Common to all cases
 

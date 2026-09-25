@@ -183,6 +183,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
 | PRIME | `~/Games/prime` (remote `memmaker`) | memmaker/prime |
 | Hack 1.0.3 | `~/Games/hack` (remote `memmaker`, branch `master`) | memmaker/hack |
+| NetHack 1.3d | `~/Games/nethack13d` (remote `memmaker`, branch `master`) | memmaker/nethack13d |
 | Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
 | AlphaMan | `~/Games/alphaman` (remote `memmaker`) | memmaker/alphaman |
 | Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
