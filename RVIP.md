@@ -53,7 +53,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -109,6 +109,11 @@ modelled on `~/Projects/contractor` `ui_console/widget_inventory.go`):
 - **Numpad only:** 8/2 move, 4/6 switch list (or back/confirm in the item
   menu), 5 or Enter chooses / opens the menu, + main action, - drop,
   * examine, 0 or . closes. The Enter menu reaches the inventory too.
+
+**3d. No `--More--` stops (auto_more).** Every game has the equivalent of
+NetHack's `auto_more`: more prompts no longer wait for a key, the game
+just continues past them (messages stay readable in the message
+window/history). On by default, and always in the web build.
 
 **4. The nicest tiles**, scaled **nearest-neighbour only** (never
 smooth/bilinear). Check the player sprite, statues/figurines, flavoured
@@ -181,7 +186,8 @@ and worked example: `shrine/rogue54.html`. Sections, in this order:
    tombstone). Capture: `~/Games/rvip-tools/shotsrv.py` (serves `web/dist`,
    saves canvas PNGs; how-to in its docstring) in the browser pane at
    1280×800, map zoomed in, then crop to the window that matters with
-   `magick -crop`. Never smooth-scale.
+   `magick -crop`. Never smooth-scale. No good shots yet → leave the
+   section out rather than show poor ones.
 5. **Trivia**, each line with a link to its source. Only what a fetched page
    actually says: check every claim with WebFetch, no guessed motives.
 6. **What's unique** (USP): what it does differently from its parent/peers.
@@ -992,6 +998,16 @@ was different.
   (`~/Games/quickband/web/`, `src/main-web.c`). Do the other steps first:
   the web build reuses the X11 tile code, prefs and window layout. WASM
   traps on function-signature mismatches, so K&R code needs full prototypes.
+- The WASM (C) code decides which tile each cell gets and hands JS a
+  finished cell array (tile + floor under it, or glyph); JS only blits.
+  No tile logic in JS (user rule; Hack's `be_web.c` + `hack.js` do this).
+- **Windows like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map,
+  messages (with history) and status in their own resizable windows, text
+  over the map in a pop-up. Zoomed in, the map never shrinks or clips: it
+  scrolls to keep the hero in the middle half and recentres on a new level
+  (all one-screen Rogue/Hack maps; Hack: `web/hack.js` `scrollMap`).
+- Tiles show only what the game has: no door tiles for doorways that
+  can't be opened or closed (Hack, NetHack 1.3d): draw floor.
 
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
