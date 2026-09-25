@@ -30,6 +30,10 @@
 		'.wm-bar.v{cursor:row-resize}.wm-bar.h{cursor:col-resize}' +
 		'.wm-bar:hover,.wm-bar.drag{background:var(--gut-hover,#d9b24c)}' +
 		'.win.wm-off{display:none!important}' +
+		/* prompt line (-more-, questions): the game puts it in the map body, shows it only while in use */
+		'.wm-topl{position:absolute;left:0;top:0;z-index:2;max-width:100%;padding:2px 6px;background:rgba(0,0,0,.8);' +
+		'border:1px solid var(--line,#2b2b33);border-width:0 1px 1px 0;font:13px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap}' +
+		'.wm-topl[hidden]{display:none}' +
 		'.wm-single .win>.t{display:none!important}' +
 		'.win>.t{cursor:grab;user-select:none}' +
 		'.win>.t .wm-btns{flex:none;display:flex;gap:2px;visibility:hidden}' +
