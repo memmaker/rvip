@@ -52,7 +52,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only, no web) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -762,6 +762,19 @@ was different.
 - No sound (upstream ships no samples), no web port yet.
 
 ---
+
+### O-AlphaMan (1995 QuickBASIC 4.5, DOS; `~/Games/alphaman`, worked example)
+
+- **Toolchain**: QB64-PE (`~/Games/qb64pe-tool/qb64pe`, `make OS=osx BUILD_QB64=y`). No multi-module linking, so `port/merge.py` builds one `port/alphaman.bas`: library block + DEFINT + `ALPHA.DC2`/`.DEC` once, A1 module code, other modules' DIM/DATA, all SUBs, then `lib.bm` + `rvip.bm`. Edit the `A*.BAS.txt` sources, never the generated file. `$INCLUDE` paths are relative to the .bas.
+- **QB64 vs QB45 traps**: an array DIMmed and then named in `COMMON SHARED` is *not* shared → DIM SHARED, drop array entries from COMMON. FIELD bound to SUB-local strings crashes → DIM SHARED them. `FOR x = (expr (a = 1)) TO` fails to parse → precompute. Programs start in the binary's folder → `CHDIR _STARTDIR$`, and `play.sh` cds into `save/` with data copies.
+- **QB64 bounds checks expose DOS bugs**: subscript-out-of-range pops a GUI dialog ("Line N ... Continue?"). The original read past array ends harmlessly under DOS; emulate the unchecked linear read in C (`rv_pag2get`) instead of changing game logic. Guard new code (e.g. pathfinding) against the player being outside the map.
+- **Assembly/INT 10h helpers** (ALPCLIB.C): keep the C, cut asm, write text pages via `_MEMIMAGE` (char+attr bytes per page) from C; the visible page is libqb's `display_page`.
+- **Window**: `$RESIZE:STRETCH` + `glutReshapeWindow(1280,800)` from a queued glut message gives 2× nearest-neighbour. Keypad: `_KEYHIT` + `_KEYDOWN(100256+n)` mapped to DOS scan codes.
+- **Input**: route every `INKEY$` loop / `INPUT` through `rv_key$` / `rv_line$` (regexes in merge.py); that is also where the test hooks live: `ALPHA_KEYS=<file>` (keys appended, `{esc}{up}…`), `ALPHA_DUMP=<file>` (text of all pages + visible page), `ALPHA_WIZ=1` (Ctrl-L enters a lair).
+- **ASan**: `qb64pe -f:ExtraCppFlags="-fsanitize=address -g -O1" -f:ExtraLinkerFlags="-fsanitize=address" -x port/alphaman.bas -o <scratch>`; random-key fuzz watching for `gui_alert` in `sample <pid>` as well as ASan reports.
+- **Menu from help**: the Enter menu is parsed from the game's help file (`alphaman.5`); edit the help lines for x/</> so menu, `?` and docs agree. Keep line count (the file is read by line).
+- **Shortcut**: osacompile `do shell script "…/play.sh >/dev/null 2>&1 &"` (like Rogue PC); icon = the ☻ player cell cropped from a window capture, nearest-neighbour to 1024.
+- **No web** (step 7): QB64 has no wasm target. A port would mean a BASIC→C translation first.
 
 # Part 2 — Common to all cases
 

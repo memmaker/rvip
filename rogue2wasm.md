@@ -173,6 +173,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
 | PRIME | `~/Games/prime` (remote `memmaker`) | memmaker/prime |
 | Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
+| AlphaMan (no web: QB64) | `~/Games/alphaman` (remote `memmaker`) | memmaker/alphaman |
 | Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
 | Sil-Q | `~/Games/sil-q-1.5.0` (remote `memmaker`) | memmaker/sil-q |
 | Tactical Angband | `~/Games/tactical-angband` (remote `memmaker`) | memmaker/tactical-angbandX |
