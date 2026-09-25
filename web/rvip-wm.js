@@ -276,6 +276,16 @@
 		if (l.childNodes.length > 500) l.removeChild(l.firstChild);
 	}
 	function logEnd(l, f) { var end = l.scrollTop + l.clientHeight >= l.scrollHeight - 4; f(); if (end) l.scrollTop = l.scrollHeight; }
+	/* The map camera (RVIP.md W4), one for every game: the game sends the player's map cell, the page
+	   calls this with the player's centre (x, y) in the map canvas `cv` (w × h px, shown in a vw × vh
+	   window; default: its parent). Player centred, clamped at the map edges; a map smaller than its
+	   window is centred. Sets the canvas margins, returns the offset { x, y }. */
+	window.RvipWM.center = function (cv, x, y, w, h, vw, vh) {
+		function ax(c, size, view) { return size <= view ? -Math.floor((view - size) / 2) : Math.max(0, Math.min(size - view, Math.round(c - view / 2))); }
+		var o = { x: ax(x, w, vw || cv.parentNode.clientWidth), y: ax(y, h, vh || cv.parentNode.clientHeight) };
+		cv.style.marginLeft = -o.x + 'px'; cv.style.marginTop = -o.y + 'px';
+		return o;
+	};
 	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
 	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
 })();

@@ -158,8 +158,10 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   (BOSS `rl_colour`). See W0.
 - **Default on:** Map, Inventory, Visible, Log messages; the rest via the
   drop-down.
-- **Zoomed in, the map scrolls** to keep the player centred instead of
-  shrinking or clipping (every one-screen map). How: Part W, W4.
+- **The map camera keeps the player centred** (clamped at the map edges)
+  instead of shrinking or clipping. A game that scrolls/centres its map
+  itself gets that on by default (Angband's `center_player`); every other
+  game sends the player's position and uses `RvipWM.center`. How: Part W, W4.
 - **Exempt:** Decker (its MFC dialogs are the game; it keeps its own layout).
 
 **6. Docs page** (Part 2). **6b. Sound effects and music** with top-bar
@@ -1214,10 +1216,20 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
   text over the map in a pop-up.
-- **Zoom:** the map never shrinks or clips when zoomed in: it scrolls to keep
-  the player in the middle half and recentres on a new level. Applies to
-  every one-screen map (all Rogue/Hack variants, Umoria `scrollMap`), in
-  single- and multi-window mode.
+- **Map camera: the player is always centred** (clamped at the map edges; a
+  map smaller than its window is centred). The map never shrinks or clips
+  when zoomed in. Single- and multi-window mode alike.
+  - **Game scrolls or centres its map itself** (Angband family:
+    `center_player`; Crawl's view): turn that on by default in the web
+    build, nothing else.
+  - **Every other game** (one-screen maps: Rogue/Hack variants, Moria/BOSS
+    panels at zoom, Omega): the game sends the player's map/screen cell on
+    every move (`flush(…, hy, hx)`, `be_hero(y, x)`), never inferred from
+    the cursor (it sits in the message line at prompts) or from screen
+    text. The page calls the one camera in rvip-wm.js with it:
+    `off = RvipWM.center(cv, x, y, w, h[, vw, vh])` (player centre and
+    canvas size in px, window size default: the canvas's parent; sets the
+    canvas margins, returns the offset). No per-game scroll maths.
 - **Automatic until customised:** default splits and zoom follow the browser
   size until the player drags or zooms (a tab first loaded tiny otherwise
   keeps a 240 px map forever); assume 1280×720 when the area isn't laid out
