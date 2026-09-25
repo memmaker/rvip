@@ -52,7 +52,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only, no web) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only, no web); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -580,7 +580,26 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   Rogue 5.x weapons/armour and one sprite per other item class; 1-bit,
   coloured by the text colour. Checked: Rogue 5.4 misses snake and black
   unicorn (24/26); Rogue 3.6 only 12/26; Super-Rogue (52 monsters),
-  UltraRogue, Advanced Rogue 5.8 (120) and 7.7 (125) far off → NetHack. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+  UltraRogue, Advanced Rogue 5.8 (120) and 7.7 (125) far off → NetHack.
+- **DawnLike: good match for Rogue and Hack derivatives** (user note,
+  2026-09-25). `~/Games/rvip-tools/tilesets/DawnLike` (v1.81, from
+  https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v18,
+  `DawnLike_5.zip`). DragonDePlatino's successor of DawnHack, which was
+  drawn for NetHack's full monster list: full-colour 16×16, 400+ creatures,
+  800+ items, walls/doors/traps, 2-frame animation (`*0.png`/`*1.png`).
+  - Already proven: Rogue Collection (github.com/mikeyk730/Rogue-Collection,
+    `res/tilemap_v1..v4.bmp`) uses DawnHack art for Rogue 3.6/5.2/5.3
+    (v1, 26/26), 5.4 (v2, 26/26) and PC Rogue 1.1/1.48 (v3/v4); one tile per
+    item class. Reuse those sheets for Rogue 3.6 / 5.4 (R4 prefers them to
+    NetHack there); DawnLike for bigger variants (Super-Rogue, Advanced
+    Rogue, UltraRogue, XRogue, Hack/NetHack line).
+  - Sprites are **not named** (sheets by category: `Characters/Reptile0.png`,
+    `Items/Potion.png` …): the mapping is by hand, per monster/item, into
+    a table like `mktiles.py`'s; fall back to NetHack tiles for gaps.
+  - Licence **CC BY 4.0**. Credit DragonDePlatino *and* DawnBringer (palette)
+    on the Help page and README. The author also asks that the Platino
+    sprite (`Characters/Reptile*.png`) is hidden somewhere in the game as
+    an easter egg. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random
@@ -797,6 +816,53 @@ was different.
 - **Menu from help**: the Enter menu is parsed from the game's help file (`alphaman.5`); edit the help lines for x/</> so menu, `?` and docs agree. Keep line count (the file is read by line).
 - **Shortcut**: osacompile `do shell script "…/play.sh >/dev/null 2>&1 &"` (like Rogue PC); icon = the ☻ player cell cropped from a window capture, nearest-neighbour to 1024.
 - **No web** (step 7): QB64 has no wasm target. A port would mean a BASIC→C translation first.
+
+### O-Decker (Decker 1.12, Windows MFC, 2001; `~/Games/decker`, worked example)
+- **Windows GUI game = write a small MFC/Win32 shim, keep the game code.**
+  `port/afxwin.h` + `mfc_core/wnd/ctl.cpp` (~5k lines) cover what the game
+  uses: message maps (`afxE<ThisClass>` overloads deduce each handler's
+  signature, no casts through the wrong type → wasm-safe), dialogs built from
+  `Decker.rc` (`port/rc2res.py` → `res_gen.cpp`; 1 DLU = 6/4 px × 13/8 px for
+  an X11 helvR10 font), DDX, common controls, GDI blits with ROPs, CArchive
+  in MFC's string format (Windows saves load). SDL2 frontend, one 640×480
+  surface, nearest-neighbour scaling. Game edits: only `(LPCTSTR)` casts on
+  CString varargs (clang errors) and `DWORD_PTR` for pointers in item data.
+- Win32 semantics that mattered: `Sleep` = present + wait, no input;
+  release mouse capture before dispatching a click and when a modal opens;
+  accelerators are `WM_COMMAND` with lParam 0; a dialog's `GetParent()` is
+  its owner; nested modal loops (DoModal, popup menus, combo drop-downs).
+- **Destroying a window from inside its own modal child** (Options → Quit
+  sends WM_CLOSE to the Matrix view, which `delete this`es while
+  `OnOptions` is still on the stack): ASan use-after-free. The shim posts
+  the close instead while the window owns a running modal; the posted-message
+  pump only handles what was queued before it started (else it re-posts
+  forever).
+- Test hook instead of X11 tools: `DECKER_FIFO` takes `key/char/click/dbl/
+  rclick/shot` lines, `DECKER_HIDDEN=1` hides the window. Check the log for
+  the hook's lines within seconds: an sdl2-compat ASan binary that can't find
+  SDL3 shows an alert on the user's screen (symlink `libSDL3.dylib` next to it).
+- WinHelp `.rtf` → HTML: `port/rtf2html.py` (topics from `#` footnotes,
+  jumps = double-underlined text + hidden id, `{bmc x.bmp}` → PNG, numeric
+  anchors from `Decker.hm` so F1 opens the current screen's topic). **macOS is
+  case-insensitive:** an output folder `help/` *is* `Help/`; use `doc/`.
+- Enter menu and explore (`port/rvip.cpp`) are built from the screen's own
+  buttons (hidden/disabled ones left out); explore is a BFS over the Matrix
+  nodes of the area. No stairs, no item inventory: steps 3 and 3c don't apply.
+- Web traps: **wasm static data sits below 64K**, so `IS_INTRESOURCE(ptr)`
+  took string literals for resource IDs (empty menu texts): link with
+  `-sGLOBAL_BASE=65536`. SDL2's web backend takes a button's position from
+  the last mousemove: the page sends a mousemove before each mousedown/up
+  (taps and synthetic clicks have none). Fixed 640×480 canvas (no
+  `SDL_WINDOW_RESIZABLE`/HIGHDPI: SDL resized it to 0 while the div was
+  hidden), scaled by CSS `image-rendering: pixelated`. Letter keys in menus
+  must be case-insensitive (the browser sends `k`, the test hook sent `K`).
+- Ctrl accelerators (quick save/load): `GetKeyState` reads the key event's
+  own modifiers, not SDL's live state. SDL's web backend tracks Ctrl from a
+  separate Control keydown: the browser pane's `ctrl+s` has none and arrives
+  as plain `s` (runs Scan). Test with dispatched `Control` down, `s` down/up,
+  `Control` up; real keyboards are fine.
+- WinHelp jumps: hidden target text can span several RTF groups (collect it),
+  targets are case-insensitive, and `!EF(...)` targets are web/mail links.
 
 # Part 2 — Common to all cases
 
