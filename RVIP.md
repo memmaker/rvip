@@ -1,12 +1,16 @@
 # Roguelike Variant Import Procedure (RVIP)
 
-How a new roguelike gets added to this Mac so it plays like the others.
+How a new roguelike gets ported to the web (WASM, https://ruzzoli.de/roguelikes/)
+so it plays like the others. **No local macOS build any more** (since
+2026-09-25): no X11/Cocoa/SDL2 frontend, no `play.sh`, no Desktop shortcut.
+The X11 notes in the case parts are history from older imports; reuse their
+logic (tiles, menus, explore), not their frontend.
 
 ## How to use this file
 
 - **Pick the case first** (table below). Part 1 is *what* every import
-  delivers; Parts A / R / O are *how*, per family. Common things (testing,
-  Desktop app, docs, web) are in Part 2.
+  delivers; Parts A / R / O are *how*, per family; Part W is the web port
+  (all cases). Common things (testing, docs) are in Part 2.
 - **Self-improving:** when an import teaches something that would help the
   next one (a trap, a fix, a faster way, a rule the user adds), add it here
   before finishing: in the case part it belongs to, or in Part 1 / Part 2 if
@@ -26,15 +30,14 @@ the handover written at the checkpoint.
 
 | Stage | Steps | Done when | Handover carries |
 |---|---|---|---|
-| 1 Get + build | 0, 1, case pick, A0/A1 / R1 / O | clean build, ASan run done, objects removed, upstream commit exists | folder, case, frontend file, build command and flags, quirks found |
+| 1 Get + build | 0, 1, case pick, A0/A1 / R1 / O | clean WASM build runs in the browser pane, ASan run done, upstream commit exists | folder, case, web frontend file, build command and flags, quirks found |
 | 2 Explore + stairs | 2, 3 | both tested in a running game | explore key, file holding the code, main-loop hook, "known grid" test used |
 | 3 Enter menu + inventory | 3b, 3c | menu lists every command, item menus tested | file names, how item actions run (direct call or key queue), menu function names |
 | 4 Tiles | 4 | sprites checked at cell size, nearest-neighbour | tile set and source, loader file, pref files, scale |
-| 5 Launcher + shortcut | 5, Part 2 "Desktop shortcut" | `play.sh` fits 1440×932, shortcut starts the game | window/env names, save dir |
+| 5 Web page | 5, 7, Part W | window layout done, page live through `deploy.sh` | live URL |
 | 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
-| 7 Web (optional) | 7, `rogue2wasm.md` | page live through `deploy.sh` | live URL |
-| 8 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
-| 9 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
+| 7 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
+| 8 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
 
 Checkpoint, at the end of each stage:
 1. Test the stage's result in a running game (Part 2 testing rules).
@@ -57,9 +60,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
-Part A. Frontend choice: **prefer SDL2 over X11** for new ports (better
-Hi-DPI support); it only replaces the `be_*` file (Rogue PC is the worked
-example). Existing X11 ports stay until touched for other reasons.
+Part A. Frontend: only the web one (`be_web.c` / `main-web.c`, Part W).
 
 ---
 
@@ -72,9 +73,10 @@ Full history (`git fetch --unshallow` before the first push; GitHub refuses
 shallow pushes). Tarball → the first commit is the untouched tarball,
 message names file + sha256.
 
-**1. It compiles** on macOS / Apple Silicon with an X11 (XQuartz) frontend
-(or its own Cocoa app), and has had **one AddressSanitizer run** of the full
-launcher setup. Remove the ASan binary and all objects afterwards.
+**1. It compiles to WASM** (Emscripten, or the language's own wasm target)
+with the web frontend and runs in the browser pane, and has had **one
+AddressSanitizer run** (`emcc -fsanitize=address`) through a real game
+start. No native macOS build. Remove the ASan build and all objects afterwards.
 
 **2. Auto-explore** on a free key: BFS over what the player knows, one step
 per turn; stops on a visible monster, any new message and any key; avoids
@@ -115,6 +117,12 @@ modelled on `~/Projects/contractor` `ui_console/widget_inventory.go`):
 NetHack's `auto_more`: more prompts no longer wait for a key, the game
 just continues past them (messages stay readable in the message
 window/history). On by default, and always in the web build.
+- z-term games: in `init_web()`, before the terms exist, set
+  `options[OPT_auto_more].normal = TRUE` (and `OPT_center_player`). New
+  characters and "reset to defaults" take it; savefiles keep the player's
+  choice. Older code: `option_info[]`/`option_norm[]` (may be `const`), 4.2:
+  `list-options.h`; grep by name, `grep -a` (Latin-1 in `tables.c`).
+- Check: a new character has no `-more-` stops during birth.
 
 **4. The nicest tiles**, scaled **nearest-neighbour only** (never
 smooth/bilinear). Check the player sprite, statues/figurines, flavoured
@@ -132,11 +140,7 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   Tandy ROM fonts): The Oldschool PC Font Resource,
   https://int10h.org/oldschool-pc-fonts/ (CC BY-SA 4.0: credit it).
 
-**5. Launcher + window layout:** `~/Games/<name>/play.sh`, all windows
-placed for the 1440×932 screen (XQuartz adds ~28 px title bars); a window
-resize must not start a resize fight with XQuartz. Desktop shortcut (Part 2).
-
-**5b. Web window layout** (every web build):
+**5. Web window layout:**
 - **One-window and multi-window mode**, switchable in the top bar.
 - **Multi-window = tiling window manager:** windows never overlap, fill the
   whole screen, never leave gaps.
@@ -151,9 +155,13 @@ resize must not start a resize fight with XQuartz. Desktop shortcut (Part 2).
   (enemies + items in view), **Recall** (if the game has it).
 - **Default on:** Map, Inventory, Visible, Log messages; the rest via the
   drop-down.
+- **Zoomed in, the map scrolls** to keep the player centred instead of
+  shrinking or clipping (every one-screen map). How: Part W, W4.
+- **Exempt:** Decker (its MFC dialogs are the game; it keeps its own layout).
 
 **6. Docs page** (Part 2). **6b. Sound effects and music** with top-bar
-toggles, **off by default** (web port). **7. Optional web/WASM** port (Part 2).
+toggles, **off by default**. **7. Web page** live at
+`https://ruzzoli.de/roguelikes/<name>/` (Part 2, mandatory).
 
 **8. GitHub repo under `memmaker` (every import ends with this).**
 `gh repo create memmaker/<name> --public --source . --remote memmaker --push`
@@ -164,7 +172,8 @@ obvious: commit 1 = pristine upstream (message: `upstream <game> <version>
 upstream is (link to the exact commit) and link the compare view
 `https://github.com/memmaker/<name>/compare/<upstream-commit>...main`.
 Everything pushed, `git status` clean, before the handover. Add the repo to the
-table in `rogue2wasm.md` ("Version control").
+table in Part W, W2. The base version and links go on the card and Help page
+(W1).
 
 **9. Deploys only from pushed commits.** Nothing under
 ruzzoli.de/roguelikes changes except via `web/deploy.sh` (game) or
@@ -388,6 +397,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - ASan: `get_move_wander()` indexed `ddy_ddd[]` with a keypad direction from
   `ddd[]` (upstream bug). `-u<name>` never set the savefile path: call
   `process_player_name(TRUE)` in `main.c`.
+- Web: 3.0-era z-term: no mouse, no `EVT_RESIZE`; a main-window resize at
+  the prompt queues `KTRL('R')`, subwindows get `p_ptr->window` flags; sound
+  via `TERM_XTRA_SOUND`. Savefiles are named after the character: the page
+  passes `-u<name>` of the newest save. An empty preloaded `lib/data` isn't
+  created: `FS.mkdirTree` it in `preRun`.
 - A SIGTERM makes Sil-Q panic-save; kill test games only after saving/quitting
   or expect a panic save file.
 
@@ -425,6 +439,16 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `lib/customize/sound.prf` as `sound:<MSG>:<samples>`); check every
   `list-message.h` entry has a line (Tactical Angband lacked `BR_WIND`,
   `SCRAMBLE`).
+- Web: hooks take `int` attrs and `wchar_t` chars (4 bytes: read `HEAP32`);
+  attr = colour + 256 × background set, big-tile filler `a=255, c=-1`. Keys
+  are 4.2 key codes + modifiers (`Term_keypress(code, mods)`: arrows
+  `0x80–0x83`, `KC_ENTER 0x9C`, `ESCAPE 0xE000`, keypad = digit +
+  `KC_MOD_KEYPAD`). Register as `"web"`; `current_graphics_mode =
+  get_graphics_mode(5)`, `tile_width = 2`, Shockbolt double-height rows via
+  `dblh_hook = is_dh_tile`; 64×64.png → lossless WebP. Without
+  `PRIVATE_USER_PATH` saves/scores/panic live in `lib/save|scores|panic`:
+  mount all. Sound: `EVENT_SOUND` → `message_sound_name()`. Option defaults:
+  a `WEB_ON` macro in `list-options.h`.
 
 ### A-Umoria (curses-based Moria, C++)
 - Only `src/ui_io.cpp` uses curses: `src/curses.h` includes
@@ -444,6 +468,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   prompts; `inventory_reopen` pushes `i`/`e` again after the command.
 - Enter menu parsed from `data/help.txt` / `rl_help.txt` (two columns split
   at `|`); the help has no groups, so the menu is one scrolling list.
+- Web: link with `em++` (`operator new`); `headers.h` needs
+  `__EMSCRIPTEN__`, skip `setuid()`. `saveChar()` ends the game and refuses a
+  new character's file: autosave to a temp file, restore state, rename.
+  `chdir('/umoria')`, save `save/game.sav`, `scores.dat` symlinked into IDBFS.
 
 ### A-BOSS (BOSS: Beyond Moria, Free Pascal, `crt` unit)
 - Pascal, not C: the game uses only `gotoxy`/`clreol`/`clrscr`/`readkey`/
@@ -464,10 +492,26 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   save/load (an own seen-map is lost on reload).
 - Town stairs walk: don't refuse `<`/`>` when townspeople are in view; stop
   only when *more* monsters come into view than at the start.
-- Web (step 7): FPC trunk has a `wasm32-wasip1` target (cross compiler in
-  `~/Games/fpc-wasm`) + Binaryen Asyncify for `readkey`; own page, no
-  Emscripten. Details in `rogue2wasm.md`, section "Pascal games (BOSS)".
-  Sound skipped.
+- Web windows: `bcrt.pas` knows the dungeon screen's panes (map, character
+  column, status, message line) and sends each one's cells while the game says
+  the dungeon view is up (`crt_view(true)` at the command prompt; `clrscr`,
+  `clear(1..2, …)` and `rl_choose` turn it off = pop-up). `msg_print` feeds
+  the history, `rl_lists` the Inventory/Visible windows.
+- Web: no Emscripten. FPC trunk (3.3.1) targets `wasm32-wasip1`: built once
+  from `~/Games/fpc-src` into `~/Games/fpc-wasm` (`make crossall
+  crossinstall OS_TARGET=wasip1 CPU_TARGET=wasm32`,
+  `OPT`/`FPCMAKEOPT=-XR<MacOSX.sdk>`), linker Emscripten's `wasm-ld`
+  (`-XP<llvm bin>/`), flags `-Twasip1 -O2 -Sgic`. `port/bcrt.pas` calls
+  `be_*` imports from module `boss`, drawn by `web/boss.js`.
+  - Key waits: `wasm-opt --asyncify` with
+    `asyncify-imports@boss.be_getkey,boss.be_sleep`; give feature flags one
+    by one (`--all-features` emits imports browsers reject).
+  - Files: `@bjorn3/browser_wasi_shim` (vendored `web/vendor/wasi`),
+    in-memory FS; preopen both `.` and `./dat`; mirrored to IndexedDB after
+    each save. TextRec hooks must be exactly `procedure(var t: TextRec)`.
+  - Autosave quietly (`be_want_save` every 2 s / tab hidden); ^Z saves and
+    ends. Headless test: `node web/test.mjs "<keys>"`. `~/bin/ls` is not
+    `/bin/ls`. Sound skipped.
 
 ---
 
@@ -526,6 +570,11 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `yylex()` drained typeahead, which ate queued item-action keys.
 - `>` must never auto-walk into a shortcut that skips levels (the town's
   volcanic shaft killed a test character at once); it works only when stood on.
+- Web: Larn keeps every file in its cwd (`chdir` into the IDBFS mount,
+  symlink the data files on every start) and deletes the save it restores
+  (autosave right after start; `be_end()` deletes it unless saved with `S`).
+  Test an autosave early: a mid-game `savegame()` hit an upstream
+  `lcreat(NULL)` bug (frozen screen).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -739,9 +788,7 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   Umoria does the same with `soundEvent()` (`src/ui_io.cpp`).
 
 ### R-test
-- Built-in browser: `computer type` sends text without key events and
-  `key greater` sends nothing; the page listens for `keydown`. Use `key`
-  with single characters or dispatch `KeyboardEvent('keydown', {key})`.
+- Browser key quirks: Part W, W10.
 - Wizard mode unlocks a fixed seed (XRogue: `SEED` env only when
   `wizard`); otherwise every run is a new dungeon, and a monster is usually
   in view on arrival — retry or fight it before testing explore.
@@ -760,11 +807,13 @@ game's own UI code) and follow that part; then add a section here with what
 was different.
 
 ### O-Omega (0.80.2, curses, no lineage; worked example)
-- Many fixed curses windows (`Msg1w`…, `Levelw`, side panels) that already
-  form one 80×N screen: the shim (`port/wcurses.c`, cut down from XRogue)
-  just composites every window onto curscr, **no pane routing**. One X11
-  text window (`port/be_x11.c`), one web canvas. Enough when there are no
-  tiles; route by window (Part R) only if the map gets tiles.
+- Many fixed curses windows (`Msg1w`…, `Levelw`, side panels) that form one
+  80×N screen: the shim (`port/wcurses.c`, cut down from XRogue) composites
+  them onto curscr (single-window mode, pop-ups) **and** routes each window
+  the game names with `wc_pane()` (`scr.c`) to its page window (W0). A
+  map-area cell drawn by an unnamed window (menus, `Menuw`, full screens)
+  makes the whole screen a pop-up. Messages go to the history from
+  `buffercycle()`/`bufferappend()`.
 - Colour: reuse the game's MSDOS `COL_*` defines under `-DOMEGA_SHIM`
   (`wattrset(w, c>>8)` → bits 8-14 of the cell) and turn on its
   `SHOW_COLOUR` option; A_STANDOUT moved to bit 16.
@@ -822,7 +871,10 @@ was different.
 - `>` off stairs walks only when the square has no down-feature (stairs,
   hole, trap door, pits); standing on a door is not "on stairs".
 - ASan: `ObjectSymbols[]` one entry short (upstream).
-- Web: see rogue2wasm.md (ZAPM). Sound only when upstream ships sound effects (user rule); ZAPM has none.
+- Web: ZAPM deletes the save it loads and `saveGame()` refuses an existing
+  file (O_EXCL): autosave into a temp `DataDir`, rename; one autosave right
+  after start; unlink before the real `S` save. End hook from `exitZapm()`.
+- Sound only when upstream ships sound effects (user rule); ZAPM has none.
 
 ### O-PRIME (2.5a, Larzid fork; ZAPM variant with NotEye tiles; worked example)
 - The UI is a clean `shInterface` (NCUI = curses, NEUI = NotEye): write an
@@ -855,6 +907,11 @@ was different.
   `spot-4` for 4-letter words; NEUI redraws before the hero is placed
   (`isInShop(-10, …)` → BUS on arm64). libsigsegv's crash handler hides
   ASan reports: `#undef CATCH_SIGSEGV` under `__has_feature(address_sanitizer)`.
+- Web: an `__EMSCRIPTEN__` backend inside `port/XUI.cpp` ships the cell
+  grids and tile stacks (`js_put`, `js_tile` RGBA, `js_popup`, `js_flush`).
+  Saves as ZAPM, autosave only at the command prompt. wasm traps: an
+  uninitialised enum read (`shTextViewer::show`), a `qsort` comparator cast.
+  `#undef CATCH_SIGSEGV` under Emscripten.
 - Testing: `-bofh` debug mode (Enter menu → Debug command: reveal map,
   create monster…); `PRIME_DUMP` for pane text; a click tool (`XSendEvent`
   ButtonPress) tests mouse rows. Game letters from `xsend` land in the
@@ -888,8 +945,15 @@ was different.
 - Testing: `CRAWL_SEED` fixes the dungeon. Wizard `{` (magic map) can't be
   sent on this keyboard layout (no keycode for braceleft). Travel won't move
   with a hostile in view, so fight first.
-- No sound (upstream ships no samples). Web: `source/libweb.cc` +
-  `winclass-web.cc` (see `rogue2wasm.md`).
+- No sound (upstream ships no samples).
+- Web: `source/libweb.cc` + `winclass-web.cc`, generated from the X11 pair by
+  replacing only the X calls; build `-DUSE_X11 -DUSE_WEB` so every game-side
+  X11 branch stays (`USE_WEB` `img_type` with `data`, no fake Xlib). Text
+  regions are read from `HEAPU8` on present, image regions are RGBA buffers
+  (`0xAABBGGRR`) via `putImageData`. JS queues input, `getch()` pulls it,
+  keys go in as X11 keysyms. Autosave must write the **level too**
+  (`save_level()` + `save_game(false)`); Export packs the several save files
+  into one JSON.
 - **Every game region gets its own page window.** Itakura's `region_item`
   (inventory tiles) was sized from the X11 leftover space and shared the
   minimap's window on the web, so it sat under a mostly black minimap
@@ -961,6 +1025,10 @@ was different.
   separate Control keydown: the browser pane's `ctrl+s` has none and arrives
   as plain `s` (runs Scan). Test with dispatched `Control` down, `s` down/up,
   `Control` up; real keyboards are fine.
+- Web: SDL2 via `-sUSE_SDL=2`, modal loops just `emscripten_sleep`;
+  `CFile::Close` after writing calls `deckerSync()`. No autosave (the page
+  warns on leave). F1 opens the converted manual at the screen's topic.
+  Exempt from step 5 windows.
 - WinHelp jumps: hidden target text can span several RTF groups (collect it),
   targets are case-insensitive, and `!EF(...)` targets are web/mail links.
 
@@ -996,15 +1064,277 @@ was different.
 - `gh repo create` (public) is blocked by the auto-mode classifier: ask the
   user to run it, then continue.
 
-# Part 2 — Common to all cases
+# Part W — Web port (WASM, step 7)
 
-### Desktop shortcut
-- `~/Desktop/Games/Roguelikes/<Name>.app` via `osacompile`
-  (`do shell script ".../play.sh >/dev/null 2>&1 &"`, delay 2, activate
-  XQuartz). Icon from a player sprite of the tileset, scaled
-  nearest-neighbour, into `applet.icns`; remove `Assets.car` and
-  `CFBundleIconName`; re-sign with `codesign --force --sign -`. Cocoa-app
-  variants get a Finder alias to their `.app` instead.
+How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
+with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
+(2026-09-24). Per-game specifics sit in the case parts (A-…, R-…, O-…).
+
+**Templates:**
+- z-term games (case A): `~/Games/quickband/web/` (`index.html`,
+  `quickband.js`, `build.sh`, `deploy.sh`, `make-help.py`) + `src/main-web.c`.
+- curses games (case R, curses Moria): `~/Games/rogue3.6/web/` or
+  `~/Games/xrogue/web/` + `port/be_web.c` (curses shim, fixed-size panes,
+  no z-term). Rogue 3.6 is the reference for windows and map scrolling.
+- Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`
+  (`build.sh` copies it into `dist`).
+
+### W0. Presentation lives in the game (rule)
+- **Presentation changes originate in the game's native/WASM code.** The JS
+  layer stays static and dumb: it blits what C hands it and forwards input.
+- C decides which tile each cell gets and hands JS a finished cell array
+  (tile + floor under it, or glyph); no tile logic in JS (Hack's
+  `be_web.c` + `hack.js`).
+- Each window's content (map, side panel, status, messages, inventory,
+  visible list) comes from the game as its own pane/grid, not cropped out of
+  a composited screen in JS. A game that draws one 80×N screen gets pane
+  routing in its shim (Part R "R-frontend"), not JS-side slicing.
+- JS may only do what the browser owns: layout of windows, zoom (cell
+  size), scrolling a map that is bigger than its window, fonts, persistence.
+
+### W1. Source and changes (required)
+Every published game states what it is built from and where our changes are:
+- **Exact base version:** upstream version *and* commit (or tarball name +
+  checksum), e.g. `umoria 5.7.15, commit 3bf8abc`; commit that pristine state
+  first (step 0).
+- **Links:** the original source at that commit/tag
+  (`https://github.com/<org>/<repo>/tree/<commit>`) and our memmaker repo
+  (step 8).
+- **Where it appears:** the card on https://ruzzoli.de/roguelikes/
+  (`<div class="ver">Based on <Game> <version> · <org>/<repo> @
+  <commit></div>`, plain text: the card is one link), the Help page ("About
+  this version", end of make-help.py's output, with the links), the Docs page
+  facts and `HANDOVER.md`. Keep them in sync; check both links open and the
+  commit matches `git log` before deploying.
+
+### W2. Version control
+Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
+
+| What | Local | GitHub |
+|---|---|---|
+| Selection page | `~/Games/roguelikes-index` | memmaker/roguelikes |
+| Quickband | `~/Games/quickband` | memmaker/quickband |
+| TinyAngband | `~/Games/tinyangband` | memmaker/tinyangband |
+| ToME 2 | `~/Games/tome-2.3.11` | memmaker/tome2 |
+| XRogue | `~/Games/xrogue` (branch `rvip-port`) | memmaker/xrogue |
+| Rogue PC | `~/Games/roguepc` | memmaker/roguepc |
+| Umoria | `~/Games/umoria` | memmaker/umoria |
+| Omega | `~/Games/omega` | memmaker/omega |
+| ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
+| PRIME | `~/Games/prime` (remote `memmaker`) | memmaker/prime |
+| Hack 1.0.3 | `~/Games/hack` (remote `memmaker`, branch `master`) | memmaker/hack |
+| NetHack 1.3d | `~/Games/nethack13d` (remote `memmaker`, branch `master`) | memmaker/nethack13d |
+| Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
+| AlphaMan | `~/Games/alphaman` (remote `memmaker`) | memmaker/alphaman |
+| Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
+| Sil-Q | `~/Games/sil-q-1.5.0` (remote `memmaker`) | memmaker/sil-q |
+| Tactical Angband | `~/Games/tactical-angband` (remote `memmaker`) | memmaker/tactical-angbandX |
+| Advanced Rogue 7.7 | `~/Games/arogue7.7` | memmaker/arogue7.7 |
+| Advanced Rogue 5.8 | `~/Games/arogue5.8` | memmaker/arogue5.8 |
+| UltraRogue | `~/Games/urogue` | memmaker/urogue |
+| Rogue 5.4 | `~/Games/rogue5.4` | memmaker/rogue5.4 |
+| Rogue 3.6 | `~/Games/rogue3.6` | memmaker/rogue3.6 |
+| Decker | `~/Games/decker` (remote `memmaker`) | memmaker/decker |
+| Super-Rogue | `~/Games/srogue` | memmaker/srogue |
+
+- Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
+  / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
+- Update loop: edit → `web/build.sh` → test → **commit + push** →
+  `web/deploy.sh` (step 9).
+- Selection page: edit → commit + push → `./deploy.sh` (check:
+  `curl -s https://ruzzoli.de/roguelikes/ | diff - index.html`).
+
+### W3. z-term frontend (case A)
+- **One C file, `src/main-web.c`**, compiled with `-DUSE_WEB`, forwards the
+  z-term hooks to JS through `EM_JS` (`text/wipe/clear/curs/pict/fresh/bell/
+  color`); JS draws straight to the canvases.
+- **Blocking input uses Asyncify:** `TERM_XTRA_EVENT` with `wait` loops
+  `emscripten_sleep(10)` until JS has queued input; with `wait == 0` call
+  `emscripten_sleep(0)` at most every ~50 ms so the browser paints.
+  `TERM_XTRA_DELAY` → `emscripten_sleep(v)` (bolt animations).
+- **Input goes into term 0's queue:** activate `angband_term[0]`,
+  `Term_keypress`/`Term_mousepress`, restore the old `Term`.
+- **Register the module as `"x11"`** (`{ "x11", help_web, init_web }` under
+  `#ifdef USE_WEB`) so `user-x11.prf`, `pref-x11.prf`, `graf-x11.prf` load.
+  Special keys use main-x11's keysym macro format: `\x1f` + `N`/`S`/`O` + `_`
+  + hex keysym + `\r` (Left `FF51`, keypad n `FFB0+n`, Shift+keypad =
+  KP_nav keysyms).
+- **Tiles:** `use_graphics = arg_graphics = GRAPHICS_DAVID_GERVAIS`,
+  `use_bigtile = TRUE`, `ANGBAND_GRAF = "david"` in `init_web`; `pict_hook`
+  + `higher_pict = TRUE` on every term. Tile position `(cp & 0x7F) * 32,
+  (ap & 0x7F) * 32`; terrain (`tap/tcp`) first, sprite on top; skip the
+  `255/255` right-half placeholder; no high bit = text. `32x32.png` already
+  carries `mask32.bmp` as alpha. (TinyAngband: 16x16.bmp keyed to alpha by
+  `web/bmp2png.py`, bigtile placeholder `a&0xF0==0xF0, c==0xFF`.)
+- **Sub-windows** are six terms (0 main, 1 inventory, 2 messages, 3 monsters,
+  4 recall, 5 items). JS computes each term's cols/rows from its window
+  before `main()` (`onRuntimeInitialized`); C asks via `js_term_cols/rows`.
+- **Canvas text:** `devicePixelRatio`-sized canvases, each glyph centred in
+  its cell (never whole strings), bytes as Latin-1, controls as blanks.
+- **Resize pipeline** (browser resize, window drags, zoom):
+  - JS never resizes a term itself: it stores the new shape per term in
+    `pending[i]` (debounced); until applied, the old canvas is CSS-scaled to
+    fit (never clip).
+  - C applies it inside the input loop (`web_pump()` → `web_apply_layout()`:
+    `js_apply_layout` → `Term_activate` → `Term_resize` → `Term_redraw`).
+    Never call into wasm from a JS handler while Asyncify is suspended.
+  - The main term changes cols/rows only at the command prompt
+    (`inkey_flag && character_generated`): the queued `EVT_RESIZE` becomes
+    `do_cmd_redraw()`. Elsewhere it could be read as an answer. Minimum 80×24.
+  - Sub-windows resize at once: flush their key queue, set the `PR_*` redraw
+    flags, push `EVT_RESIZE` onto term 0 if at the prompt. A `dpr` change
+    also relayouts.
+  - Other command loops: `grep -n EVT_RESIZE src/*.c`, check `inkey_flag`.
+
+### W4. Windows (step 5)
+- All games use `rvip-wm.js`: `RvipWM({area, menu, wins, multi, single,
+  state, save, layout(rects), font(id,d), onReset})`, windows are `#t-<id>`
+  with a `.t .name` title bar and a `.body`. It gives the tiling layout,
+  gutters, Windows drop-down, rename/A−/A+ on hover, one/multi-window toggle.
+- **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
+  (with history), status, inventory and visible list in their own windows,
+  text over the map in a pop-up.
+- **Zoom:** the map never shrinks or clips when zoomed in: it scrolls to keep
+  the player in the middle half and recentres on a new level. Applies to
+  every one-screen map (all Rogue/Hack variants, Umoria `scrollMap`), in
+  single- and multi-window mode.
+- **Automatic until customised:** default splits and zoom follow the browser
+  size until the player drags or zooms (a tab first loaded tiny otherwise
+  keeps a 240 px map forever); assume 1280×720 when the area isn't laid out
+  yet. Reset windows restores the default.
+- Buttons never take focus (`mousedown → preventDefault()`); inputs in title
+  bars stop propagation and `onKey` ignores `input/textarea`, so typing never
+  reaches the game.
+- Tiles show only what the game has: no door tiles for doorways that can't
+  be opened or closed (Hack, NetHack 1.3d).
+
+### W5. Persistence: IndexedDB (IDBFS)
+- **Everything the player sets goes to IndexedDB (required), never
+  `localStorage`:** in-game options (savefile), pref files the game writes
+  (`/<name>/lib/user`), page settings (layout, zoom, fonts, titles, sound
+  toggles) as a JSON file there (`web-layout.json`), synced after a change.
+  Check: change each, reload, still set. (Exception: a pure per-browser tile
+  set choice.)
+- **Own paths per game:** IDBFS names each database after its mount point
+  and all games share the origin (a shared `/lib/save` made TinyAngband load
+  Quickband's save). Preload to `/<name>/lib`
+  (`--preload-file web/stage/lib@/<name>/lib`), `FS.chdir('/<name>')` in
+  `preRun`.
+- Link `-lidbfs.js`, export `IDBFS`. In `preRun`: `FS.mkdirTree` +
+  `FS.mount(IDBFS)` per save dir, then `FS.syncfs(true)` inside
+  `addRunDependency`/`removeRunDependency` so `main()` waits.
+- **Write-back:** `web_sync_files()` (→ `FS.syncfs(false)`) at the end of the
+  game's save function; also every 15 s, on `visibilitychange` and
+  `pagehide`. Serialize syncfs calls.
+- **Autosave:** JS calls an exported `_web_request_save()`; C acts only when
+  idle at the command prompt with an empty key queue and pushes the normal
+  save command (Ctrl-S). Every 2 minutes and when the tab is hidden.
+  **Never** save from JS while Asyncify is suspended. Games that delete the
+  save on load or refuse to overwrite: save to a temp file, rename (see the
+  case parts). `beforeunload` warns while a game runs.
+- Export downloads the save; Import / New character clear the save dir only
+  (the layout survives), write, sync, reload.
+- **Game end:** keep `quit_aux` as the web hook (`#ifndef USE_WEB` around
+  main.c's `quit_hook` line), sync, show a "Play again" overlay; set
+  `plog_aux` so errors show on the page. Don't use `-sEXIT_RUNTIME` for the
+  end hook (IndexedDB closes before the last sync): call it from the game's
+  exit function before `exit()`.
+- Save name: uid is 0 and `SET_UID` stays: `-uPLAYER` via `Module.arguments`
+  → `/lib/save/0.PLAYER`. Games naming saves after the character: pass the
+  newest save's name (push into `Module.arguments`, don't replace the array).
+
+### W6. Help button: the game guide
+- *Help* shows the full guide: about the game, keyboard controls (keys to
+  remember box: help, explore, Enter menu, stairs, save; Docs essentials;
+  full key list in `<details>`), saving (written for the web), tips, new
+  player's guide, playing in the browser.
+- `web/make-help.py` imports `build-docs.py` (via `importlib`) and
+  `guides.py` from `~/Desktop/Games/Roguelikes/Docs`; `build.sh` writes
+  `$OUT/help.html`. The Docs entry needs a Tips section.
+- The page fetches `help.html` on first open; while open the game gets no
+  keys, Escape closes. Check every claim in the web build.
+
+### W7. Build
+- `brew install emscripten` (6.0.10 worked); `web/build.sh` → `web/dist`,
+  `web/deploy.sh` → server. Run scripts with `sh`, not zsh (no word split).
+- z-term source list from `Makefile.src` (strip CRLF, `*.o` of
+  `ANGFILES`/`ZFILES`, drop `main*`, add `main.c main-web.c`); curses games
+  get `$(CFILES)` from `make`.
+- Flags: `-O2 -fcommon -std=gnu99 -DUSE_WEB -w -sASYNCIFY
+  -sASYNCIFY_STACK_SIZE=65536 -sSTACK_SIZE=1048576 -sALLOW_MEMORY_GROWTH
+  -sINITIAL_MEMORY=64MB -sEXPORTED_FUNCTIONS=_main,_web_request_save
+  -sEXPORTED_RUNTIME_METHODS=FS,IDBFS,HEAPU8,addRunDependency,removeRunDependency
+  -sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web`. `-fcommon` for globals
+  defined in several files; C++ links with `em++`, and `em++` treats `.c` as
+  C++ (compile C with `emcc -c` first).
+- Package only the data the game reads (no X11 fonts, BMPs); the server
+  **denies `*.txt`**, so text data goes inside `.data`.
+
+### W8. Code fixes to expect
+- **Function-pointer casts trap** (`function signature mismatch`, kills the
+  game; native tolerates it). Find all with
+  `emcc -fsyntax-only -Wno-everything -Wcast-function-type-strict` per file
+  and write wrappers with the real signature (Quickband `OPTION_ACTION` in
+  `cmd4.c`: `=` → `w` crashed). Usual places: menu/command tables, hooks,
+  `qsort` comparators. Last resort `-sEMULATE_FUNCTION_POINTER_CASTS`.
+  Test: open every options entry, subwindow flags all on.
+- K&R code: link and read every `wasm-ld: function signature mismatch`
+  (undeclared void calls, wrong argument counts, mismatched externs); add
+  prototypes (Part R).
+- `incompatible-pointer-types` errors (find with
+  `-Wno-error=incompatible-pointer-types` and grep); `safe_setuid_*` guarded
+  with `#if defined(SET_UID) && !defined(USE_WEB)`; no X11-only helpers.
+- **Show crashes on the page:** a trap after an Asyncify resume is an
+  *unhandled promise rejection* (bypasses `onAbort`): listen for
+  `unhandledrejection` and `error`, show "The game crashed … reload".
+- Upstream bugs seen on the web (fix in the shared source): `W:` lines never
+  registered subwindow handlers for a new character (fix in
+  `process_some_user_pref_files()`); `<0x>` in Messages (`count <= 1`).
+
+### W9. Server (ruzzoli.de)
+- `ssh ruzzoli.de` (felix, passwordless sudo); root `/var/www/ruzzoli.de`,
+  nginx `/etc/nginx/sites-enabled/ruzzoli.de.conf`, knows `application/wasm`.
+- `deploy.sh`: guard (step 9), `sudo mkdir -p …/roguelikes/<name>`,
+  `chown felix:www-data`, `rsync -rtz --delete dist/ …` (macOS rsync: no
+  `--chmod`). The deploy prints nothing: verify with `curl`.
+- `location ^~ /roguelikes/` (no-cache, gzip for wasm/data/js/css) covers
+  the page and every game; the rest of the site keeps `expires 30d`.
+
+### W10. Testing
+- Serve `web/dist` locally (`python3 -m http.server <port> -d web/dist` or
+  `shotsrv.py`), open it with `navigate` in your own tab, kill your PID after.
+- Browser-pane key quirks: `type` sends no keydown (use `key` with
+  space-separated keys or dispatch `KeyboardEvent('keydown', {key})`);
+  `shift+period` arrives empty (send `>`); no keypad keys (dispatch with
+  `code:'Numpad5'`); `ctrl+s` has no separate Control keydown.
+- A stale module after rebuilding: `fetch(f, {cache:'reload'})`, then reload.
+- **Checklist:** title → birth → map with tiles → every window filled
+  (inventory, visible list, messages, recall) → shop → stairs → help, Enter
+  menu → window drag/zoom/rename, layout survives reload, zoomed map
+  scrolls with the player → options menu entries don't crash → no
+  `-more-` stops → save, reload, character loads, autosave works → death/
+  quit → "Play again" → no console errors.
+- **Resize test:** 1000×650 → 1440×900 → 1200×750 (once with a prompt open)
+  → 760×500; read canvas sizes, expect no scaling when big enough; reset to
+  `desktop`.
+
+### W11. Procedure (short)
+1. Game builds and plays (steps 1–4).
+2. Copy the template frontend and `web/`, rename (`<name>-core`, title,
+   `SAVE_NAME`, tile sheet), wire the windows to `rvip-wm.js`.
+3. Web option defaults (step 3d; case A also `center_player`), fix every
+   signature-mismatch warning.
+4. `build.sh`, test with the checklist, fix empty windows at the source.
+5. Commit + push, `deploy.sh`, test the live URL.
+6. **Selection page card** (every published game): copy an `<a class="card">`
+   in `~/Games/roguelikes-index/index.html`: 12×5 monster tiles
+   (~384×160, nearest-neighbour), name, tag (lineage · start year), 1–2
+   sentences on goals and uniqueness, **no input hints**, the W1 version
+   line. Commit + push, `deploy.sh` (rsync without `--delete`).
+
+---
+
+# Part 2 — Common to all cases
 
 ### Docs page (step 6)
 - `~/Desktop/Games/Roguelikes/Docs/`: add a `GAMES` entry in
@@ -1016,41 +1346,16 @@ was different.
   shown in the web Help. Outside sources are allowed for them (strategy
   guides, GameFAQs, wikis); write them in your own words.
 
-### Web (step 7)
-- To make a variant playable at `https://ruzzoli.de/roguelikes/<name>/`
-  (tiles, all subwindows, saves in IndexedDB), follow
-  **`~/Games/rogue2wasm.md`**. Quickband is the worked example
-  (`~/Games/quickband/web/`, `src/main-web.c`). Do the other steps first:
-  the web build reuses the X11 tile code, prefs and window layout. WASM
-  traps on function-signature mismatches, so K&R code needs full prototypes.
-- The WASM (C) code decides which tile each cell gets and hands JS a
-  finished cell array (tile + floor under it, or glyph); JS only blits.
-  No tile logic in JS (user rule; Hack's `be_web.c` + `hack.js` do this).
-- **Windows like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map,
-  messages (with history) and status in their own resizable windows, text
-  over the map in a pop-up. Zoomed in, the map never shrinks or clips: it
-  scrolls to keep the hero in the middle half and recentres on a new level
-  (all one-screen Rogue/Hack maps; Hack: `web/hack.js` `scrollMap`).
-- Tiles show only what the game has: no door tiles for doorways that
-  can't be opened or closed (Hack, NetHack 1.3d): draw floor.
-
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
   CRLF into LF (the whole file shows as changed in `git diff`): open in
   binary, or use `sed`, and compare `grep -c $'\r'` with `git show HEAD:`.
 
 ### Testing without touching the user's games
-- The user may be playing another variant in XQuartz right now. Never take
-  full-screen screenshots and never send global keystrokes (no System
-  Events). Capture only the test window with `xwd -id <window>` (decode with
-  `~/Games/rvip-tools/xwd2png.py`); send keys with
-  `~/Games/rvip-tools/xsend <window-id> <keys…>` (`XSendEvent` to that one
-  window). Arguments are **keysym names** (`Return`, `Escape`,
-  `numbersign`, `greater`, `question`, `asterisk`, `space`, `Down`);
-  `:text` sends letters. Window IDs: `xwininfo -root -tree`.
-- Kill only the PID you started (`exec` in `play.sh` makes it the game).
-- Start test games with `</dev/null` and output redirected: a backgrounded
-  game holding the tool's stdin/stdout hangs the shell command.
+- Test in the browser pane against `web/dist` served locally (e.g.
+  `~/Games/rvip-tools/shotsrv.py`), in your own tab. Never take full-screen
+  screenshots or send global keystrokes (no System Events).
+- Kill only the server PID you started.
 - **Parallel imports share things:** agents of one session share the
   scratchpad folder and the browser pane. Use a subfolder of your own for
   scratch files, check a port with `lsof -iTCP:<port> -sTCP:LISTEN` before
@@ -1058,6 +1363,5 @@ was different.
   and open your own browser tab (`tabs_create`) instead of navigating the
   shared one.
 - Test characters: throwaway name, isolated `HOME`/save dir where the game
-  allows; otherwise delete every save/notes file the test created (default
-  saves are named after the Mac login — the user's real game would load
-  them), and nothing else.
+  allows; otherwise delete every save/notes file the test created (on the
+  live site saves sit in the user's IndexedDB: test locally, not there), and nothing else.
