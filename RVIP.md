@@ -113,7 +113,7 @@ modelled on `~/Projects/contractor` `ui_console/widget_inventory.go`):
   menu), 5 or Enter chooses / opens the menu, + main action, - drop,
   * examine, 0 or . closes. The Enter menu reaches the inventory too.
 
-**3d. No `--More--` stops (auto_more).** Every game has the equivalent of
+**3d. No `--More--` stops (auto_more).** Required: every game has the equivalent of
 NetHack's `auto_more`: more prompts no longer wait for a key, the game
 just continues past them (messages stay readable in the message
 window/history). On by default, and always in the web build.
