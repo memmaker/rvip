@@ -163,6 +163,7 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   itself gets that on by default (Angband's `center_player`); every other
   game sends the player's position and uses `RvipWM.center`. How: Part W, W4.
 - **Exempt:** Decker (its MFC dialogs are the game; it keeps its own layout).
+- **Text only, no tiles/text switch (the user's choice):** BOSS, ZAPM.
 
 **6. Docs page** (Part 2). **6b. Sound effects and music** with top-bar
 toggles, **off by default**. **7. Web page** live at
