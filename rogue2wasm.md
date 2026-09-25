@@ -87,6 +87,32 @@ live at https://ruzzoli.de/roguelikes/sil-q/.
   (`options[]` in `option.c` is static). No `-Wcast-function-type-strict`
   warnings in 4.2 code.
 
+**Linley's Dungeon Crawl (C++, Itakura's tile frontend, 2026-09-25):**
+`~/Games/crawl-linley/web/` + `source/libweb.cc`, `winclass-web.cc`, live at
+https://ruzzoli.de/roguelikes/crawl-linley/.
+- The game has its own platform split (`winclass-x11.cc`/`libx11.cc`, and
+  `-win`/`libwt` for Windows): the web layer is a third pair, generated from
+  the X11 pair by replacing only the X calls. Build with `-DUSE_X11
+  -DUSE_WEB` so every game-side X11 branch stays; `winclass.h` gets a
+  `USE_WEB` `img_type` (`{width, height, bytes_per_line, data}`), so the
+  `ImgCopy*` code with direct `data` access is unchanged. No fake Xlib.
+- Regions become page windows: text regions only mark themselves dirty and
+  JS reads `cbuf`/`abuf` straight from `HEAPU8` on present; image regions
+  (tile view, minimap, item rows) are RGBA back buffers (`create_pixel`
+  returns `0xAABBGGRR` = canvas byte order) copied with `putImageData`.
+  The text layer (`region_crt`, layer 1) is the pop-up, cropped to its used
+  cells. Font: int10h IBM VGA 8x16 webfont (`@font-face`).
+- Input can't call into wasm while suspended: JS queues key/mouse events,
+  `getch()` pulls them (`emscripten_sleep(10)` when empty), `kbhit()` yields
+  every 50 ms. Keys go in as X11 keysyms so the copied keypress code is
+  unchanged. `-sUSE_LIBPNG=1` for the PNG tiles.
+- Autosave at the command prompt must write the **level too**
+  (`save_level()` + `save_game(false)`), else a reload regenerates it.
+  Saves are several files (`<name>0.sav/.st/.kil/.tc/.<level>`): Export
+  packs them into one JSON. The page passes `-name` of the newest `.sav`.
+- A port that another process already listens on returns *its* page: check
+  `lsof -iTCP:<port>` before trusting a local test.
+
 **Template to copy:** `~/Games/quickband/web/` (`index.html`, `quickband.js`,
 `build.sh`, `deploy.sh`) and `~/Games/quickband/src/main-web.c`. Do the RVIP
 steps first (`RVIP.md`): the web build reuses the X11 tile code, pref files
