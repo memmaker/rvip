@@ -377,6 +377,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `quickband.js` plays a random sample per event, loops the town music,
   keeps button choices in `web-layout.json` (IndexedDB); `build.sh` copies
   `lib/xtra/sound` and `web/music` into `dist`.
+- Shared player `web/rvip-sound.js`: C names the files, JS only plays
+  (`RVIPSound.play(['name',...], vol)` → `sound/<name>.wav`, lazy, in
+  order, resumes audio on first key/click). NetHack 5.0: a soundlib
+  `sound/websound/websound.c` (`SND_LIB_WEBSOUND` + `SND_SOUNDEFFECTS_AUTOMAP`,
+  mapping as macsound) and `sound/wav/*.wav` copied to `dist/sound`.
 
 ### A-Sil-Q (2026-09-25, `~/Games/sil-q-1.5.0`, `HANDOVER.md`)
 - The folder was an unzipped GitHub tarball: `diff -r` against a clone of
@@ -1151,6 +1156,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Rogue 3.6 | `~/Games/rogue3.6` | memmaker/rogue3.6 |
 | Decker | `~/Games/decker` (remote `memmaker`) | memmaker/decker |
 | Super-Rogue | `~/Games/srogue` | memmaker/srogue |
+| NetHack 5.0 | `~/Games/nethack50` (branch `NetHack-5.0`) | memmaker/nethack50 |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
