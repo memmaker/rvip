@@ -599,7 +599,16 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   - Licence **CC BY 4.0**. Credit DragonDePlatino *and* DawnBringer (palette)
     on the Help page and README. The author also asks that the Platino
     sprite (`Characters/Reptile*.png`) is hidden somewhere in the game as
-    an easter egg. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+    an easter egg.
+  - **Multi-tileset games** (2026-09-25): Rogue 3.6 (v1), Rogue 5.4 (v2) and
+    Rogue PC (v4) offer DawnHack next to their default. Pattern: `port/mkdawn.py`
+    writes `tiles-dawn.png/.rgba` with the *same slot layout* as the default
+    sheet (uncovered slots keep the default), so the game code is untouched.
+    Web: a *Tiles* / *Tile set* button, choice kept in `localStorage`;
+    X11: `TILESET=dawn ./play.sh` or `save/tileset`; Rogue PC SDL: button +
+    `tileset=` in `roguepc.cfg`. Credit in `port/dawnhack/CREDITS.txt`, the
+    Help page and the README. Only add a set when it covers every monster and
+    item class of the game. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random

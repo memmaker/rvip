@@ -124,6 +124,16 @@ https://ruzzoli.de/roguelikes/crawl-linley/.
 - A port that another process already listens on returns *its* page: check
   `lsof -iTCP:<port>` before trusting a local test.
 
+**Decker (Windows MFC game, SDL2 via `-sUSE_SDL=2`, 2026-09-25):**
+`~/Games/decker/web/` + the same `port/` shim as the Mac build, live at
+https://ruzzoli.de/roguelikes/decker/. Page copied from Omega's.
+- The game's modal loops just call `emscripten_sleep` (Asyncify); no main-loop
+  rewrite. Saves: `CFile::Close` after writing calls `deckerSync()`.
+- `-sGLOBAL_BASE=65536` (resource-ID pointer checks), mousemove before each
+  click, fixed canvas scaled by CSS: see RVIP.md O-Decker.
+- No autosave (the game has none; the page warns on leave). F1 opens the
+  converted manual in an iframe panel at the screen's topic.
+
 **Template to copy:** `~/Games/quickband/web/` (`index.html`, `quickband.js`,
 `build.sh`, `deploy.sh`) and `~/Games/quickband/src/main-web.c`. Do the RVIP
 steps first (`RVIP.md`): the web build reuses the X11 tile code, pref files
@@ -182,6 +192,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | UltraRogue | `~/Games/urogue` | memmaker/urogue |
 | Rogue 5.4 | `~/Games/rogue5.4` | memmaker/rogue5.4 |
 | Rogue 3.6 | `~/Games/rogue3.6` | memmaker/rogue3.6 |
+| Decker | `~/Games/decker` (remote `memmaker`) | memmaker/decker |
 | Super-Rogue | `~/Games/srogue` | memmaker/srogue |
 
 - Per game repo: pristine upstream commit first, then port, RVIP and web
