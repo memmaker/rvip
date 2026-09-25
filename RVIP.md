@@ -496,6 +496,19 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   XRogue's `rs_read_long()` read 4 bytes into an uninitialised 8-byte long
   (gold/exp garbage after restore). Read into a 32-bit int. Always test
   save → restore and compare gold/exp.
+- **Undeclared *void* libc calls trap on WASM** (`signature_mismatch:srand48`,
+  `free`, `abort`): include `stdlib.h`/`unistd.h` at the very top of the
+  game header (Super-Rogue's first include sat inside `#ifdef BSD`). To find
+  a trap, build with `emcc -O1 --profiling-funcs` and print `err.stack`.
+- Games that catch SIGSEGV (`game_err` → save + abort) hide ASan reports:
+  run with `ASAN_OPTIONS=allow_user_segv_handler=0`. They may also ignore
+  SIGTERM afterwards: stop test runs with `kill -9` on your own PID.
+- Restore paths that `endwin()` + `fork()` to unlink the save close the X
+  window under the shim: plain `unlink()` there. Saves that `close(fileno(f))`
+  lose the buffered tail: `fclose(f)`.
+- Copied `.gitignore`s: Rogue 5.4's ignores `Makefile` (configure output);
+  check `git status` shows every file you changed before the first commit.
+  Worked example for all of the above: **Super-Rogue** (`~/Games/srogue`).
 
 ### R-frontend. Curses shim with panes
 - There is no z-term: replace curses with a small in-memory shim

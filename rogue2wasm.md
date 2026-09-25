@@ -182,6 +182,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | UltraRogue | `~/Games/urogue` | memmaker/urogue |
 | Rogue 5.4 | `~/Games/rogue5.4` | memmaker/rogue5.4 |
 | Rogue 3.6 | `~/Games/rogue3.6` | memmaker/rogue3.6 |
+| Super-Rogue | `~/Games/srogue` | memmaker/srogue |
 
 - Per game repo: pristine upstream commit first, then port, RVIP and web
   commits. Commit the game changes **and** the harness: `web/` (`index.html`,
@@ -604,6 +605,37 @@ which helps the X11 build too):
 - **`<0x>` lines in the Messages window:** empty history slots have
   count 0 and are printed as `"%s <%dx>"`. Use `count <= 1` in
   `xtra3.c`.
+
+## Pascal games (BOSS)
+
+No Emscripten: Free Pascal trunk (3.3.1) targets `wasm32-wasip1` directly.
+The page (`boss/web/boss.js`) is a small hand-written loader.
+
+- **Compiler:** built once from `~/Games/fpc-src` into `~/Games/fpc-wasm`
+  (`make crossall crossinstall OS_TARGET=wasip1 CPU_TARGET=wasm32`, with
+  `OPT`/`FPCMAKEOPT=-XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk`).
+  Linker: Emscripten's `wasm-ld` via `-XP<llvm bin>/`. Flags
+  `-Twasip1 -O2 -Sgic`.
+- **Screen and keys:** the game's `crt` replacement (`port/bcrt.pas`) calls
+  `be_*` functions; on wasm they are imports from module `boss`, drawn on a
+  canvas by `boss.js`.
+- **Waiting for keys:** `wasm-opt --asyncify` with
+  `asyncify-imports@boss.be_getkey,boss.be_sleep`; an import that returns a
+  Promise unwinds, `_start` is called again to rewind. Give wasm-opt the
+  feature flags one by one: `--all-features` emits compact imports that
+  browsers reject ("Invalid import kind 126").
+- **Files:** `@bjorn3/browser_wasi_shim` (vendored in `web/vendor/wasi`)
+  with an in-memory FS. FPC resolves `./dat/x` against a preopen named
+  `./dat`, so preopen both `.` and `./dat`. Everything written is mirrored
+  to IndexedDB after each save.
+- **Traps:** wasm indirect calls check signatures, so FPC `TextRec`
+  hooks must be `procedure(var t: TextRec)` exactly ("function signature
+  mismatch" otherwise).
+- **Saves:** the game autosaves quietly (`be_want_save` every 2 s or when
+  the page is hidden); ^Z saves and ends; death/quit deletes the save.
+- **Headless test:** `node web/test.mjs "<keys>"` runs the wasm with the
+  shim and prints the screen when keys run out.
+- `~/bin/ls` is not `/bin/ls`: use `/bin/ls` in build scripts.
 
 ## Server (ruzzoli.de)
 
