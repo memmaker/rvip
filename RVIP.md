@@ -398,8 +398,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   save/load (an own seen-map is lost on reload).
 - Town stairs walk: don't refuse `<`/`>` when townspeople are in view; stop
   only when *more* monsters come into view than at the start.
-- Web (step 7) not possible with FPC 3.2.2 (no wasm target); sound skipped
-  with it.
+- Web (step 7): FPC trunk has a `wasm32-wasip1` target (cross compiler in
+  `~/Games/fpc-wasm`) + Binaryen Asyncify for `readkey`; own page, no
+  Emscripten. Details in `rogue2wasm.md`, section "Pascal games (BOSS)".
+  Sound skipped.
 
 ---
 
@@ -759,7 +761,14 @@ was different.
 - Testing: `CRAWL_SEED` fixes the dungeon. Wizard `{` (magic map) can't be
   sent on this keyboard layout (no keycode for braceleft). Travel won't move
   with a hostile in view, so fight first.
-- No sound (upstream ships no samples), no web port yet.
+- No sound (upstream ships no samples). Web: `source/libweb.cc` +
+  `winclass-web.cc` (see `rogue2wasm.md`).
+- **Every game region gets its own page window.** Itakura's `region_item`
+  (inventory tiles) was sized from the X11 leftover space and shared the
+  minimap's window on the web, so it sat under a mostly black minimap
+  canvas. Give such regions a fixed grid (8×8 ≥ `MAX_ITEMLIST`) and their
+  own tiled window with a split; check `show_items` in init.txt shows all
+  classes, or the "Inventory" window hides weapons and armour.
 
 ---
 
