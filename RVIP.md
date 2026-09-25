@@ -669,7 +669,9 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     them stand-ins, all 234 used slots).
     Large bestiaries: urogue `port/mkdawn.py` imports `mktiles` and, per slot,
     tries the game's name, then the NetHack stand-in's name (DawnLike follows
-    NetHack's names), then a small hand table (406 monsters, 651 slots). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+    NetHack's names), then a small hand table (406 monsters, 651 slots). The same script, copied
+    as is, serves arogue5.8, arogue7.7 and xrogue (mon_tile read from tilemap.h;
+    CSRC from `M.SRC`). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random
