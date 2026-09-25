@@ -57,8 +57,9 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
-Part A. Frontend choice: X11 fits the launcher/testing tools here; SDL2 is
-fine too (Rogue PC uses it) and only replaces the `be_*` file.
+Part A. Frontend choice: **prefer SDL2 over X11** for new ports (better
+Hi-DPI support); it only replaces the `be_*` file (Rogue PC is the worked
+example). Existing X11 ports stay until touched for other reasons.
 
 ---
 
@@ -134,6 +135,22 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
 **5. Launcher + window layout:** `~/Games/<name>/play.sh`, all windows
 placed for the 1440×932 screen (XQuartz adds ~28 px title bars); a window
 resize must not start a resize fight with XQuartz. Desktop shortcut (Part 2).
+
+**5b. Web window layout** (every web build):
+- **One-window and multi-window mode**, switchable in the top bar.
+- **Multi-window = tiling window manager:** windows never overlap, fill the
+  whole screen, never leave gaps.
+- The user can **resize and rearrange** windows; the layout is saved in
+  IndexedDB with the other game data.
+- A **Windows drop-down** in the top bar toggles each sub-window on/off.
+- Each sub-window's **title bar**, on hover only, shows buttons to rename
+  the window and to make its font larger/smaller.
+- Sub-windows: **Map**, **Log messages**, **Inventory** (items coloured by
+  type; Angband colour conventions as fallback when the game defines
+  none), **Equipment** (unless already in the inventory), **Visible**
+  (enemies + items in view), **Recall** (if the game has it).
+- **Default on:** Map, Inventory, Visible, Log messages; the rest via the
+  drop-down.
 
 **6. Docs page** (Part 2). **6b. Sound effects and music** with top-bar
 toggles, **off by default** (web port). **7. Optional web/WASM** port (Part 2).
