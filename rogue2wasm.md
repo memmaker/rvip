@@ -183,7 +183,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
 | PRIME | `~/Games/prime` (remote `memmaker`) | memmaker/prime |
 | Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
-| AlphaMan (no web: QB64) | `~/Games/alphaman` (remote `memmaker`) | memmaker/alphaman |
+| AlphaMan | `~/Games/alphaman` (remote `memmaker`) | memmaker/alphaman |
 | Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
 | Sil-Q | `~/Games/sil-q-1.5.0` (remote `memmaker`) | memmaker/sil-q |
 | Tactical Angband | `~/Games/tactical-angband` (remote `memmaker`) | memmaker/tactical-angbandX |
@@ -616,6 +616,20 @@ which helps the X11 build too):
 - **`<0x>` lines in the Messages window:** empty history slots have
   count 0 and are printed as `"%s <%dx>"`. Use `count <= 1` in
   `xtra3.c`.
+
+## QuickBASIC games (AlphaMan)
+
+QB64 has no WebAssembly target. FreeBASIC does the job: `fbc -lang qb -gen gcc -r
+-target js-asmjs -m <main>` emits C for the QuickBASIC source, and FreeBASIC's
+runtime builds with Emscripten (`make rtlib TARGET=wasm32-unknown-emscripten`
+in a clone of github.com/freebasic/fbc; a host fbc is FreeBASIC-NG's macOS
+build in `~/Games/fbc-tool`). Replace the runtime's termlib console with a DOS
+text-mode driver (`~/Games/alphaman/port/fb/console.c`: 8 pages of char+attr,
+`fb_Console*` + `fb_PageSet`/`fb_PageCopy` overrides) and draw the visible page
+on a canvas with the VGA 9×16 font (`web/alphaman.js`), scaled by whole
+pixels. Asyncify for the key wait; `COMMAND$` is empty under Asyncify, so the
+save to load goes through `ENVIRON$`. Details and the FreeBASIC dialect traps:
+RVIP.md, section O-AlphaMan.
 
 ## Pascal games (BOSS)
 

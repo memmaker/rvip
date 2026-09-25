@@ -654,12 +654,19 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   - **Multi-tileset games** (2026-09-25): Rogue 3.6 (v1), Rogue 5.4 (v2) and
     Rogue PC (v4) offer DawnHack next to their default. Pattern: `port/mkdawn.py`
     writes `tiles-dawn.png/.rgba` with the *same slot layout* as the default
-    sheet (uncovered slots keep the default), so the game code is untouched.
+    sheet, so the game code is untouched.
     Web: a *Tiles* / *Tile set* button, choice kept in `localStorage`;
     X11: `TILESET=dawn ./play.sh` or `save/tileset`; Rogue PC SDL: button +
     `tileset=` in `roguepc.cfg`. Credit in `port/dawnhack/CREDITS.txt`, the
-    Help page and the README. Only add a set when it covers every monster and
-    item class of the game. Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+    Help page and the README. **Never mix tile sets** (user rule,
+    2026-09-25): every slot the game can show must come from the one set.
+    A set must cover the game to ~95% with fitting art (stand-ins from the
+    same set for the rest), otherwise the game keeps its fallback only.
+    Check: compare each used slot of `tiles-dawn.png` with `tiles.png`; any
+    identical slot is a leak. If monsters/items share a slot in the default
+    sheet, give each its own slot first (srogue `mktiles.py` `unique()`).
+    Example by name: srogue `port/mkdawn.py` (DawnLike, 53 monsters, 25 of
+    them stand-ins, all 234 used slots). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random
@@ -875,7 +882,12 @@ was different.
 - **ASan**: `qb64pe -f:ExtraCppFlags="-fsanitize=address -g -O1" -f:ExtraLinkerFlags="-fsanitize=address" -x port/alphaman.bas -o <scratch>`; random-key fuzz watching for `gui_alert` in `sample <pid>` as well as ASan reports.
 - **Menu from help**: the Enter menu is parsed from the game's help file (`alphaman.5`); edit the help lines for x/</> so menu, `?` and docs agree. Keep line count (the file is read by line).
 - **Shortcut**: osacompile `do shell script "…/play.sh >/dev/null 2>&1 &"` (like Rogue PC); icon = the ☻ player cell cropped from a window capture, nearest-neighbour to 1024.
-- **No web** (step 7): QB64 has no wasm target. A port would mean a BASIC→C translation first.
+- **Web (step 7) without QB64**: QB64 has no wasm target, but **FreeBASIC** compiles the same QuickBASIC source (`-lang qb`: GOTO/GOSUB, BYREF, 16-bit INTEGER, GET/PUT records) to C (`fbc -gen gcc -r -target js-asmjs -m <main>`), and FreeBASIC's runtime builds for Emscripten (`make rtlib TARGET=wasm32-unknown-emscripten` in a clone of github.com/freebasic/fbc; host fbc = FreeBASIC-NG's darwin build, `~/Games/fbc-tool`). `port/merge.py fb` makes the FreeBASIC variant of the merged source. Lessons (`~/Games/alphaman/web`, `port/fb`):
+  - FB has no `FIELD` (use a TYPE with `STRING * n` + `GET #f, rec, var`), no `CLEAR , , n`, no `_CONTINUE` (use `GOTO` to a label before `LOOP`), no pointers in `-lang qb` (pass `arr(1, 1)` BYREF for a C pointer; `BYVAL AS STRING` hands C the *descriptor*, read `->data`). `name`, `files` are keywords; a local scalar cannot share a name with a global array; a BYREF parameter cannot be a FOR counter. Every DECLARE is needed (keep the QB ones, one per name, drop `SEG`).
+  - Replace the rtlib/js console (termlib) with your own driver: define all `fb_Console*` functions plus `fb_hInit/fb_hEnd`, `fb_GfxScreenQB`, and **`fb_PageSet`/`fb_PageCopy`** (the core rejects pages ≥ `FB_CONSOLE_MAXPAGES` = 1 on js); QB's `SCREEN , , n` must also make page n visible. Include `fb.h` from the fbc source (`-I src/rtlib`) for `fb_ConPrintTTY` and the hooks struct.
+  - Link with `-sASYNCIFY`; `emscripten_sleep` from a C `rv_wait` for key polling. `-O2` or higher (at `-O1` the giant main has too many wasm locals). Under Asyncify `argv` arrives empty in `COMMAND$`: pass the save name via `ENVIRON$` (Module.ENV). `SLEEP n` is seconds in `-lang qb`.
+  - Node test harness: run the core with `vm.runInThisContext` (a CommonJS `require` hides the global `Module`), NODEFS at the run dir, the same ALPHA_KEYS/ALPHA_DUMP hooks; `-lnodefs.js -lidbfs.js` and export `NODEFS,IDBFS,HEAPU8,HEAPU16,HEAP32`. Embedded files exist only after the static constructors: copy data files in `onRuntimeInitialized`, not `preRun`.
+  - The web FS is case-sensitive: the game saved `NAME.ALF` and opened `NAME.alf`. The DOS game loads a save only from the command line, so the page (and `play.sh`) continue the newest `.ALF`.
 
 ### O-Decker (Decker 1.12, Windows MFC, 2001; `~/Games/decker`, worked example)
 - **Windows GUI game = write a small MFC/Win32 shim, keep the game code.**
