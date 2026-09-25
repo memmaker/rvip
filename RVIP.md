@@ -14,6 +14,39 @@ How a new roguelike gets added to this Mac so it plays like the others.
   instead of piling up notes. Say in the handover what was added.
 - Keep worked examples current: when a case gets a new example game, add it
   to its table.
+- **Work in stages** (next section): stop after every stage and wait for the
+  user before starting the next one.
+
+## Stages and checkpoints (mandatory)
+
+An import runs in the stages below, one at a time. **At the end of every
+stage stop and wait for the user to say go.** The pause lets the user compact
+the context; the next stage must need nothing from the old context except
+the handover written at the checkpoint.
+
+| Stage | Steps | Done when | Handover carries |
+|---|---|---|---|
+| 1 Get + build | 0, 1, case pick, A0/A1 / R1 / O | clean build, ASan run done, objects removed, upstream commit exists | folder, case, frontend file, build command and flags, quirks found |
+| 2 Explore + stairs | 2, 3 | both tested in a running game | explore key, file holding the code, main-loop hook, "known grid" test used |
+| 3 Enter menu + inventory | 3b, 3c | menu lists every command, item menus tested | file names, how item actions run (direct call or key queue), menu function names |
+| 4 Tiles | 4 | sprites checked at cell size, nearest-neighbour | tile set and source, loader file, pref files, scale |
+| 5 Launcher + shortcut | 5, Part 2 "Desktop shortcut" | `play.sh` fits 1440×932, shortcut starts the game | window/env names, save dir |
+| 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
+| 7 Web (optional) | 7, `rogue2wasm.md` | page live through `deploy.sh` | live URL |
+| 8 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
+
+Checkpoint, at the end of each stage:
+1. Test the stage's result in a running game (Part 2 testing rules).
+2. Write the handover into `~/Games/<name>/HANDOVER.md` under
+   `## RVIP progress`: stage done, next stage, the "Handover carries" facts,
+   open problems. Short: only what the next stage needs.
+3. Commit (`RVIP: stage N <topic>`).
+4. Tell the user: "Stage N done. Compact the context now (`/compact`), then
+   say `continue RVIP <name>`." Then stop. Do not start the next stage.
+
+Resuming after compaction: read this file, the game's `HANDOVER.md`
+progress section and `git log --oneline -20`. Do not re-read the source
+tree; grep for what the handover names. Merge stages only when the user asks.
 
 | Case | Family | Recognise it by | Worked examples |
 |---|---|---|---|
