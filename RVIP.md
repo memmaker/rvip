@@ -53,7 +53,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -940,6 +940,30 @@ was different.
   `Control` up; real keyboards are fine.
 - WinHelp jumps: hidden target text can span several RTF groups (collect it),
   targets are case-insensitive, and `!EF(...)` targets are web/mail links.
+
+### O-Hack (Hack 1.0.3 via restoHack, termcap; `~/Games/hack`, worked example)
+- **Termcap games (raw escape codes, no curses):** don't touch the game.
+  `port/vt.c` swaps stdin/stdout for `funopen()` streams in a constructor;
+  stdout goes through a small VT100 interpreter into an 80×24 buffer, which
+  the backend draws (`be_x11.c` / `be_web.c`). `TERM=vt100`.
+- **Tiles from game state, not screen chars:** `tiles.c` compares the
+  screen with what `levl[][]`/monsters/objects say is there; cells that
+  differ are text or rays. `vt_map` finds text boxes (menus drawn over the
+  map) that way, shared by X11 and web.
+- **Web (Emscripten):** musl's stdin/stdout are const → a force-included
+  header (`-include web-inc/hkio.h`) redirects them to `fopencookie`
+  streams. `-D__linux__` picks termios over sgtty; termcap stub with VT100
+  strings. `-sEXIT_RUNTIME=1` or atexit never runs; an `EM_ASYNC_JS` exit
+  hook awaits the IDBFS sync, else "connection is closing". `gethdate`
+  stats argv[0]: create `/this.program` (mtime 0).
+- **Autosave on a save-and-exit game:** `dosave0()` then `dorecover()` and
+  write the file back (dorecover deletes it). Reset worn-item pointers
+  before restoring, set `flags.toplin=2` then `redotoplin()` (else `docrt`
+  waits on `--More--`), give back luck/moonphase `dosave0` changed.
+- **K&R wasm traps:** mismatched `extern` declarations (`bwrite` void vs
+  int) and `long long` vs `long` across files trap at run time; grep the
+  externs.
+- Cooked-mode prompts (name) need local echo in the VT layer.
 
 # Part 2 — Common to all cases
 
