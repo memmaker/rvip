@@ -718,8 +718,11 @@ was different.
   key read (queue, Enter menu, stairs arrival). Item actions use Itakura's
   `push_inven_idx()` preselect plus a queued command key; stale preselects
   are cleared before the next real key.
-- X11 keypad digits arrive as `CMD_MOVE_*`, so lists can tell them from
-  top-row digits (counts). Cursor keys and keypad Enter were unmapped.
+- Keypad digits and cursor keys arrive as **vi letters** (`j`, `k` …), which
+  are item letters in lists. While an RVIP list/menu is open
+  (`rvip_raw_dirs`), the frontend sends `RVIP_KEY_DIR(n)` instead. Cursor
+  keys and keypad Enter were unmapped. Test arrow keys in lists *after* any
+  key-mapping change.
 - Testing: `CRAWL_SEED` fixes the dungeon. Wizard `{` (magic map) can't be
   sent on this keyboard layout (no keycode for braceleft). Travel won't move
   with a hostile in view, so fight first.
