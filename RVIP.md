@@ -427,6 +427,22 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   volcanic shaft killed a test character at once); it works only when stood on.
 
 ### R1. Compile
+- **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
+  UltraRogue, Advanced Rogue 5.8/7.7; forks under `memmaker/`): copy
+  XRogue's `port/`, `web/` and `explore.c` (as `rvip.c`, plus the menus from
+  XRogue's `help.c`). Worked example: **Advanced Rogue 7.7**
+  (`~/Games/arogue7.7`, `HANDOVER.md`, live at /roguelikes/arogue77/).
+  - `daemon()`/`fuse()` take `int arg` but get pointers: truncated on arm64
+    (crash in `doctor()`). Make the argument `void *` + prototypes.
+  - `mdport.c` `md_readchar()` decodes escape sequences and needs
+    `halfdelay`: under the shim return `wgetch()` directly (arrows → hjkl);
+    `md_gethomedir()` also takes the passwd dir before `$HOME`.
+  - `port/mktiles.py` now reads monster/item names from the C tables
+    (`table('weaps')` …) and matches NetHack tiles by name; unmatched names
+    are printed, add them to `EXTRA`.
+  - `web/build.sh` gets the sources with `make` (`$(CFILES)`), not by
+    parsing the Makefile.
+  - Watch brace-less `if/else` bodies when adding lines to `state.c`.
 - K&R code on Apple Silicon: **variadic functions called without a
   prototype get garbage arguments on arm64** (XRogue's `msg()` printed the
   player's name as the quest item). Add prototypes for every variadic and
@@ -561,6 +577,9 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   Umoria does the same with `soundEvent()` (`src/ui_io.cpp`).
 
 ### R-test
+- Built-in browser: `computer type` sends text without key events and
+  `key greater` sends nothing; the page listens for `keydown`. Use `key`
+  with single characters or dispatch `KeyboardEvent('keydown', {key})`.
 - Wizard mode unlocks a fixed seed (XRogue: `SEED` env only when
   `wizard`); otherwise every run is a new dungeon, and a monster is usually
   in view on arrival — retry or fight it before testing explore.
