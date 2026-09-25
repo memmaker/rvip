@@ -19,7 +19,7 @@ How a new roguelike gets added to this Mac so it plays like the others.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, text only; web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -81,7 +81,11 @@ smooth/bilinear). Check the player sprite, statues/figurines, flavoured
 items (rings!) and unknown grids really look right. Where no tiles exist:
 case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   using a fallback set for a game with a different theme:** the user rejected
-  NetHack tiles for ZAPM (sci-fi) and wants text only there.
+  NetHack tiles for ZAPM (sci-fi) and wants text only there. A **NotEye
+  release** of a game means a tile sheet in its repo (`gfx/`, loaded by
+  `lua/<game>.lua`): show it to the user first (crops at 2×) and let them
+  decide tiles vs text. For PRIME they chose its tiles, with RLTiles only
+  for gaps that don't need to look futuristic.
 - **Text next to square tiles looks bad.** Only the map is tiled; messages,
   status, lists and help go to text windows with a normal font.
 - **Period fonts** (original text mode, CP437 box drawing, IBM/Amstrad/
@@ -630,6 +634,42 @@ was different.
   hole, trap door, pits); standing on a door is not "on stairs".
 - ASan: `ObjectSymbols[]` one entry short (upstream).
 - Web: see rogue2wasm.md (ZAPM). Sound only when upstream ships sound effects (user rule); ZAPM has none.
+
+### O-PRIME (2.5a, Larzid fork; ZAPM variant with NotEye tiles; worked example)
+- The UI is a clean `shInterface` (NCUI = curses, NEUI = NotEye): write an
+  own frontend class (`port/XUI.cpp`) instead of a curses shim. Windows
+  kMain/kSide/kLog + pop-ups kTemp/kMenu/kMenuHelp as cell grids; pop-up =
+  every open pop-up window cut to its content, stacked in opening order
+  (kMenuHelp sits at the screen bottom, a union box would be 25 rows).
+- Tiles: reuse NEUI's per-cell tile stacks (`terr2tile`, `feat2tile`,
+  `putOverlay`, effects) and mirror `tileat()` from `lua/prime.lua`
+  (letters recoloured for monsters without tiles, grenade and optic-blast
+  recolours). Key colour = sheet pixel (0,0). `PRIME_TILEGAPS` lists what
+  really lacks a tile: count at runtime, the data files overstate gaps
+  (items show their flavour look + a mini-icon; `tile_col 0` means "none").
+- Build: tables need `tablemk` (bison + flex + **fpc**; macOS has no libfl:
+  a one-line `yywrap` lib) — the shipped `bin/tablemk` and `obj/*.o` are
+  Linux leftovers. Header deps (`-MMD`) or a `config.h` change leaves stale
+  objects (keymap path came out as `~/.config/prime`).
+- Explore/stairs/menus: ZAPM's `Rvip.cpp` ported almost 1:1, but PRIME calls
+  `interrupt()` on every normal step (it doubles as a check): **don't** stop
+  walks there, messages/monsters/keys are enough. Walking into a door opens
+  it, so explore just steps. Item actions: `objectVerbCommand(obj)` with the
+  action key pushed — no item prompt.
+- Enter: keymaps bind Ctrl+J (shoot S) and Ctrl+M (history): Return gets its
+  own code 13, Ctrl+J stays 10; the ADOM keymap's history moved to ^P.
+- XCopyArea sends NoExpose events unless the GC has `graphics_exposures`
+  off — a "key pending" check on `XPending()` then stops explore every step.
+- Name functions (`inv()`) use a 64-slot `GetBuf()` ring: the inventory pane
+  clobbered the caller's keymap file name. Save/restore the ring around it.
+- ASan (upstream): `makePluralNH()` returns a stack buffer and reads
+  `spot-4` for 4-letter words; NEUI redraws before the hero is placed
+  (`isInShop(-10, …)` → BUS on arm64). libsigsegv's crash handler hides
+  ASan reports: `#undef CATCH_SIGSEGV` under `__has_feature(address_sanitizer)`.
+- Testing: `-bofh` debug mode (Enter menu → Debug command: reveal map,
+  create monster…); `PRIME_DUMP` for pane text; a click tool (`XSendEvent`
+  ButtonPress) tests mouse rows. Game letters from `xsend` land in the
+  profession menu if sent too early (`X` = Xel'Naga).
 
 ---
 
