@@ -211,30 +211,22 @@ and worked example: `shrine/rogue54.html`. Sections, in this order:
 2. **Lineage**: what came before, which code it is built on (same facts as
    the tree entry, step 10), link to `../#tree`.
 3. **Credits**: who made it (original authors, maintainers, porters, tiles).
-4. **Four screenshots** from our web build: title screen, first steps in the
-   dungeon, a fight with a monster, the inventory. No title screen → say so
-   in the caption and use the most iconic screen instead (Rogue: the
-   tombstone). Capture: `~/Games/rvip-tools/shotsrv.py` (serves `web/dist`,
-   saves canvas PNGs; how-to in its docstring) in the browser pane at
-   1280×800, map zoomed in, then crop to the window that matters with
-   `magick -crop`. Never smooth-scale. No good shots yet → leave the
-   section out rather than show poor ones.
-5. **Trivia**, each line with a link to its source. Only what a fetched page
+4. **Trivia**, each line with a link to its source. Only what a fetched page
    actually says: check every claim with WebFetch, no guessed motives.
-6. **What's unique** (USP): what it does differently from its parent/peers.
-7. **Code dive**: language, lines/files (`wc -l`), original OS/hardware/
+5. **What's unique** (USP): what it does differently from its parent/peers.
+6. **Code dive**: language, lines/files (`wc -l`), original OS/hardware/
    terminal, notable code facts (save format, data tables), link to our repo.
-8. **Stats from the code**: counts of classes, races, monsters, items per
+7. **Stats from the code**: counts of classes, races, monsters, items per
    kind, spells, skills, levels (grep the data tables / `MAX*` defines, not
    the web), with the most interesting and unusual entries named.
-9. **Manual**: the original manual copied into `shrine/<web-name>/` (text/
+8. **Manual**: the original manual copied into `shrine/<web-name>/` (text/
    PDF, only if the licence allows; else link). None found → write that on
    the page and tell the user.
-10. **Getting started**: five steps to a first game, link to the game's
+9. **Getting started**: five steps to a first game, link to the game's
     `help.html`.
-11. **Help**: link a walkthrough if one exists (tell the user if not), else
+10. **Help**: link a walkthrough if one exists (tell the user if not), else
     strategy rules of thumb plus links (RogueBasin, wikis).
-12. **Cheats**: wizard/debug modes (and whether our build has them), known
+11. **Cheats**: wizard/debug modes (and whether our build has them), known
     exploits, Export/Import save-scumming. None → say so.
 
 Then link it from three places: the card gets
