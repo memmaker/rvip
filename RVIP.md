@@ -154,8 +154,8 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   none), **Equipment** (unless already in the inventory), **Visible**
   (enemies + items in view), **Recall** (if the game has it).
 - **Item colours everywhere** (Inventory, Visible): the game's own; none →
-  Angband's colours by kind, decided in the game code where it knows the
-  item type (BOSS `rl_colour`), else `RvipWM.itemColor(name)`.
+  Angband's colours by kind, picked in the game code from the item's type
+  (BOSS `rl_colour`). See W0.
 - **Default on:** Map, Inventory, Visible, Log messages; the rest via the
   drop-down.
 - **Zoomed in, the map scrolls** to keep the player centred instead of
@@ -1094,6 +1094,13 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
   visible list) comes from the game as its own pane/grid, not cropped out of
   a composited screen in JS. A game that draws one 80×N screen gets pane
   routing in its shim (Part R "R-frontend"), not JS-side slicing.
+- **Colours always come from the game backend** and are defined in the game
+  code (WASM side), never in the frontend/JS: the game sends a colour with
+  every cell, list line and message.
+- **Never guess from a bare string.** Kind, colour, tile, monster/item
+  identity: take them from the game's data (type, tval, index), not by
+  matching names or screen text (no regexes over item names, no scraping
+  rows for "STR :").
 - JS may only do what the browser owns: layout of windows, zoom (cell
   size), scrolling a map that is bigger than its window, fonts, persistence.
 
