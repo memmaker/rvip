@@ -666,7 +666,10 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     identical slot is a leak. If monsters/items share a slot in the default
     sheet, give each its own slot first (srogue `mktiles.py` `unique()`).
     Example by name: srogue `port/mkdawn.py` (DawnLike, 53 monsters, 25 of
-    them stand-ins, all 234 used slots). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
+    them stand-ins, all 234 used slots).
+    Large bestiaries: urogue `port/mkdawn.py` imports `mktiles` and, per slot,
+    tries the game's name, then the NetHack stand-in's name (DawnLike follows
+    NetHack's names), then a small hand table (406 monsters, 651 slots). Fallback tileset is **NetHack** (https://github.com/NetHack/NetHack
   `win/share/monsters.txt`, `objects.txt`, `other.txt`, 16×16, converted
   like `tile2bmp`/`txt2ppm`; XRogue: `port/mktiles.py`). Map by
   monster/object/feature name, ASCII for anything without a match; random
