@@ -47,6 +47,17 @@ XRogue's web files (tiles and audio removed, colours added).
   right after start; unlink before the real `S` save on the web.
 - `usleep` animations: `-Dusleep=wc_usleep` (flush + `emscripten_sleep`).
 
+**PRIME (C++, own `shInterface`, 32×32 tiles, 2026-09-25):** `~/Games/prime/web/`
++ an `__EMSCRIPTEN__` backend inside `port/XUI.cpp` (the X11 frontend keeps
+cell grids and tile stacks, so the web side only ships them: `js_put`,
+`js_tile` RGBA, `js_popup`, `js_flush`). `prime.js` copied from Larn, no sound.
+- Same save rules as ZAPM (deleted on load); autosave only at the command
+  prompt (`RvipAtPrompt`), so no mid-menu state is saved.
+- wasm traps upstream got away with: an uninitialised enum read (`sp` in
+  `shTextViewer::show` → "unreachable"), a `qsort` comparator cast to another
+  function type (signature mismatch trap) — replace with a typed sort.
+- `#undef CATCH_SIGSEGV` (libsigsegv) under Emscripten.
+
 **Sil-Q 1.5.0 (2026-09-25):** `~/Games/sil-q-1.5.0/web/` + `src/main-web.c`,
 live at https://ruzzoli.de/roguelikes/sil-q/.
 - 3.0-era z-term: no mouse, no `ui_event`/`EVT_RESIZE`. A main-window resize
@@ -160,6 +171,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | Umoria | `~/Games/umoria` | memmaker/umoria |
 | Omega | `~/Games/omega` | memmaker/omega |
 | ZAPM | `~/Games/zapm` (remote `memmaker`) | memmaker/zapm |
+| PRIME | `~/Games/prime` (remote `memmaker`) | memmaker/prime |
 | Linley's Dungeon Crawl | `~/Games/crawl-linley` (remote `memmaker`) | memmaker/crawl-linley |
 | Larn | `~/Games/larn` (remote `memmaker`) | memmaker/larn |
 | Sil-Q | `~/Games/sil-q-1.5.0` (remote `memmaker`) | memmaker/sil-q |
