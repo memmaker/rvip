@@ -142,6 +142,7 @@ Everything that goes to ruzzoli.de/roguelikes is on GitHub (account `memmaker`) 
 | Advanced Rogue 5.8 | `~/Games/arogue5.8` | memmaker/arogue5.8 |
 | UltraRogue | `~/Games/urogue` | memmaker/urogue |
 | Rogue 5.4 | `~/Games/rogue5.4` | memmaker/rogue5.4 |
+| Rogue 3.6 | `~/Games/rogue3.6` | memmaker/rogue3.6 |
 
 - Per game repo: pristine upstream commit first, then port, RVIP and web
   commits. Commit the game changes **and** the harness: `web/` (`index.html`,
