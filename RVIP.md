@@ -34,6 +34,7 @@ the handover written at the checkpoint.
 | 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
 | 7 Web (optional) | 7, `rogue2wasm.md` | page live through `deploy.sh` | live URL |
 | 8 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
+| 9 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
 
 Checkpoint, at the end of each stage:
 1. Test the stage's result in a running game (Part 2 testing rules).
@@ -164,6 +165,48 @@ way. Give year and author. Check the parent in the game's own sources
 cross-check it on the web (RogueBasin, the Angband wiki, the project's own
 page). If sources disagree or only one weak hint exists, say so in the
 handover. Then commit, push and `deploy.sh` (step 9).
+
+**11. Shrine page (every game).** One page per game about the game itself:
+`~/Games/roguelikes-index/shrine/<web-name>.html` plus `shrine/<web-name>/`
+for its images and manual; styles only from `shrine/shrine.css`. Template
+and worked example: `shrine/rogue54.html`. Sections, in this order:
+1. **Date of birth** (first release; this version's year) and the fact tiles
+   (creators, language, platform) at the top.
+2. **Lineage**: what came before, which code it is built on (same facts as
+   the tree entry, step 10), link to `../#tree`.
+3. **Credits**: who made it (original authors, maintainers, porters, tiles).
+4. **Four screenshots** from our web build: title screen, first steps in the
+   dungeon, a fight with a monster, the inventory. No title screen → say so
+   in the caption and use the most iconic screen instead (Rogue: the
+   tombstone). Capture: `~/Games/rvip-tools/shotsrv.py` (serves `web/dist`,
+   saves canvas PNGs; how-to in its docstring) in the browser pane at
+   1280×800, map zoomed in, then crop to the window that matters with
+   `magick -crop`. Never smooth-scale.
+5. **Trivia**, each line with a link to its source. Only what a fetched page
+   actually says: check every claim with WebFetch, no guessed motives.
+6. **What's unique** (USP): what it does differently from its parent/peers.
+7. **Code dive**: language, lines/files (`wc -l`), original OS/hardware/
+   terminal, notable code facts (save format, data tables), link to our repo.
+8. **Stats from the code**: counts of classes, races, monsters, items per
+   kind, spells, skills, levels (grep the data tables / `MAX*` defines, not
+   the web), with the most interesting and unusual entries named.
+9. **Manual**: the original manual copied into `shrine/<web-name>/` (text/
+   PDF, only if the licence allows; else link). None found → write that on
+   the page and tell the user.
+10. **Getting started**: five steps to a first game, link to the game's
+    `help.html`.
+11. **Help**: link a walkthrough if one exists (tell the user if not), else
+    strategy rules of thumb plus links (RogueBasin, wikis).
+12. **Cheats**: wizard/debug modes (and whether our build has them), known
+    exploits, Export/Import save-scumming. None → say so.
+
+Then link it from three places: the card gets
+`<a class="play info" href="shrine/<web-name>.html">Info</a>` next to Play;
+the tree entry gets `<a class="shrine" href="shrine/<web-name>.html">✦</a>`
+right after the gold name; the game page's `#bar h1` text becomes
+`<a href="../shrine/<web-name>.html">` (plus `#bar h1 a { color: inherit;
+text-decoration: none; }`). Commit + push both repos, run both
+`deploy.sh` (step 9), check the three links on the live site.
 
 ---
 
@@ -593,9 +636,17 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     item class. Reuse those sheets for Rogue 3.6 / 5.4 (R4 prefers them to
     NetHack there); DawnLike for bigger variants (Super-Rogue, Advanced
     Rogue, UltraRogue, XRogue, Hack/NetHack line).
-  - Sprites are **not named** (sheets by category: `Characters/Reptile0.png`,
-    `Items/Potion.png` …): the mapping is by hand, per monster/item, into
-    a table like `mktiles.py`'s; fall back to NetHack tiles for gaps.
+  - The sheets carry **no names** (`Characters/Reptile0.png`, `Items/Potion.png` …),
+    but **DawnLikeAtlas** (github.com/tommyettinger/DawnLikeAtlas, cloned to
+    `tilesets/DawnLikeAtlas`, CC BY 4.0) names all ~5,350 sprites by hand
+    ("kobold", "emu", "acid blob" …; frames `_0`/`_1`). Browse by eye:
+    https://tommyettinger.github.io/DawnLikeAtlas/indexSmall.html.
+    `tilesets/dawnlike_index.py` matches those pixel-for-pixel against the
+    original sheets → `tilesets/dawnlike_names.tsv` (name, frame, sheet,
+    col, row; 5,239 matched, 111 atlas-only extras skipped). **Map by name**:
+    look up each monster/item of the variant in the TSV (grep), write the
+    table in `mkdawn.py`, fall back to NetHack tiles for gaps. Names are the
+    atlas author's reading of the art, so check odd matches in the preview.
   - Licence **CC BY 4.0**. Credit DragonDePlatino *and* DawnBringer (palette)
     on the Help page and README. The author also asks that the Platino
     sprite (`Characters/Reptile*.png`) is hidden somewhere in the game as
