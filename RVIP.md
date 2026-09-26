@@ -1641,6 +1641,7 @@ was different.
 - **Autosave** in a save-on-quit game: call the game's save at the command prompt with no keys pending; delete the save after a finished run. **Sound:** none in the game → 7 WAVs synthesized at build time (`web/make-sounds.py`).
 - No tileset exists (the GL build draws font sheets): text mode.
 - **Stage 7:** a cloud run's repo carries the procedure bundle (`rvip/`): rename it (`gh repo rename <name>-cloud`), `git filter-repo --path rvip --invert-paths` in a fresh clone, point `build.sh` at `~/Games/rvip-tools/web/`, then `gh repo create` the public repo from that clone. Card image of a text game: 48×10 cells of the web build's grid drawn with the game's own font sheet (`ForaysImages/font8x16.png`, 8×16 + 1 px gap) = 384×160.
+- **Stage 8:** a licence’s © start year is when work began, not the birth year: Forays says 2011, RogueBasin dates 0.5.0 to 28 Jan 2012 (card and tree fixed). No changelog file? Build `changelog.txt` from `gh api repos/<o>/<r>/releases` notes + `git log`. A debug menu behind `if(false)` counts as “no cheats in any build”.
 
 # Part W — Web port (WASM, step 7)
 
