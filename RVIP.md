@@ -621,6 +621,11 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   "monster in view" only near the player (Ularn: 5 cells), or explore stops
   across the map. Ularn has no colours: colour map cells in the shim by
   `item[][]`/`mitem[][]` when the screen char matches the game's own char.
+- Ularn stage 3 (`~/Games/ularn/port/rvip.c`, from Larn's): arrows send hjkl there, so
+  the page sends cursor keys as `0x100|key`; `wc_getch()` masks them for the game and
+  keeps them only while a menu sets `wc_raw` (else `j`/`k` can't be both command and cursor).
+  `Uhelp` page 2 is tab-separated: expand tabs, columns 0/27/56, a cell starts only after a
+  blank. Item actions are verb + slot letter (`T` takes none, `w-` puts away); no floor offers.
 - Testing stairs: Ularn's level 1 breeds lemmings; test deeper stairs natively
   (keys piped into the test binary, wizard `=` + `Z` teleport; its password is
   read with `fgets(stdin)`, so native only).
