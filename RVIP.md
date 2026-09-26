@@ -343,7 +343,7 @@ Worked examples:
 | Tactical Angband 0.9beta2 (4.2) | `~/Games/tactical-angband` | Cocoa app, `play.sh`; web | `p` |
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
 | Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/zangband/ | `H` |
-| FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
+| FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/frogcomposband/ | `X` |
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -667,6 +667,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Stage 6: Zangband's `sounds.py` / `make-help.py` / `web/music` as is
   (+ `glass` event); help tables sit between `<topic:OriginalKeyset>`,
   `<topic:RogueKeyset>`, `<topic:CommandCounts>` (`parse_table(indent=1)`).
+- Stage 7: first release = the "initial unofficial beta" commit
+  (2018-03-09, `git log -i --grep=frog`), not the first tag (the repo
+  carries PosChengband's history from 2013); authors from
+  `lib/file/credits.txt` (PosChengband = Chris Kousky, ComPosband = Gwilim
+  Owen, Frog = Antero Sulka). A stale `<!--og-->` block from stage 5 must be
+  replaced, not added to.
 
 ### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
 - Official repo `hengband/hengband`, newest release tag = `master`; English
@@ -1610,6 +1616,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | DynaHack | `~/Games/dynahack` (remote `memmaker`, branch `unnethack`) | memmaker/dynahack |
 | uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
+| FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
