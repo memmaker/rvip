@@ -931,6 +931,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   so on the page. Plain 2.9.x help → `web/mkmanual.py` (one `<pre>` per file,
   `help.hlp` order); join its nav links with spaces or they don't wrap at
   375 px. Slash-joined word lists (`A/B/C/D`) in shrine tables overflow too.
+- Stage 9: hook `files.c` `close_game()` top of the `is_dead` branch (as
+  Zangband), `web_run_end()` in `main-web.c`; score = `total_points()`,
+  name = `op_ptr->full_name`, killer = `died_from` (`monster_desc(0x88)`).
+  r_info has no index numbers: killer art numbers `N:` in file order from 0.
+  Dispatched `keydown` Escape/Backspace are ignored at birth (letters work):
+  use real keys (`computer key`). `^A y n` a unique (Morgoth) in town places
+  nothing; a non-unique (Great Hell Wyrm) kills in one turn.
 
 ### A-NPPAngband (NPPAngband 0.5.1; `~/Games/nppangband`, `HANDOVER.md`, cloud run)
 - Case A but **3.1-era** code (game-cmd.c, ui-menu.c, cmd-obj.c
