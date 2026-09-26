@@ -82,7 +82,7 @@ the orchestrator's brief says so.
 | Case | Family | Recognise it by | Worked examples |
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
-| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/); MAG (`~/Games/mag`, `HANDOVER.md`; DOS C game on BIOS int 10h/16h, R-MAG) |
+| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/); MAG (`~/Games/mag`, `HANDOVER.md`; DOS C game on BIOS int 10h/16h, R-MAG; web: https://ruzzoli.de/roguelikes/mag/) |
 | **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Prospector (`~/Games/prospector`, `HANDOVER.md`; FreeBASIC fbgfx graphics game, own gfxlib2 driver to a canvas, own Gervais/Deon tiles); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/); Forays into Norrendrin (`~/Games/forays`, `HANDOVER.md`; C# console game → .NET browser-wasm in a Web Worker, text only; web: https://ruzzoli.de/roguelikes/forays/); LambdaRogue (`~/Games/lambdarogue`, `HANDOVER.md`; Free Pascal + JEDI-SDL graphics game → FPC trunk wasm32-wasip1, one SDL replacement unit handing blit lists to a canvas, own tiles; web: https://ruzzoli.de/roguelikes/lambdarogue/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
@@ -1203,6 +1203,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   (`pr_obj`) in both. Browser pane: `shift+z` arrives as `z` (explore key
   `Z` needs a dispatched `KeyboardEvent`); `Module.mag.screen()` gives the
   visual page as text for scripted fights (`☻` = player).
+- **Stage 7:** split as LambdaRogue (`gh repo rename mag-cloud`, `mv` the
+  clone, `git clone` it locally + `git filter-repo --path rvip --path
+  web/shots --path LESSONS.md --invert-paths`; the upstream commit keeps its
+  hash). Point `web/deploy.sh`'s guard at `memmaker/main` (the cloud wrote
+  `origin`). Card image: a 12x5 room (walls, torches, 28 monsters, player,
+  stairs) drawn from `tiles-dawn.png` via `tiles.h` slot ids at 2x.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -1990,6 +1996,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
 | Hengband | `~/Games/hengband` (remote `memmaker`, branch `master`; upstream hengband/hengband `master` @ `bf1054199`; submodule `lib/xtra`) | memmaker/hengband |
 | LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
+| MAG | `~/Games/mag` (remote `memmaker`, branch `main`; upstream = DOS source drop `~/Downloads/mag_src` @ `cc36a63`; cloud history with the `rvip/` bundle: private memmaker/mag-cloud, `~/Games/mag-cloud`) | memmaker/mag |
 | Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud, `~/Games/easyband-cloud`) | memmaker/easyband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
