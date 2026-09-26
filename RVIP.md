@@ -568,6 +568,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   the preload (`web/stage/lib/xtra/sound/sound.cfg`) and read them with
   `Module.FS.readFile(path, { encoding: 'utf8' })`, lazily on first use (the
   FS is ready by then). TinyAngband's `web/tinyangband.js` `loadSoundCfg()` is the pattern.
+  Tactical Angband's page still `fetch()`es `sounds/sound.prf`: don't copy
+  that (FAangband). Create the music `Audio` lazily (a `new Audio()` at load
+  fetches the ogg with music off). A page without `<link rel="icon"
+  href="data:,">` logs a favicon 404 in every test run.
 - Prefer the variant's samples (`lib/xtra/sound/sound.cfg`). Fill empty or
   broken events from Dubtrain (`~/Downloads/Dubtrain Angband Sound Pack
   v3.1.0`, same event names), copy only used `.wav`s. Events neither covers
@@ -860,6 +864,26 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (`zap`→`zap_rod`, `stairs`→`stairs_down`).
 - Messages: fold repeats in `fix_message()` but not the blank `" "` lines
   birth writes around its `====` separator (they showed as ` (x2)`).
+
+### A-FAangband (FAangband 2.0.1, 4.2 code base; `~/Games/faangband`, `HANDOVER.md`, cloud run)
+- Upstream NickMcConnell/FAangband `master` @ `0d85203`; A-4.2 with
+  Tactical Angband's `main-web.c`/page (`Module.fa`). FAangband adds
+  `lib/bone` (persist) and reads `lib/ghost` (preload).
+- Birth starts with a world menu (Standard Wilderness / Extended / Hybrid
+  Dungeon / Angband Dungeon); the town is a wilderness level whose exits are
+  easy/hard paths (`<`/`>` glyphs): stair walks take them too. Explore `p`
+  refuses in the wilderness (a monster is nearly always in view).
+- Enter menu: "Hidden" → Action / Information / Utility + "Wizard and
+  debug". Tiles: Shockbolt Dark + 96 generated stand-ins (92.7% → 100%).
+  Windows: 7 terms, term 6 = Equipment (`PW_EQUIP` instead of
+  `PW_OVERHEAD` in `default_window_flag[]`). Sound: the game ships the
+  Dubtrain mp3s + `sound.prf` (6 events added: BIRTH, BR_ICE, BR_STORM,
+  BR_DRAGONFIRE, BR_HELLFIRE, SCRAMBLE).
+- Mac check: the cloud's `make-help.py` wrote its own HTML without the
+  page's help classes (`.toc`, `.box`, `.grid`, `.all`) and a
+  `docs/web/*-docs.html`: replaced by Tactical Angband's form reading the
+  Docs entry. Zoom in a small window changes nothing visible: term 0 stays
+  ≥ 80×24 and is CSS-scaled to fit (by design, W3).
 - Stage 7: the repo split as O-Forays; the filter rewrites every hash, so
   the upstream commit changes (`00f2a06` cloud → `2c3e95b` public): fix
   `make-help.py`, Docs facts and README after `filter-repo`. Also drop
@@ -922,6 +946,31 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `PRIVATE_USER_PATH` saves/scores/panic live in `lib/save|scores|panic`:
   mount all. Sound: `EVENT_SOUND` → `message_sound_name()`. Option defaults:
   a `WEB_ON` macro in `list-options.h`.
+- Newer 4.2 code (FAangband 2.0.1): `modules[]` entries have five fields
+  (`name, help, init, hup_disconnects, tstp_default`), `init_web(int, char
+  **)` needs no cast. `config.h` sets `PRIVATE_USER_PATH` for every UNIX
+  (Emscripten too): guard it with `!defined(USE_WEB)`. Game end: `main.c`
+  chains `extended_quit_hook`; under `USE_WEB` skip it so `quit_aux` stays
+  the web hook and can still read `player->is_dead` for the overlay text.
+- ASan (curses test build): `main-gcu.c` `Term_text_gcu()` reads
+  `colortable[a & 127]` (30 entries); the knowledge menus' visual editor
+  hands it any attr → global-buffer-overflow. Clamp to `BASIC_COLORS`.
+- Tile coverage (4.2 name prefs `monster:`, `object:tval:name`,
+  `feat:name:light`, `trap:name:light`, `flavor:idx`): compare names
+  case-insensitively, strip `& ` and `~`, `armour` → `armor`, key traps by
+  the second `name:` field (memmaker/faangband `web/tile-coverage.py`).
+  Gaps → a generated, marked stand-in block at the end of `graf-shb-*.prf`
+  (`web/mkgraf-standins.py`): monsters by `base:` + nearest `depth:`,
+  rings/amulets by material from `flvr-shb.prf`'s comments. The sheet has
+  teal water (0x98:0xDF) and "old forest tree" (0x9F:0x83); give `TF_TREE`
+  grids the grass tile as `tap/tcp` in `grid_data_as_text()`.
+- Enter menu: `cmd_menu()` / `textui_action_menu_choose()` never set
+  `menu.selections`: set `lower_case` at every level and size boxes from
+  `desc` + `key[mode]`, clamped to `Term->hgt`. Browse-mode switch keys must
+  leave out Ctrl-M / Ctrl-I; reopen the list from the top of
+  `textui_process_command()`, not inside `do_cmd_inven()`.
+- A stair walk that must cross a known trap in a one-wide corridor does
+  nothing and says nothing (FAangband): `W` + direction steps onto it.
 
 ### A-Umoria (curses-based Moria, C++)
 - Only `src/ui_io.cpp` uses curses: `src/curses.h` includes
@@ -2129,6 +2178,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 ### W7. Build
 - `brew install emscripten` (6.0.10 worked); `web/build.sh` → `web/dist`,
   `web/deploy.sh` → server. Run scripts with `sh`, not zsh (no word split).
+- Cloud (Ubuntu): emsdk in `/home/user/emsdk` while `$HOME` is `/root`, and
+  `. emsdk_env.sh` fails under dash: `build.sh` puts
+  `${EMSDK:-/home/user/emsdk}/upstream/emscripten` on `PATH` when `emcc` is
+  missing; `apt-get install webp binaryen` (never npm `wasm-opt`).
 - z-term source list from `Makefile.src` (strip CRLF, `*.o` of
   `ANGFILES`/`ZFILES`, drop `main*`, add `main.c main-web.c`); curses games
   get `$(CFILES)` from `make`.
