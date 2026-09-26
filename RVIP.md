@@ -987,6 +987,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   Easyband's `mkmanual.py` works for 3.1-era help after `\r`→`\n` and
   `_` in link names (`insc_macro.txt`). oook.cz and Google Groups rate-limit
   (429): take facts from RogueBasin and narkive.
+- Stage 9: Easyband's `web_run_end()` works unchanged (3.1's `died_from`,
+  `total_points()`, `turn`, `op_ptr->full_name`); hook `files.c`
+  `close_game()` before `death_screen()` (it zeroes a winner's depth).
+  Killers: generic `angband()` in `make.py` with `the=True` (8 monster
+  names start with "The"). Debug summon: count `0588` then `^A y n` (the
+  number goes in the count, no prompt); keys via dispatched `keydown`
+  (`computer type Q` became `q`, ctrl: `{key:'a', ctrlKey:true}`).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
