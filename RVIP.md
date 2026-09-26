@@ -287,8 +287,18 @@ finished run to `/roguelikes/beacon`; the server turns the nginx log into
 `umoria` (`game_death.cpp` endGame).
 - **Hook the game's code**, never the screen: call a `js_beacon` EM_JS in
   `port/be_web.c(pp)` from the function that ends the run (death, win,
-  quit), reading the game's own variables. Keepalive `no-cors` fetch, all
-  values URL-encoded, errors swallowed (must not break offline play).
+  quit), reading the game's own variables. All values URL-encoded, errors
+  swallowed (must not break offline play).
+- **Send through the retry outbox**, never a bare fetch:
+  `if (window.RvipWM && RvipWM.report) RvipWM.report(q); else fetch('/roguelikes/beacon?' + q, { keepalive: true, mode: 'no-cors' }).catch(function () {});`
+  `RvipWM.report` (in the shared `rvip-wm.js`, which the page must load)
+  adds a unique run `id` and end time `at`, keeps the URL in the
+  localStorage outbox `rvip-outbox` and resends the identical URL on every
+  page load and when back online until the server answers 2xx. The server
+  collapses only resends with the same `id`. Test: block
+  `/roguelikes/beacon` (503), end a run → one URL with `&id=…&at=…` in the
+  outbox; unblock (204) and reload or `RvipWM.flush()` → same URL sent,
+  outbox empty.
 - Send `g` (site slug), `ev` (death|win|quit), `name`, `killer`, `depth`,
   `score` (the game's canonical score, what its high-score list uses),
   `turns`, `lvl`. Omit what the game doesn't know.
