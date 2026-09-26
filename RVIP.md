@@ -271,6 +271,11 @@ and worked example: `shrine/rogue54.html`. Sections, in this order:
 11. **Cheats**: wizard/debug modes (and whether our build has them), known
     exploits, Export/Import save-scumming. None → say so.
 
+Shrine tables: `shrine.css` keeps the first column `nowrap`, so put only a
+short name there (one person or "DevTeam", "Contributors") and lists of
+names in the second column, or the page scrolls sideways on phones (Zangband).
+Check `document.documentElement.scrollWidth > innerWidth` at 375 px.
+
 Then link it from three places: the card gets
 `<a class="play info" href="shrine/<web-name>.html">Info</a>` next to Play;
 the tree entry gets `<a class="shrine" href="shrine/<web-name>.html">✦</a>`
