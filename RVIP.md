@@ -448,9 +448,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - **No tiles upstream:** **Shockbolt** from Vanilla
   (https://github.com/angband/angband `lib/tiles/shockbolt/`: `64x64.png`,
   `graf-shb-dark.prf` / `-light.prf`, `flvr-shb.prf`, `xtra-shb.prf`).
-  Rewrite the mapping for the variant's own names/indices, check every
-  sprite, ASCII for anything without a match, scale 64→cell
-  nearest-neighbour.
+  Rewrite the mapping for the variant's own names/indices (generator by name,
+  family stand-ins for the rest, never ASCII; example
+  `~/Games/zangband/web/mkgraf-shb.py`), spot-check sprites, scale 64→cell
+  nearest-neighbour. Page: Tiles on/off button applied at the command prompt.
 - Main map at 30×30: 15×30 font + big-tile mode (`-b`).
 
 ### A5. `play.sh` and windows
@@ -539,8 +540,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   files are gitignored. Lua itself builds for wasm unchanged.
 - Map: `area(x, y)` → `cave_type`, `parea(x, y)` → `pcave_type` (memory);
   town is part of the wilderness; traps/glyphs are fields (`t_info`).
-- Tiles: own 16x16 set covers 91.4% (`web/tile-coverage.py`: pref entries of
-  `graf-new.prf` against every `N:` of `r/k/f/t_info`) → Shockbolt.
+- Tiles: own 16x16 set 91.4% → Shockbolt, `lib/pref/graf-shb.prf` made by
+  `web/mkgraf-shb.py` (names + family stand-ins, 99.8%; `web/tile-coverage.py`).
+  Own mode `GRAPHICS_SHOCKBOLT` (`$GRAF` "shb"): the Adam Bolt hacks
+  (`spell_color`, corpse size, lighting c+1/c+2) stay off; Shockbolt terrain is
+  torch/lit/dark = c-1/c/c+1. Flavours are `S:0x80..0xFF` (base + colour),
+  bolts `S:0x30..0x7F`. Bigtile is a term region (`Term_bigregion`): the web
+  hooks draw column x at cell 2x - big_x1 (as `main-x11.c` `square_to_pixel`).
+  `font-x11.prf` walls are char 0x02 (DEC ▒): the page's glyph() must draw it.
 - ASan (native `-DUSE_GCU`, pty + random keys, isolated `HOME`): window flag
   loop over 32 entries of a 15-entry table (`init2.c`), help menu keys `u`–`z`
   past `hook[62]` (`files.c`), figurine name out of scope (`flavor.c`),
