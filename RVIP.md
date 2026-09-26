@@ -337,12 +337,16 @@ Worked examples:
 | Sil-Q 1.5.0 | `~/Games/sil-q-1.5.0` | X11, `play.sh` (Cocoa `Sil.app` kept) | `P` |
 | Tactical Angband 0.9beta2 (4.2) | `~/Games/tactical-angband` | Cocoa app, `play.sh`; web | `p` |
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
+| Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
 on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 
 ### A0. Get it
+- Check every upstream branch before picking the base: a variant's last
+  "release" commit may not compile (Zangband `master` lost `TERM_YELLOW`;
+  its `dev` branch has the fix). Name the branch + commit in the handover.
 - Git drops empty folders: recreate `lib/save`, `lib/user`, `lib/apex`,
   `lib/bone`, `lib/info` (whatever `init2.c` expects) or saving fails.
 
@@ -494,6 +498,23 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   created: `FS.mkdirTree` it in `preRun`.
 - A SIGTERM makes Sil-Q panic-save; kill test games only after saving/quitting
   or expect a panic save file.
+
+### A-Zangband (Zangband 2.7.x; `~/Games/zangband`, `HANDOVER.md`)
+- Template: TinyAngband's `main-web.c` / `web/` (a Zangband derivative).
+  2.7's z-term has no `TERM_XTRA_CLEAR` and no `bigcurs_hook`; globals moved
+  into `p_ptr` (`p_ptr->cmd.inkey_flag`, `p_ptr->state.is_dead`,
+  `p_ptr->depth`).
+- Lua 4 + tolua: `src/l-*.c` are generated from `l-*.pkg` by the host tool
+  `src/lua/tolua` (build it with `cc`; it loads its `.lua` parts from its own
+  folder, so keep the binary in `src/lua/`). `build.sh` does both; generated
+  files are gitignored. Lua itself builds for wasm unchanged.
+- Map: `area(x, y)` → `cave_type`, `parea(x, y)` → `pcave_type` (memory);
+  town is part of the wilderness; traps/glyphs are fields (`t_info`).
+- Tiles: own 16x16 set covers 91.4% (`web/tile-coverage.py`: pref entries of
+  `graf-new.prf` against every `N:` of `r/k/f/t_info`) → Shockbolt.
+- ASan (native `-DUSE_GCU`, pty + random keys, isolated `HOME`): window flag
+  loop over 32 entries of a 15-entry table (`init2.c`), help menu keys `u`–`z`
+  past `hook[62]` (`files.c`), figurine name out of scope (`flavor.c`).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1380,7 +1401,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Input goes into term 0's queue:** activate `angband_term[0]`,
   `Term_keypress`/`Term_mousepress`, restore the old `Term`.
 - **Register the module as `"x11"`** (`{ "x11", help_web, init_web }` under
-  `#ifdef USE_WEB`) so `user-x11.prf`, `pref-x11.prf`, `graf-x11.prf` load.
+  `#ifdef USE_WEB`; where `modules[]` uses `INIT_MODULE()`, which casts the
+  init function to `(int, char **, unsigned char *)`, give `init_web` exactly
+  that signature and add the entry by hand, or the call traps in wasm) so `user-x11.prf`, `pref-x11.prf`, `graf-x11.prf` load.
   Special keys use main-x11's keysym macro format: `\x1f` + `N`/`S`/`O` + `_`
   + hex keysym + `\r` (Left `FF51`, keypad n `FFB0+n`, Shift+keypad =
   KP_nav keysyms).
@@ -1623,6 +1646,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   allows; otherwise delete every save/notes file the test created (on the
   live site saves sit in the user's IndexedDB: test locally, not there), and nothing else.
 - **Cleaning test saves in the browser:** delete ONLY the game's own IDBFS
-  database on the test origin (`indexedDB.deleteDatabase('/<game>')`),
-  never all databases: every game on that origin keeps its saves there (one
+  databases on the test origin. IDBFS makes one database per mount point
+  (z-term pages: `/<game>/lib/save`, `/<game>/lib/user`, …), so
+  `deleteDatabase('/<game>')` removes nothing: list `indexedDB.databases()`
+  and delete the names starting with `/<game>/`, never all databases: every game on that origin keeps its saves there (one
   agent wiped all games' local test saves on localhost).
