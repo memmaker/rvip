@@ -510,6 +510,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Shockbolt trees/bushes are cut-outs: give plant features a grass
   background (`*tap/*tcp` in `map_info()`), else they sit on black.
 - Main map at 30×30: 15×30 font + big-tile mode (`-b`).
+- A pref for a sheet the repo lacks may still be current: check its `#`
+  names against the ids before regenerating (Hengband). Old A.B./8x8
+  prefs map the unknown grid to a text `x`: give it an empty cell.
+  Small sheets (16 px): zoom steps in whole multiples only.
 
 ### A5. `play.sh` and windows
 - One `ANGBAND_X11_*` block per window:
@@ -717,8 +721,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   every minimum at maximum: `n` on each stat sets it to 3. Birth screens
   flush input: space scripted keys ~200 ms.
 - Tiles: prefs map `R:`/`K:`/`F:` by JSON id (not tval:sval); own 8x8 =
-  72.5% (16x16/32x32 sheets never in git) → user chose Adam Bolt
-  16x16 anyway (Frog's `16x16.bmp` + `graf-new.prf`, remapped to ids).
+  72.5% (16x16/32x32 sheets never in git) → user chose Adam Bolt 16x16:
+  upstream `graf-new.prf` is already id-correct, only the sheet was missing
+  (Frog's `16x16.bmp` + `mask.bmp` as alpha → `web/tiles.webp`);
+  `web/mkgraf-ab.py` writes stand-ins to `graf-ab.prf` (read at the end of
+  graf-new.prf) → 100%. Hengband's viewport handles big-tile mode as is.
+  A reload after saving in the dungeon asks "delete the old temporary
+  files? [y/n]": `n` quits the game (stage 5).
 - ASan: `path_parse("~")` uses `getpwuid`, not `$HOME`: compile the test
   build's `main.cpp` + `main/angband-initializer.cpp` without
   `PRIVATE_USER_PATH`. Bugs: `open_auto_dump()` `!fpp` for `!*fpp`,
