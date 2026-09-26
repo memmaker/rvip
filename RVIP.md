@@ -338,6 +338,7 @@ Worked examples:
 | Tactical Angband 0.9beta2 (4.2) | `~/Games/tactical-angband` | Cocoa app, `play.sh`; web | `p` |
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
 | Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | `H` |
+| FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
@@ -536,6 +537,23 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Browser testing: `Module.qb.text(t,x,y,n,a,s)` gets a HEAPU8 pointer and
   is looked up per call, so wrapping it gives a text shadow of term 0. IDBFS
   deletes stay blocked while the game page is open (close its dbs first).
+
+### A-FrogComposband (7.1.salmiak.6; `~/Games/frogcomposband`, `HANDOVER.md`)
+- Newest code is upstream `master` (63 commits after tag `v7.1.salmiak`);
+  other branches are years older. z-term like TinyAngband's (has
+  `TERM_XTRA_CLEAR`, `bigcurs_hook`, globals `inkey_flag`, `dun_level`,
+  `p_ptr->is_dead`): copy TinyAngband's `main-web.c`, not Zangband's.
+- Sources: `CFILES ZFILES ANGFILES` of `src/Makefile.src` (CRLF); the
+  `DEFAULT_{CONFIG,LIB,DATA}_PATH` macros come from autotools only: pass
+  them with `-D...='"./lib/"'`.
+- No `auto_more` option (`message.c` `auto_more_state` is transient): 3d
+  needs a code change. Birth: game-type menu, Beginner + RET + RET = quick
+  start.
+- Tiles: `graf-new.prf` uses `K:tval:sval` (k_info numbers `N:*`): count
+  objects by their `I:` line. Own 16x16 = 59.4% → Shockbolt.
+- ASan: macro trigger key burst overflows `buf` (`cmd4.c`
+  `do_cmd_macro_aux()`, same bug as Zangband's). Random-key driver: leave
+  out `_` (autopick editor eats every key) and `@` (macro menu).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1438,7 +1456,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Register the module as `"x11"`** (`{ "x11", help_web, init_web }` under
   `#ifdef USE_WEB`; where `modules[]` uses `INIT_MODULE()`, which casts the
   init function to `(int, char **, unsigned char *)`, give `init_web` exactly
-  that signature and add the entry by hand, or the call traps in wasm) so `user-x11.prf`, `pref-x11.prf`, `graf-x11.prf` load.
+  that signature and add the entry by hand, or the call traps in wasm; older
+  `main.c` without `modules[]` (FrogComposband) is an `if (!done)` chain:
+  call `init_web()` there and set `ANGBAND_SYS = "x11"`) so `user-x11.prf`, `pref-x11.prf`, `graf-x11.prf` load.
   Special keys use main-x11's keysym macro format: `\x1f` + `N`/`S`/`O` + `_`
   + hex keysym + `\r` (Left `FF51`, keypad n `FFB0+n`, Shift+keypad =
   KP_nav keysyms).
@@ -1590,7 +1610,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   and write wrappers with the real signature (Quickband `OPTION_ACTION` in
   `cmd4.c`: `=` → `w` crashed). Usual places: menu/command tables, hooks,
   `qsort` comparators. Last resort `-sEMULATE_FUNCTION_POINTER_CASTS`.
-  Test: open every options entry, subwindow flags all on.
+  Test: open every options entry, subwindow flags all on. Casts that only
+  swap typed pointers for `void *` (`vec_free_f`, `vec_cmp_f`) keep the wasm
+  signature and are harmless; look for changed arity or int/float.
 - K&R code: link and read every `wasm-ld: function signature mismatch`
   (undeclared void calls, wrong argument counts, mismatched externs); add
   prototypes (Part R).
