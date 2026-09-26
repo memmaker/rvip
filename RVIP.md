@@ -1262,6 +1262,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   hash). Point `web/deploy.sh`'s guard at `memmaker/main` (the cloud wrote
   `origin`). Card image: a 12x5 room (walls, torches, 28 monsters, player,
   stairs) drawn from `tiles-dawn.png` via `tiles.h` slot ids at 2x.
+- **Stage 8:** check each date claim's real source: "1985 UNIX version" was the DOS Games
+  Archive, not RogueBasin (as the handover said); RogueBasin's `action=raw` wikitext via
+  curl is the fastest exact read. Help screens rebuilt for the port can be the shrine
+  manual, but say on the page they are rebuilt. A release zip that may hold the original
+  doc is a download: ask the user, don't fetch it in a stage agent. Index checkout dirty
+  from another session: clone, edit, push and `deploy.sh` from the clone.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
