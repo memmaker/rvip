@@ -82,7 +82,7 @@ the orchestrator's brief says so.
 | Case | Family | Recognise it by | Worked examples |
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
-| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
+| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/) |
 | **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
@@ -693,6 +693,11 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   port), JS picks a random file per event and plays it with `rvip-sound.js`. Events Dubtrain lacks
   (`pickup`) get a named sample in `sounds.py`. Check doc facts in the running game: README.spoilers
   predates 1.7.0 (class list has Geek, not Adventurer).
+- Ularn stage 7 (publish): `og.py` rewrites every game's `web/index.html` and re-shoots the
+  index/stats previews with Chrome; for one new game write only that game's `<!--og-->` block (same
+  code as og.py's second loop) and bump "N classic roguelikes" in index.html's tags. Card image
+  for 8x16 tiles: 24x5 tiles at 2x = 384x160. The browser pane shows the tall index page black in
+  screenshots; check the card via DOM (`find`, img `naturalWidth`).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -1341,6 +1346,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | NetHack 5.0 | `~/Games/nethack50` (branch `NetHack-5.0`) | memmaker/nethack50 |
 | SLASH'EM | `~/Games/slashem` (remote `memmaker`, branch `main`) | memmaker/slashem |
 | DynaHack | `~/Games/dynahack` (remote `memmaker`, branch `unnethack`) | memmaker/dynahack |
+| uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
