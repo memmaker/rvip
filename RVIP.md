@@ -480,6 +480,16 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   family stand-ins for the rest, never ASCII; example
   `~/Games/zangband/web/mkgraf-shb.py`), spot-check sprites, scale 64→cell
   nearest-neighbour. Page: Tiles on/off button applied at the command prompt.
+  The generator is near-generic (FrogComposband's is a port with only the
+  edit-file reader, tval table and feature table changed); a shared copy in
+  rvip-tools would pay off at the next Angband variant.
+- Big-tile mode: test it before relying on it (a map that looks right can
+  still be 1 cell per grid). Newer variants' viewport code may ignore
+  `use_bigtile` (Frog). Pass `big` to `js_pict` per cell (next cell is the
+  `AF_BIGTILE2` pad), not the global flag, or list/sidebar item tiles spill
+  into the next cell and leave stale halves.
+- Shockbolt trees/bushes are cut-outs: give plant features a grass
+  background (`*tap/*tcp` in `map_info()`), else they sit on black.
 - Main map at 30×30: 15×30 font + big-tile mode (`-b`).
 
 ### A5. `play.sh` and windows
@@ -628,8 +638,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - No `auto_more` option (`message.c` `auto_more_state` is transient): 3d
   needs a code change. Birth: game-type menu, Beginner + RET + RET = quick
   start.
-- Tiles: `graf-new.prf` uses `K:tval:sval` (k_info numbers `N:*`): count
-  objects by their `I:` line. Own 16x16 = 59.4% → Shockbolt.
+- Tiles: Shockbolt 99.9% (`web/mkgraf-shb.py`, `web/tile-coverage.py`).
+  Pref `K:tval:sval` (k_info numbers `N:*`: key by the `I:` line), flavours
+  are k_info entries (`N:idx:name:flavour`, no `S:` flavour slots), features
+  `F:idx:std:lite:dark` = Shockbolt lit/torch/dark (no C shift). Upstream
+  bigtile was broken (`xtra2.c` viewport ignored it): `UI_MAP_STEP` fix.
 - ASan: macro trigger key burst overflows `buf` (`cmd4.c`
   `do_cmd_macro_aux()`, same bug as Zangband's; also `autopick.c`
   `insert_macro_line()`), knowledge monsters visual mode on an empty group
