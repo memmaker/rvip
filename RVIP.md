@@ -426,6 +426,9 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `command_menu` on → check it lists the added commands. ToME 2: no
   menu yet → port one. Sil-Q **done** (`src/cmd-rvip.c`, see A-Sil-Q). Tactical Angband (4.2): **done**, see A-4.2.
   Zangband **done** (`cmd_menu()`/`box_menu()` in `util.c`, see A-Zangband).
+  FrogComposband **done**: its own `inkey_from_menu()` (fixed 2-column
+  boxes, Enter/`x`) rewritten as Zangband's `cmd_menu()` in place; a
+  variant's old menu with hard-coded boxes is not worth extending.
 - Show each command's key for the *current* keyset by reverse lookup in
   `keymap_act[mode][]`, and run the chosen underlying command past the
   keymaps (a `raw` flag in `request_command()`), or roguelike picks the
@@ -444,6 +447,15 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   Clear the preselect after the command, not after the inventory command
   that set it, and only reopen the list when no command is queued
   (Zangband: both bugs ate the action).
+- Variant with an object-prompt framework (FrogComposband `obj_prompt()`,
+  PosChengband family): no key table per command needed for the prompt
+  side: a global preselect is taken by the next `obj_prompt()` if one of
+  its tabs offers the object (tabs are already filtered by the command's
+  test and places); for prompts driven by a `cmd_handler` (inspect,
+  inscribe) call the handler with the object's label. The cursor goes in
+  the prompt context, drawn by `inv_display()`; put cursor keys after the
+  label test so `@2` tags still win. The action menu still needs the
+  command filters: most are `static` (wrap them, don't copy).
 - X11 keypad Enter + - * / . need macros in `pref-x11.prf` (`^__FF8D\r`
   etc.) or they arrive as junk.
 - Tags: 2/4/5/6/8 are cursor keys in prompts, so only @1/@3/@7/@9/@0 work
@@ -615,6 +627,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   skips `-more-` under `USE_WEB`. Beginner = coffee-break (no `<`).
   `sound.cfg` goes in the preload, not a `fetch()` (`.cfg` is served as a
   download).
+- Stage 3: menu + item menus as Zangband's (see A3b/A3c); `i`/`e` are
+  `gear_ui()` (`obj.c`) = `obj_prompt()` with `_gear_handler()`; Frog's
+  handlers catch Ctrl+letter before Tab/^E/^P tab keys (use 4/6 or `/`).
+  Test items: Beginner Rogue has food/scrolls; Alchemist (5) sells
+  potions; roguelike via `!` `Y:rogue_like_commands`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
