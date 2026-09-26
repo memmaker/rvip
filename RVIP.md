@@ -1261,6 +1261,10 @@ was different.
   Asyncify yields every 50 ms, so a key interrupt is testable only by
   queueing the key before the walk; synthetic pointer events can't drag
   dividers (use `computer`).
+- Stage 9: beacon in `done()` right before `topten()` (score = `u.urexp`
+  = topten's points). Test all three ends without playing: a temporary
+  `done2()` patch keyed on `plname` (`win*` → `done(ASCENDED)`, `die*` →
+  `done(DIED)` with killer "a newt"), reverted before commit.
 
 ### O-DynaHack (0.6.0, NetHack4/NitroHack family; `~/Games/dynahack`, worked example)
 - NetHack4 family = game library + client: replace the client (`nitrohack/`)
