@@ -50,7 +50,7 @@ The orchestrator does between stages: read the report, tick the stage in
 It never reads the game source itself. When an agent reports a stage as
 failed or partial, start one more agent for the remainder with the failure
 report in its brief; after that, record the gap in the handover and move on.
-When a game is done (stage 8), start stage 1 of the next game in the todo.
+When a game is done (last stage of the table), start stage 1 of the next game in the todo.
 
 | Stage | Steps | Done when | Handover carries |
 |---|---|---|---|
