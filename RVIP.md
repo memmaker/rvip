@@ -1772,6 +1772,14 @@ was different.
   nested `keyin`s (logbook → E → logbook…) overflow the stack: wrap `keyin`
   with a depth counter and pass the game's own `blocked` from depth 3.
   `max_maps` kept (unchecked `lastplanet+=1`): 400 MB stays.
+- **Sound (stage 6)**: no central play routine (16 inline `#ifdef _FBSOUND`
+  blocks): a script copied each block into a twin `#ifdef __FB_JS__` block
+  right after it, `fbs_Play_Wave(sound(n))` → `rv_sound(n,_volume)`, so the
+  game's own conditions stay; the C hook maps n → wav name (no cfg needed).
+  Test trigger without a planet: fly back and forth until "Fuel low" (< 50 %)
+  plays `alarm_2.wav`. Complete key list for Docs: parse the Enter menu's
+  own table (`rv_cmdadd` lines + `types.bas` defaults), not the old manual
+  (its Ctrl-L logbook is `L` in R197).
 
 ### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
 
