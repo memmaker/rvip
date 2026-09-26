@@ -993,7 +993,7 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   Killers: generic `angband()` in `make.py` with `the=True` (8 monster
   names start with "The"). Debug summon: count `0588` then `^A y n` (the
   number goes in the count, no prompt); keys via dispatched `keydown`
-  (`computer type Q` became `q`, ctrl: `{key:'a', ctrlKey:true}`).
+  (`computer key shift+q` gave `q`, `type Q` nothing; ctrl: `{key:'a', ctrlKey:true}`).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
