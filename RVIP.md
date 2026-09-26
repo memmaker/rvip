@@ -56,7 +56,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -1111,6 +1111,42 @@ was different.
   queueing the key before the walk; synthetic pointer events can't drag
   dividers (use `computer`).
 
+### O-DynaHack (0.6.0, NetHack4/NitroHack family; `~/Games/dynahack`, worked example)
+- NetHack4 family = game library + client: replace the client (`nitrohack/`)
+  with `web/webwin.c` (~1300 lines: `nh_window_procs`, command loop, birth,
+  save discovery); leave `libnitrohack/` nearly alone. The library frees what
+  its API returns (`xmalloc()`: drawing info, command list) after the next
+  call → copy it.
+- Data tools (`makedefs`, `dgn_comp`, `lev_comp`, `dlb`) write native longs
+  → build with emcc, run under node (as O-SLASH'EM). Preload read-only data to
+  its own prefix (`/dynahack-data` = DATAPREFIX): a preload under the IDBFS
+  mount is hidden or copied into IndexedDB.
+- Saves = the running game log (`.nhgame`): IDBFS sync while idle (2 s) +
+  on hide gives crash-proof autosave; a closed tab is replayed (T:720 ≈ 1.5 s).
+  Never call `nh_describe_pos()` from a redraw (its `mksobj()` changes state
+  outside the log → replay desync; only inside a getpos prompt), so the
+  Visible window lists monsters only.
+- Autoexplore (`v`) and travel (`_`) exist: add only the new-message stop
+  (`pline.c` `vpline()`), `~` as altkey, `<`/`>` walk via travel
+  (`do.c` `walk_to_stairs()`, `iflags.rvip_stairs`, cleared by `nomul()`),
+  no pathing through boulders while exploring (it never pushes them:
+  `test_move` TEST_TRAV). Check a copied client's direction-key order
+  against the game's (`enum nh_direction` W NW N NE E SE S SW ≠ 3.4.3).
+- Commands + item actions come from the API (`nh_get_commands()`,
+  `nh_get_object_commands()`): Enter menu and item menus are client-side,
+  the choice returned as the next command (logged). Item prompts: answer
+  `?` once to open the game's own list (one candidate: `*`).
+- Tiles: count coverage per display symbol incl. random appearances (stage 1
+  counted names: 96.6 % → real 88.3 %); a tiny dumper built from the game's
+  own symbol tables (`web/tiledump.c`, emcc + node) makes matching exact.
+  NetHack 3.4.3 set (via SLASH'EM) = the family fallback, gaps → same-set
+  stand-ins.
+- Sound: no library patch (client message proc + `levdesc_short` for
+  stairs/town); no shop music (API has no shop flag).
+- Testing: `resize_window` sends no `resize` to a background pane tab
+  (dispatch one); `deleteDatabase` from the game's own page is "blocked",
+  run it from a plain page on the same origin; `-D` not available on the web.
+
 # Part W — Web port (WASM, step 7)
 
 How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
@@ -1193,6 +1229,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Super-Rogue | `~/Games/srogue` | memmaker/srogue |
 | NetHack 5.0 | `~/Games/nethack50` (branch `NetHack-5.0`) | memmaker/nethack50 |
 | SLASH'EM | `~/Games/slashem` (remote `memmaker`, branch `main`) | memmaker/slashem |
+| DynaHack | `~/Games/dynahack` (remote `memmaker`, branch `unnethack`) | memmaker/dynahack |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
