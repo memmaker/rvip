@@ -348,6 +348,7 @@ Worked examples:
 | FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/frogcomposband/ | `X` |
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
+| FAangband 2.0.1 (4.2) | `~/Games/faangband` (`HANDOVER.md`) | web only (`main-web.c` from Tactical Angband's); https://ruzzoli.de/roguelikes/faangband/ | `p` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
@@ -884,6 +885,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `docs/web/*-docs.html`: replaced by Tactical Angband's form reading the
   Docs entry. Zoom in a small window changes nothing visible: term 0 stays
   ≥ 80×24 and is CSS-scaled to fit (by design, W3).
+- Stage 7 repo split: `git filter-repo` drops upstream's commit signatures
+  and rewrote every upstream hash (compare links broke). Filter only our
+  range: `git filter-repo --refs <upstream-commit>..main --path rvip --path
+  web/shots --path LESSONS.md --invert-paths` in a `git clone --no-local`
+  copy, then drop its `origin` (it points at the cloud folder).
+  `web/deploy.sh`'s guard must fetch the new remote (`memmaker`).
+  Card image: 60 distinct Shockbolt monster tiles from the game's
+  `graf-shb-dark.prf` (stand-in block excluded), spread by `depth:`.
 - Stage 7: the repo split as O-Forays; the filter rewrites every hash, so
   the upstream commit changes (`00f2a06` cloud → `2c3e95b` public): fix
   `make-help.py`, Docs facts and README after `filter-repo`. Also drop
@@ -1890,7 +1899,7 @@ was different.
 - **Stages 2–3:** upstream already had explore (`x`) and travel; the stairs walk flag must survive the arrival message (cancel in `Interrupt()` only when not yet on the stairs). One item cursor in the game's single item prompt (`GetItemSelection`) serves every "Which item?"; `Term.Push(key)` lets any other key run as a command from a list.
 - **Autosave** in a save-on-quit game: call the game's save at the command prompt with no keys pending; delete the save after a finished run. **Sound:** none in the game → 7 WAVs synthesized at build time (`web/make-sounds.py`).
 - No tileset exists (the GL build draws font sheets): text mode.
-- **Stage 7:** a cloud run's repo carries the procedure bundle (`rvip/`): rename it (`gh repo rename <name>-cloud`), `git filter-repo --path rvip --invert-paths` in a fresh clone, point `build.sh` at `~/Games/rvip-tools/web/`, then `gh repo create` the public repo from that clone. Card image of a text game: 48×10 cells of the web build's grid drawn with the game's own font sheet (`ForaysImages/font8x16.png`, 8×16 + 1 px gap) = 384×160.
+- **Stage 7:** a cloud run's repo carries the procedure bundle (`rvip/`): rename it (`gh repo rename <name>-cloud`), `git filter-repo --path rvip --invert-paths` in a fresh clone (with `--refs <upstream>..main` when upstream history is kept: A-FAangband), point `build.sh` at `~/Games/rvip-tools/web/`, then `gh repo create` the public repo from that clone. Card image of a text game: 48×10 cells of the web build's grid drawn with the game's own font sheet (`ForaysImages/font8x16.png`, 8×16 + 1 px gap) = 384×160.
 - **Stage 8:** a licence’s © start year is when work began, not the birth year: Forays says 2011, RogueBasin dates 0.5.0 to 28 Jan 2012 (card and tree fixed). No changelog file? Build `changelog.txt` from `gh api repos/<o>/<r>/releases` notes + `git log`. A debug menu behind `if(false)` counts as “no cheats in any build”.
 - **Stage 9:** hook the one place every finished run passes (Forays: `Main.cs` right after the game loop, `if(!Global.SAVING)`), game → `ITermBackend.Beacon` → worker `postMessage` → page `RvipWM.report`. Killer = the damage source's `Name.Singular` saved in the death branch (not the "killed by …" text). No XP level: omit `lvl`; score = depth (the high score list's rank).
 - **Service-worker COOP/COEP shims break the beacon:** `new Response(res.body, {status: 204})` throws → "Failed to fetch", the report never leaves the outbox. Pass `null` as body for 101/204/205/304 (`web/coi-sw.js`). Test the outbox empties, not just that the URL was built.
@@ -1996,6 +2005,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
 | Hengband | `~/Games/hengband` (remote `memmaker`, branch `master`; upstream hengband/hengband `master` @ `bf1054199`; submodule `lib/xtra`) | memmaker/hengband |
 | LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
+| FAangband | `~/Games/faangband` (remote `memmaker`, branch `main`; upstream NickMcConnell/FAangband `main` @ `0d85203`; cloud history with the `rvip/` bundle: private memmaker/faangband-cloud, `~/Games/faangband-cloud`) | memmaker/faangband |
 | MAG | `~/Games/mag` (remote `memmaker`, branch `main`; upstream = DOS source drop `~/Downloads/mag_src` @ `cc36a63`; cloud history with the `rvip/` bundle: private memmaker/mag-cloud, `~/Games/mag-cloud`) | memmaker/mag |
 | Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud, `~/Games/easyband-cloud`) | memmaker/easyband |
 
