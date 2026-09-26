@@ -571,6 +571,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (`field_first_known(FTYPE_TRAP)`, `FTYPE_BUILD`, `FTYPE_DOOR`); the town's
   dungeon entrance is a plain `FEAT_MORE`. Option defaults: set
   `option_info[i].o_val` by `o_text` name in `init_web()`.
+- Windows: `birth.c` fills an empty window 1 with `PW_MESSAGE` and 2 with
+  `PW_INVEN` (the inventory-in-Messages bug); `web_window_flags[]` in
+  `main-web.c` sets all 7 terms (`PW_PLAYER` = Character window). Game end
+  is one path, `close_game()` → `quit(NULL)`; death's tombstone menu and
+  exit question are C key waits, then `js_quit(msg, is_dead)` reloads the
+  page into a new birth (debug death: `0756 ^A n`, Great hell wyrm).
 - Browser testing: `Module.qb.text(t,x,y,n,a,s)` gets a HEAPU8 pointer and
   is looked up per call, so wrapping it (plus `qb.wipe`/`qb.clear`) gives a
   text shadow of term 0. Never set `window.PATH` in the page: it is
@@ -1581,6 +1587,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   size until the player drags or zooms (a tab first loaded tiny otherwise
   keeps a 240 px map forever); assume 1280×720 when the area isn't laid out
   yet. Reset windows restores the default.
+- **z-term sub-window content:** set `window_flag[i]` for every web term in
+  `init_web()` from one table matching the page's `TERMS` (runs before
+  birth and load; birth code may fill empty windows with its own defaults,
+  a savefile brings its own flags, so old test saves keep old routing).
 - Buttons never take focus (`mousedown → preventDefault()`); inputs in title
   bars stop propagation and `onKey` ignores `input/textarea`, so typing never
   reaches the game.
