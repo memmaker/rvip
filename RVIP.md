@@ -790,6 +790,17 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (end char = the char after the colour letter), `***** <Tag>` anchors,
   `***** [x] file#Tag` link tables; converter `web/mkmanual.py`. Stats:
   JSONC loads in node with `new Function('return ' + text)()`.
+- Stage 9: hook `core/game-closer.cpp` `close_game()` after
+  `check_death()` (Ctrl-X save returns there, no beacon); `web_run_end()`
+  in `main-web.cpp` (extern decl, no header). Score = `calc_score()`,
+  turns = `InnerGameData::get_real_turns(game_turn)`. `take_hit()` builds
+  `died_from` as "{hallucinatingly distorted }{a monster}{ while
+  paralyzed| while being the statue}": strip all; it also clears
+  `total_winner` on death (winner seppuku restores it). Killer art from
+  `MonraceDefinitions.jsonc` ids + `graf-new.prf`/`graf-ab.prf`. Debug
+  summon: `^A n`, Tab = enter monster id (783 Great Wyrm of Chaos), `,`
+  waits. `jlicense.txt` (3) forbids sends to Hengband's own score server
+  only. The browser pane is shared with other sessions: always pass `tabId`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
