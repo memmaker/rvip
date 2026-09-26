@@ -344,6 +344,7 @@ Worked examples:
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
 | Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/zangband/ | `H` |
 | FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
+| Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
@@ -658,6 +659,29 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   handlers catch Ctrl+letter before Tab/^E/^P tab keys (use 4/6 or `/`).
   Test items: Beginner Rogue has food/scrolls; Alchemist (5) sells
   potions; roguelike via `!` `Y:rogue_like_commands`.
+
+### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
+- Official repo `hengband/hengband`, newest release tag = `master`; English
+  is complete in 3.x (`_("ja", "en")` in the source, `"en"` names in the
+  `lib/edit/*.jsonc` data): build without `-DJP`. "Cryomaniac13 en" is the
+  Touhou Katteban fork, another game. `lib/xtra` is a git submodule
+  (`hengband.xtra`: sound, music, only `graf/8x8.bmp`): `git submodule
+  update --init lib/xtra`.
+- 3.x z-term is C++: `term_type`, `term_init/term_activate/term_resize/
+  term_key_push`, `game_term`, `angband_terms[]`, hooks take `TERM_LEN`,
+  `quit_aux`/`plog_aux` take `std::string_view`; `character_generated` is
+  `AngbandWorld::get_instance()`, depth `p_ptr->current_floor_ptr->dun_level`.
+  `main.cpp` is an `if (!done)` chain like Frog's. `-DDISABLE_NET` (no curl).
+- Birth: no quick start for the first character; the autoroller starts with
+  every minimum at maximum: `n` on each stat sets it to 3. Birth screens
+  flush input: space scripted keys ~200 ms.
+- Tiles: prefs map `R:`/`K:`/`F:` by JSON id (not tval:sval); own 8x8 =
+  72.5% (16x16/32x32 sheets not shipped) → Shockbolt.
+- ASan: `path_parse("~")` uses `getpwuid`, not `$HOME`: compile the test
+  build's `main.cpp` + `main/angband-initializer.cpp` without
+  `PRIVATE_USER_PATH`. Bugs: `open_auto_dump()` `!fpp` for `!*fpp`,
+  `path_parse()` throws on `~unknownuser`, monster knowledge `r` on an empty
+  group. Birth-aware driver: pyte (`pip install pyte` in a venv) + pty.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1750,6 +1774,14 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   -sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web`. `-fcommon` for globals
   defined in several files; C++ links with `em++`, and `em++` treats `.c` as
   C++ (compile C with `emcc -c` first).
+- **C++ that catches exceptions needs `-fexceptions` at compile and link**
+  (Emscripten drops `catch` by default; the throw then aborts the wasm).
+  Hengband: `std::stoi` at every number prompt, "-" at Quantity crashed.
+  `grep -rn 'catch *(' src` before the first build. Costs ~35% wasm size.
+- Big C++ trees (Hengband: 870 files): compile to cached objects in
+  parallel (`xargs -P $(sysctl -n hw.ncpu) -n 1 sh -c '...' _`; `-I{}`
+  hits macOS xargs' 255-byte limit), link once; source list from
+  `Makefile.am` `*_SOURCES` (include `.cc`, e.g. bundled `fmt/format.cc`).
 - Package only the data the game reads (no X11 fonts, BMPs); the server
   **denies `*.txt`**, so text data goes inside `.data`.
 
