@@ -1969,6 +1969,22 @@ was different.
   plays `alarm_2.wav`. Complete key list for Docs: parse the Enter menu's
   own table (`rv_cmdadd` lines + `types.bas` defaults), not the old manual
   (its Ctrl-L logbook is `L` in R197).
+- **Polish before 7**: one-line questions (`askyn`, `dprint` + `keyin`) have no
+  shared routine, so classify by screen state instead: a shared flag "main
+  screen is on screen", set by the main prompt and the map draw routines,
+  cleared by every `Cls` (`#Undef Cls` / `#Define Cls rv_cls` in the first
+  included file works in FB), by `menu()` just before its `keyin` (menus
+  redraw the map behind themselves first) and by `textbox()` only left of
+  the sidebar (the sidebar is drawn with `textbox` too). A nested `keyin`
+  with the flag set = prompt line over Map. Map camera: send the ship's
+  cell centre in map-part pixels with the regions (the game's own scroll
+  offset already applied) and call `RvipWM.center`. Game end: the game's
+  last screen already takes a key, so the page reloads by itself. Memory:
+  static `DIM SHARED` arrays are wasm BSS, `INITIAL_MEMORY` cannot go below
+  them (wasm-ld "initial memory too small"); `ReDim Shared` moves them to
+  the heap. No shared add-a-map path (65 `lastplanet+=1`): guard the
+  in-game adders with one check helper; `fixstarmap`'s local `p(2048)` was
+  indexed by planet numbers up to `max_maps` (4096).
 
 ### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
 
@@ -2222,6 +2238,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **One-framebuffer graphics games** (fbgfx, SDL blits): the game exports
   its region rectangles and a "main prompt" flag; JS blits the regions into
   windows and shows the whole screen in a pop-up otherwise (O-Prospector).
+  One-line questions over the main screen: a game-side "main screen still
+  on screen" flag (cleared by clear-screen, menus, boxes over the map) sent
+  with the regions; the page then keeps the windows and uses `RvipWM.prompt`.
 - Tiles show only what the game has: no door tiles for doorways that can't
   be opened or closed (Hack, NetHack 1.3d).
 
@@ -2259,7 +2278,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Game end (games that END/exit):** call a C `rv_gameover()` before the
   game's `END`/`exit` that notifies the page and then loops on
   `emscripten_sleep` forever (Prospector); the page keeps the last screen,
-  syncs, reloads on the next key. `onExit` as fallback for error paths.
+  syncs and reloads by itself after a short delay when the game's own last
+  screen already took a key (no extra page key). `onExit` as fallback for
+  error paths.
 - **Game end (curses/termcap games):** the game waits for a key on its last screen (from C), then the
   page syncs and reloads for a new game (Ularn `clearvt100()`); grep every `exit(` in the death routine.
 - **Game end (z-term):** keep `quit_aux` as the web hook (`#ifndef USE_WEB` around
