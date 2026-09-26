@@ -2019,6 +2019,17 @@ was different.
   bay12forums answer 403 to bots; YouTube oEmbed
   (`youtube.com/oembed?url=…`) confirms Let's Play titles without a browser.
 
+- **Stage 9**: hook the top of the summary routine every ended run passes
+  (`death_message`), skip the save-and-quit code (`player.dead=99`); `ev` from
+  the game's end code (98 retired = win, 6 = quit). Build the query in C with
+  **`EM_JS`**, not `EM_ASM`: commas in the JS (`var a, b`, object literals)
+  split the `EM_ASM` macro arguments. Killer art from a BASIC monster table:
+  per `if a=` block pair each `sdesc="…"` literal with the nearest preceding
+  `ti_no=` literal (a block can hold several tiles); skip `sdesc="x "&…`
+  prefixes. Landing menu in the hidden pane: switch the page to One window
+  to see the whole system strip (sun, asteroid field, planets); a planet
+  asking "take crewmembers without suits?" = no oxygen, `y`, walk off.
+
 ### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
 
 - **Route: .NET browser-wasm, no Emscripten, no workload.** `Microsoft.NET.Sdk.WebAssembly` + `RuntimeIdentifier browser-wasm` builds with the plain SDK (Mono interpreter; runtime pack from nuget.org). Workloads (`wasm-tools`) only for relink/AOT. Mac: official `dotnet-install.sh --channel 10.0 --install-dir ~/.dotnet` (brew cask needs sudo). `PublishTrimmed` + `TrimMode=full`: 27 MB → 6.4 MB.
