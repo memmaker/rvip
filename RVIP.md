@@ -781,6 +781,15 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   "iks", `news.txt` names Mr.Hoge as founder). Card image from the Adam Bolt
   sheet: skip tiles with <70 opaque px or mean luma <28 (the sheet has
   blank/near-black cells under `R:` entries), else a third of the grid is empty.
+- Stage 8: founder question settled by the game's own files, not wikis:
+  `faq.txt` ("Mr.Hoge wrote the first original part") + `jlicense.txt`
+  (Mr.hoge = copyright holder); RogueBasin's developer field names a later
+  team member (iks). Birth year from hengband.github.io `history/`
+  (0.1.0 = 2000-06-19; raw pages via `gh api repos/hengband/hengband.github.io/contents/history`),
+  not RogueBasin's first stable (1.0.7, 2001). Help markup: `[[[[c|text|`
+  (end char = the char after the colour letter), `***** <Tag>` anchors,
+  `***** [x] file#Tag` link tables; converter `web/mkmanual.py`. Stats:
+  JSONC loads in node with `new Function('return ' + text)()`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
