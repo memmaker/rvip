@@ -524,7 +524,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   from Dubtrain with a name map, `~/Games/zangband/web/sounds.py <cfg> <wavdir>`
   (events read from `angband_sound_name[]`, cfg into the preload stage, wavs
   to `dist/sound`). Dubtrain v3.1.0's cfg names some missing wavs
-  (`mco_bite_crunch.wav`): skip files that do not exist.
+  (`mco_bite_crunch.wav`): skip files that do not exist. Newer variants add
+  events (Frog: `glass`): its assert names them, add them to `MAP`.
 - Music: the variant's own, else loop
   `~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg` at
   depth 0.
@@ -637,8 +638,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `DEFAULT_{CONFIG,LIB,DATA}_PATH` macros come from autotools only: pass
   them with `-D...='"./lib/"'`.
 - No `auto_more` option (`message.c` `auto_more_state` is transient): 3d
-  needs a code change. Birth: game-type menu, Beginner + RET + RET = quick
-  start.
+  needs a code change. Birth: game-type menu, `b` (Beginner) + RET + RET =
+  quick start (`a` does nothing).
 - Tiles: Shockbolt 99.9% (`web/mkgraf-shb.py`, `web/tile-coverage.py`).
   Pref `K:tval:sval` (k_info numbers `N:*`: key by the `I:` line), flavours
   are k_info entries (`N:idx:name:flavour`, no `S:` flavour slots), features
@@ -663,6 +664,9 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   window (`PW_PLAYER` 0x1000, `fix_player()` in `py_info.c`); `PW_SPELL`
   is a no-op upstream. Death test without wizard mode: `Q y @` (suicide =
   real death path); the tombstone's ESC skips the sheet; no score list.
+- Stage 6: Zangband's `sounds.py` / `make-help.py` / `web/music` as is
+  (+ `glass` event); help tables sit between `<topic:OriginalKeyset>`,
+  `<topic:RogueKeyset>`, `<topic:CommandCounts>` (`parse_table(indent=1)`).
 
 ### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
 - Official repo `hengband/hengband`, newest release tag = `master`; English
@@ -1881,6 +1885,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   (`lib/file/news.txt` in z-term games), licence from the source headers.
 - Two keysets: `all` = original list + the roguelike list with
   " (roguelike keyset)" appended (Zangband entry in `build-docs.py`).
+  `parse_table()` strips PosChengband-family `<color:x>` markup; after a
+  parser change compare the other pages with a copy made before.
 
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
