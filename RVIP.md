@@ -1112,6 +1112,39 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   ASan runtime, gcc 13 works. Mac pickup: point `build.sh` at
   `~/Games/rvip-tools/web/rvip-wm.js`, serve with `http.server --directory`
   (survives `rm -rf dist`).
+- **Tiles (R4):** DawnLike by name from DawnLikeAtlas `renamed/`: some
+  sprites lack the `_0/_1` suffix, some names are misspelt (`storrmwyrm`);
+  build the name set from both forms and assert every table entry exists.
+  13/55 monsters and 15/151 kinds match exactly, the rest are same-set
+  stand-ins; random appearances ("bubbly potion") map by name, so a sprite
+  never reveals an unknown item. 100% of 323 slots, `port/mkdawn.py`.
+- **W0:** decide tiles from the game's own page-0 shadow (`optscr[0]`), not
+  BIOS VRAM: port menus on the visual page never disturb the map, and a
+  monster shown as another letter (invisible, delusion) stays as shown.
+- **Game end:** MAG draws the Hall of Heroes on page 0 right before `exit()`:
+  clear the "game running" flag in `port_exit()` so it goes out as text, not
+  through the tile lookup (letters would become monster sprites).
+- **Sound (R7, DOS game without events):** hook `uattack`/`mattack`
+  hit-miss, the kill branch, `ck_exp`, `newlev` (also runs at game start:
+  one stairs sound), `teleport`, `pickup`, plus one call in the item
+  dispatcher keyed by its verb table (`utilize()` `util[].c_comname`).
+  Dubtrain lacks `hurt`/`scroll`/`wear`/`ignite` events by those names: map
+  them to `mon_hit`, `study`, `wield`, `breathe_fire` (`web/sounds.py`).
+  `build.sh` runs `sounds.py`; samples are not committed (as Larn/Umoria).
+- **Cloud run, rest:** the Dubtrain pack is not in the cloud: ship the events
+  + `web/sounds.py`, test with silent wavs. Guide data as one module feeding
+  `make-help.py` and a standalone docs page; on the Mac it moved into
+  `build-docs.py` GAMES + `guides.py` GUIDES/SAVING by a script (`repr()` of
+  the dicts, `all=lambda: [...]`: `main()` calls it) and `make-help.py`
+  reads the Docs like LambdaRogue's. `. emsdk_env.sh` does not persist
+  between tool calls (a build without it leaves an empty `dist` and every
+  test times out). A resumed session on a detached HEAD pushes the stale
+  local `main`: `git checkout -B main HEAD` first.
+- **Mac check (stage 7):** the Inventory window painted items in use white
+  while the pop-up list used the type colours: use the game's O_COLORINV
+  (`pr_obj`) in both. Browser pane: `shift+z` arrives as `z` (explore key
+  `Z` needs a dispatched `KeyboardEvent`); `Module.mag.screen()` gives the
+  visual page as text for scripted fights (`☻` = player).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -1185,6 +1218,8 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
 - The game's name functions (`inv_name()`) write a **shared global buffer**
   (`prbuf`) that callers may be using while a refresh happens: save and
   restore it around any call from the frontend.
+  Or build side windows only when the game waits for a command (MAG:
+  `port_idle()` -> `fe_idle()`, `form()` has one static buffer).
 - Never use `mvwinch` in tile/pane code: it moves the window cursor.
 - Map words: rows of the map window with 3+ non-terrain characters and no
   real monster/object under them are text (XRogue's shop prints help into
