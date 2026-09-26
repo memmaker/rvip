@@ -733,6 +733,10 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   image, card `<p>` as description). Check the tree's year and parent on the web: uLarn was 1987
   (not the README's 1992) and predates Larn 12.4, so it moved from under 12.4 to under Larn.
   Help files with `^[[7m` markers: escape the text once, then turn markers into `<b>`.
+- Ularn stage 9 (beacon): one hook in `died()` (after the life-protection return, before every
+  `exit()`) covers death, win (263) and quit (Q = 300, not 256); skip 257 (S). Killer = `monster[x].name`
+  (no articles) or `whydead[x-256]`. Test the win natively: wizard `=`, `@p21` (cure potion), take it,
+  walk into the town `H`, `g` (drive stdin from Python, reading `ULARN_DUMP` for positions).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
