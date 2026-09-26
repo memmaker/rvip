@@ -445,6 +445,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   FrogComposband **done**: its own `inkey_from_menu()` (fixed 2-column
   boxes, Enter/`x`) rewritten as Zangband's `cmd_menu()` in place; a
   variant's old menu with hard-coded boxes is not worth extending.
+  Hengband 3.x **done** the same way (`InputKeyRequestor::inkey_from_menu()`,
+  `menu_info` made one flat `std::vector`, see A-Hengband).
 - Show each command's key for the *current* keyset by reverse lookup in
   `keymap_act[mode][]`, and run the chosen underlying command past the
   keymaps (a `raw` flag in `request_command()`), or roguelike picks the
@@ -472,6 +474,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   the prompt context, drawn by `inv_display()`; put cursor keys after the
   label test so `@2` tags still win. The action menu still needs the
   command filters: most are `static` (wrap them, don't copy).
+- Hengband 3.x (every prompt is `choose_item()` → `get_item_floor()`):
+  the preselect is a `tl::optional<short>` checked first in
+  `get_item_floor()` (places from `fis.inven/equip`, `get_item_okay()`
+  with the command's tester, `repeat_push()` so `n` works); the action
+  table repeats each command's `USE_*` flags and tester (they are public).
+  Main action order: devices before eat (MANA-food races eat staffs).
 - X11 keypad Enter + - * / . need macros in `pref-x11.prf` (`^__FF8D\r`
   etc.) or they arrive as junk.
 - Tags: 2/4/5/6/8 are cursor keys in prompts, so only @1/@3/@7/@9/@0 work
@@ -726,6 +734,16 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   defaults): `web/build.sh` rewrites the staged copy. A leftover test
   save keeps its options: delete the test IDBFS databases first. ASan:
   help `%` Goto File with an unknown name aborts (uncaught throw).
+- Stage 3: menu/items as A3b/A3c (`io/input-key-requester.cpp`,
+  `cmd-item/cmd-item.cpp` `gear_ui()`). 3.x z-term has no
+  `Term_keypress()`: `term_key_push()` puts a key in *front*, so a web
+  frontend pushing a whole event with it reverses multi-key macro
+  triggers (arrows ran as `_FF54` junk): append FIFO to `key_queue`
+  yourself. Web prompt line lost spaces: `row0` holes (cells the game
+  never wrote) must join as blanks. Test items: `l` look, space to a
+  shop, `g` walks there. ASan: `term_erase()` stepped to column -1 on
+  attr 0xFF (colour menu index wraps), racial `U` `/` read
+  `power_desc[-15]`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
