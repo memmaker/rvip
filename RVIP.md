@@ -58,9 +58,9 @@ When a game is done (stage 8), start stage 1 of the next game in the todo.
 | 2 Explore + stairs | 2, 3 | both tested in a running game | explore key, file holding the code, main-loop hook, "known grid" test used |
 | 3 Enter menu + inventory | 3b, 3c | menu lists every command, item menus tested | file names, how item actions run (direct call or key queue), menu function names |
 | 4 Tiles | 4 | sprites checked at cell size, nearest-neighbour | tile set and source, loader file, pref files, scale |
-| 5 Web page | 5, 5b, 7, Part W | window layout done, page live through `deploy.sh` | live URL |
+| 5 Web page | 5, 7, Part W | window layout done, page live through `deploy.sh` | live URL |
 | 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
-| 7 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
+| 7 Publish | 8, 9, 10, 5b, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
 | 8 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
 | 9 Graveyard + leaderboard | 12 | beacon seen for quit (and death if reachable), killer PNGs deployed | fields sent, fields missing and why |
 
