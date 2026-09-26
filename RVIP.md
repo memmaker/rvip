@@ -2009,6 +2009,15 @@ was different.
   show the live page after a dispatched `resize`; a POST from the https
   site to `127.0.0.1` is blocked (ERR_BLOCKED_BY_CLIENT), so shotsrv only
   works for locally served pages.
+- **Stage 8**: a copyright span is not a birth year (README © 2008, first
+  release 0.1.0 = 18 Feb 2009 on RogueBasin, first Google Code download):
+  fix card + tree. PDF manual → `manual.html` with the same PDFKit dump
+  (one `<pre>` per page, caps lines as TOC); column layouts read out of
+  order, so link the PDF as the original. Old changelogs may carry CP437
+  bytes (0xF8 = °). A key constant that shows as U+FFFD in the source
+  (`key_cheat`) is unreachable: report "no cheats". freebasic.net and
+  bay12forums answer 403 to bots; YouTube oEmbed
+  (`youtube.com/oembed?url=…`) confirms Let's Play titles without a browser.
 
 ### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
 
