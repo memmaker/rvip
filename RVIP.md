@@ -492,6 +492,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   v3.1.0`, same event names), copy only used `.wav`s. Events neither covers
   (`angband_sound_name[]` in `variable.c`) get a close sample. Quickband:
   16 upstream + 132 Dubtrain + 3 reused.
+- Variant cfg names wavs it never shipped (Zangband): generate the web cfg
+  from Dubtrain with a name map, `~/Games/zangband/web/sounds.py <cfg> <wavdir>`
+  (events read from `angband_sound_name[]`, cfg into the preload stage, wavs
+  to `dist/sound`). Dubtrain v3.1.0's cfg names some missing wavs
+  (`mco_bite_crunch.wav`): skip files that do not exist.
 - Music: the variant's own, else loop
   `~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg` at
   depth 0.
@@ -584,6 +589,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   deletes stay blocked while the game page is open (close its dbs first).
 - ASan pty driver: leave out ^Y (DSUSP on macOS) and ^Z/^C/^\ or the game
   stops (`ps` state `T`) and the driver blocks; add a SIGALRM watchdog.
+- Sound/help (stage 6): no C change needed (`TERM_XTRA_SOUND` → `js_sound`);
+  `web/sounds.py` (Dubtrain map) and `web/make-help.py` (TinyAngband's + Credits).
 
 ### A-FrogComposband (7.1.salmiak.6; `~/Games/frogcomposband`, `HANDOVER.md`)
 - Newest code is upstream `master` (63 commits after tag `v7.1.salmiak`);
@@ -1740,6 +1747,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   "On this computer". `make-help.py` reads the Docs at build time: after a Docs fix
   rebuild (or rerun it into `dist/help.html`). Outside sources are allowed for them (strategy
   guides, GameFAQs, wikis); write them in your own words.
+- Credits: take the maintainers from the game's splash/news screen
+  (`lib/file/news.txt` in z-term games), licence from the source headers.
+- Two keysets: `all` = original list + the roguelike list with
+  " (roguelike keyset)" appended (Zangband entry in `build-docs.py`).
 
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
