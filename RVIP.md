@@ -58,7 +58,7 @@ When a game is done (stage 8), start stage 1 of the next game in the todo.
 | 2 Explore + stairs | 2, 3 | both tested in a running game | explore key, file holding the code, main-loop hook, "known grid" test used |
 | 3 Enter menu + inventory | 3b, 3c | menu lists every command, item menus tested | file names, how item actions run (direct call or key queue), menu function names |
 | 4 Tiles | 4 | sprites checked at cell size, nearest-neighbour | tile set and source, loader file, pref files, scale |
-| 5 Web page | 5, 7, Part W | window layout done, page live through `deploy.sh` | live URL |
+| 5 Web page | 5, 5b, 7, Part W | window layout done, page live through `deploy.sh` | live URL |
 | 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
 | 7 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
 | 8 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
@@ -196,6 +196,15 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   game sends the player's position and uses `RvipWM.center`. How: Part W, W4.
 - **Exempt:** Decker (its MFC dialogs are the game; it keeps its own layout).
 - **Text only, no tiles/text switch (the user's choice):** BOSS, ZAPM.
+
+**5b. Link preview (every game).** Shared links need Open Graph/Twitter
+tags. Don't write them by hand: after the index card exists (step 10), run
+`python3 ~/Games/roguelikes-index/og.py`. It writes a `<!--og-->` block
+after `<title>` in the game's `web/index.html` (title and text from the
+card, image = the card image `roguelikes/<web-name>.png`) and in its shrine
+page. Deploys ship `web/dist`: rebuild (or copy `web/index.html` into
+`dist`) before `deploy.sh`, then check with
+`curl -s https://ruzzoli.de/roguelikes/<web-name>/ | grep og:image`.
 
 **6. Docs page** (Part 2). **6b. Sound effects and music** with top-bar
 toggles, **off by default**. **7. Web page** live at
