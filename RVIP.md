@@ -774,6 +774,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (Japanese only): Angband licence + keep notices, state changes, no
   score-server sends; no GPL. Birth for tests: `b a` `a y` `a y` Esc,
   autoroller `n 2` ×6, Enter ×4.
+- Stage 7: upstream ships `readme.md` (Japanese): on macOS's
+  case-insensitive disk a `README.md` can't sit beside it, so the port
+  section goes on top of `readme.md` (what GitHub shows). Tree parent per
+  RogueBasin: Japanese Zangband 2.2.8, 1.0.7 in Dec 2001 (RogueBasin names
+  "iks", `news.txt` names Mr.Hoge as founder). Card image from the Adam Bolt
+  sheet: skip tiles with <70 opaque px or mean luma <28 (the sheet has
+  blank/near-black cells under `R:` entries), else a third of the grid is empty.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1777,6 +1784,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 | FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
+| Hengband | `~/Games/hengband` (remote `memmaker`, branch `master`; upstream hengband/hengband `master` @ `bf1054199`; submodule `lib/xtra`) | memmaker/hengband |
 | LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
