@@ -860,6 +860,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (`zap`→`zap_rod`, `stairs`→`stairs_down`).
 - Messages: fold repeats in `fix_message()` but not the blank `" "` lines
   birth writes around its `====` separator (they showed as ` (x2)`).
+- Stage 7: the repo split as O-Forays; the filter rewrites every hash, so
+  the upstream commit changes (`00f2a06` cloud → `2c3e95b` public): fix
+  `make-help.py`, Docs facts and README after `filter-repo`. Also drop
+  `web/shots/` (Playwright screenshots) and don't keep `origin` in the
+  public clone. A local agent's stash from before the cloud resumed: take
+  only hunks the cloud lacks (`git checkout stash@{0} -- <file>` when the
+  cloud never touched the file). Card year from the archive's entry dates
+  (`lsar -l`) when the files carry none.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1881,6 +1889,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
 | Hengband | `~/Games/hengband` (remote `memmaker`, branch `master`; upstream hengband/hengband `master` @ `bf1054199`; submodule `lib/xtra`) | memmaker/hengband |
 | LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
+| Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud, `~/Games/easyband-cloud`) | memmaker/easyband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
