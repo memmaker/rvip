@@ -938,6 +938,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   Dispatched `keydown` Escape/Backspace are ignored at birth (letters work):
   use real keys (`computer key`). `^A y n` a unique (Morgoth) in town places
   nothing; a non-unique (Great Hell Wyrm) kills in one turn.
+- Stage 8 (FAangband): the first-release date is in the r.g.r.a announcement
+  (`rec.games.roguelike.angband.narkive.com`, search "New variant <name>"); old
+  angband.oook.cz forum threads: web.archive.org CDX
+  (`/cdx/search/cdx?url=angband.oook.cz/forum/archive/index.php/t-N.html`, then
+  `/web/<ts>id_/<url>` by curl). A Sphinx manual (`docs/*.rst`) without docutils:
+  one `<pre>` per file in toctree order, like the 2.9.x help. A 4.2 rewrite has
+  vanilla's git history and a `changes.txt` that starts at 2.0: add the GitHub
+  release notes (`gh release view <tag> --json body`) and link the old diffs.
 
 ### A-NPPAngband (NPPAngband 0.5.1; `~/Games/nppangband`, `HANDOVER.md`, cloud run)
 - Case A but **3.1-era** code (game-cmd.c, ui-menu.c, cmd-obj.c
