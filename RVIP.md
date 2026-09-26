@@ -1604,6 +1604,14 @@ was different.
   `findbest` every turn and ate it). `grep -a` on `main.bas` (Latin-1 bytes,
   plain grep may print nothing). Native ASan with 64-bit
   `Integer` finds digit buffers sized for 32 bit (`credits()` `z(12)`).
+- **Tiles (stage 4)**: coverage = `port/tilecov.sh` (dump loaded `gt_no()`
+  vs literal `ti_no=` assignments); skip comparisons (`if x.ti_no=0 then` was
+  counted as "missing tile 0"); FB `print #f,n` writes a leading space, strip it
+  before `comm`, and sort without `-n` for `comm`. Tiles/Text button = a spare
+  scancode (120) that `keyin` handles at main prompts only: flip the game's
+  own flag, `save_config`, and redo the screen setup a restart would do
+  (`_mwx`, `load_fonts` = new `SCREENRES`): just flipping the flag (as the
+  game's own config menu does) draws tiles into the text-sized layout.
 
 # Part W — Web port (WASM, step 7)
 
