@@ -1696,6 +1696,7 @@ was different.
 - **Sound (6b):** turn the game's music/sfx options on in the web config; page toggles decide; forward `Mix_VolumeMusic`, answer `Mix_PlayingMusic` truthfully (0 while muted: the game picks a new song only when none plays).
 - **Mac check (stage 7):** the Enter menu changes what Enter means, so strip "[ENTER] or" from the game's floor hints too (`UserInterface.pas`, one `StringReplace` under `WEB`). An empty character name saved `saves/.lambdarogue`, which FPC's Unix `FindFirst` treats as hidden: the save vanished from the list → refuse empty names in the web build.
 - Docs in a cloud run: `web/docs_entry.py` shaped like a `GAMES`/`GUIDES` entry; on the Mac it moves into `build-docs.py` / `guides.py`.
+- **Stage 8:** no manual file? The in-game help menu is the manual: render its text files (`data/story/help_*.txt`) plus the key screen into `shrine/<g>/manual.html` (`<pre>` per topic); leave out a private postal address. Google Code dates without a browser: `storage.googleapis.com/google-code-archive/v2/code.google.com/<p>/downloads-page-N.json` (`releaseDate`). itch.io / ModDB / SourceForge answer bots with 403: use RogueBasin, the change log and the archive JSON. `deploy.sh` refused because another session left untracked files: run it from a fresh `git clone --depth 1` of the pushed repo instead.
 
 # Part W — Web port (WASM, step 7)
 
