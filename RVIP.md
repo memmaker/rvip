@@ -326,6 +326,8 @@ finished run to `/roguelikes/beacon`; the server turns the nginx log into
   server keeps each win as its own write-once file
   (`/var/lib/roguelikes-stats/wins/<g>/`, see CONTRACT.md); never write
   code or run commands that overwrite, move or delete those files.
+- Browser pane: if typed keys don't reach the game, dispatch
+  `KeyboardEvent('keydown', {key})` on `document` from JS (FrogComposband).
 - Commit + push both repos, run both `deploy.sh` (step 9).
 
 ---
@@ -383,7 +385,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (Zangband: `view_torch_grids` off) need the explorer's own seen array
   (Quickband's `explore_seen`), or it walks back and forth for thousands of
   turns. Also stop when a step did not move the player (an unseen monster
-  is attacked silently) and without light.
+  is attacked silently) and without a light of the player's own (standing
+  in a lit room's exit shows nothing beyond it: Hengband walked back and
+  forth there forever). Hengband family: `CAVE_KNOWN` (set by
+  `note_spot()`) is never forgotten, use `is_mark() || CAVE_KNOWN`.
+- Name the monster in the "in view" stop ("In view: the Frail yeek."):
+  a visible monster behind a wall blocks explore and is otherwise a
+  mystery.
 - New-message stop: snapshot `message_num()` and set `auto_explore` *before*
   the move, so messages and `disturb()` from the move itself win. Where a
   repeated message only bumps a count (FrogComposband), clear the flag in
@@ -412,6 +420,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   picks the staircase, travel walks; a `process_player()` branch after the
   travel one takes the stairs once travel has stopped on them.
 - Coffee-break / beginner modes have no up staircases: test `<` in Normal.
+- Surface: let the stairs BFS cross unknown grids (travel does), so `>`
+  in town finds the entrance at night.
 
 ### A3b. Enter menu
 - **Reuse the variant's own menu** and rebind it to Enter (`'\r'`, `'\n'`)
@@ -678,6 +688,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `lib/help/*.txt` markup (`<color:x>` spans, `<topic:>` anchors, `<link:>`
   in-page links), not the stale white-on-black `lib/help/html/`. Tree:
   Hengband → Chengband (2010) → PosChengband (2012) → ComPosband (2017).
+- Stage 9: hook in `files.c` `close_game()` (not scores.c); score =
+  `hof_score()`, turns = `turn_real(game_turn)` as `score_current()`;
+  strip " while helpless" from `died_from`. `^A n` name lookup failed,
+  the r_info number works. `files.c` is CRLF: edit in binary mode.
 
 ### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
 - Official repo `hengband/hengband`, newest release tag = `master`; English
@@ -695,12 +709,23 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   every minimum at maximum: `n` on each stat sets it to 3. Birth screens
   flush input: space scripted keys ~200 ms.
 - Tiles: prefs map `R:`/`K:`/`F:` by JSON id (not tval:sval); own 8x8 =
-  72.5% (16x16/32x32 sheets not shipped) → Shockbolt.
+  72.5% (16x16/32x32 sheets never in git) → user chose Adam Bolt
+  16x16 anyway (Frog's `16x16.bmp` + `graf-new.prf`, remapped to ids).
 - ASan: `path_parse("~")` uses `getpwuid`, not `$HOME`: compile the test
   build's `main.cpp` + `main/angband-initializer.cpp` without
   `PRIVATE_USER_PATH`. Bugs: `open_auto_dump()` `!fpp` for `!*fpp`,
   `path_parse()` throws on `~unknownuser`, monster knowledge `r` on an empty
   group. Birth-aware driver: pyte (`pip install pyte` in a venv) + pty.
+- Stage 2: explore on `X` (`cmd-action/cmd-explore.cpp`): `X` was a `w0`
+  keymap (`pref-key.prf` `C:0:X`) and a command-menu key
+  (`request_command()`), both removed for keyset 0. Stairs walk =
+  `Travel::set_goal()` + a `process_player()` branch after travel (travel
+  refuses without light). 3d: `auto_more` still stops when no term has
+  the MESSAGE flag; use `skip_more` too. New-character option defaults
+  come from `lib/pref/pref-opt.prf` (`X:`/`Y:` lines beat the table
+  defaults): `web/build.sh` rewrites the staged copy. A leftover test
+  save keeps its options: delete the test IDBFS databases first. ASan:
+  help `%` Goto File with an unknown name aborts (uncaught throw).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
