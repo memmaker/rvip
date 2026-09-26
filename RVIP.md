@@ -611,6 +611,19 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   (autosave right after start; `be_end()` deletes it unless saved with `S`).
   Test an autosave early: a mid-game `savegame()` hit an upstream
   `lcreat(NULL)` bug (frozen screen).
+- **Ularn / Larn 12 (termcap, `~/Games/ularn`):** no stair commands: stepping
+  on stairs, doors, the entrance asks "(d) go down?"-style questions. `<`/`>`/
+  explore answer them from C with a one-shot reply that only a non-command read
+  takes (`wc_answer()`), never with queued keys (a blocked step would run the
+  answer as a command). `yylex()` blocks: hook `parse()` before it with a step
+  function that polls the keyboard (`be_poll()`: short sleep, non-blocking key).
+- Larn-family screens keep sleeping monsters drawn after you walk away: count
+  "monster in view" only near the player (Ularn: 5 cells), or explore stops
+  across the map. Ularn has no colours: colour map cells in the shim by
+  `item[][]`/`mitem[][]` when the screen char matches the game's own char.
+- Testing stairs: Ularn's level 1 breeds lemmings; test deeper stairs natively
+  (keys piped into the test binary, wizard `=` + `Z` teleport; its password is
+  read with `fgets(stdin)`, so native only).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
