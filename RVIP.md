@@ -456,6 +456,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   redraw when rows/cols change.
 
 ### A6b. Sound and music
+- **Never `fetch()` a `.cfg`/`.prf`/other non-web file from the page:** the
+  server sends it as `application/octet-stream` and the Claude browser pane
+  turns that into a download prompt on every page load. Stage such files into
+  the preload (`web/stage/lib/xtra/sound/sound.cfg`) and read them with
+  `Module.FS.readFile(path, { encoding: 'utf8' })`, lazily on first use (the
+  FS is ready by then). TinyAngband's `web/tinyangband.js` `loadSoundCfg()` is the pattern.
 - Prefer the variant's samples (`lib/xtra/sound/sound.cfg`). Fill empty or
   broken events from Dubtrain (`~/Downloads/Dubtrain Angband Sound Pack
   v3.1.0`, same event names), copy only used `.wav`s. Events neither covers
