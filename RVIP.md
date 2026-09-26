@@ -379,13 +379,20 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   turns. Also stop when a step did not move the player (an unseen monster
   is attacked silently) and without light.
 - New-message stop: snapshot `message_num()` and set `auto_explore` *before*
-  the move, so messages and `disturb()` from the move itself win.
+  the move, so messages and `disturb()` from the move itself win. Where a
+  repeated message only bumps a count (FrogComposband), clear the flag in
+  the message print function instead.
+- Rubble: dig it (`do_cmd_tunnel_aux()`) and re-set the flag after the dig
+  so its own "You dig" messages don't stop. When known traps/locked doors
+  cut the only way, say so instead of "Nothing left to explore".
 - Open doors by calling the open helper directly, not an "alter" command
   that prompts for a direction. Locked door: stop, mark it, skip it on the
   next press.
 - The key must be free in **both** the command table and the keymaps in
   `lib/pref/pref.prf` (`C:0:` lines). Quickband: `X` was a `w0` keymap and
   `` ` `` is turned into Escape by the input layer, so explore went on `H`.
+  Also check `request_command()` for keys that open a command menu
+  (FrogComposband: Enter/`x`/`X`); order of preference: `H`, then `X`.
 - Help files: `cmdlist.txt` / `command.txt`, `cmddesc.txt`.
 
 ### A3. Stairs
@@ -395,6 +402,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   wilderness map) untouched.
 - The monster-in-view refusal is for explore only: a stair walk may flee
   (`disturb()` still stops it each time a monster moves).
+- A game with its own travel (`travel_begin()`, Hengband family): BFS only
+  picks the staircase, travel walks; a `process_player()` branch after the
+  travel one takes the stairs once travel has stopped on them.
+- Coffee-break / beginner modes have no up staircases: test `<` in Normal.
 
 ### A3b. Enter menu
 - **Reuse the variant's own menu** and rebind it to Enter (`'\r'`, `'\n'`)
@@ -582,8 +593,15 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Tiles: `graf-new.prf` uses `K:tval:sval` (k_info numbers `N:*`): count
   objects by their `I:` line. Own 16x16 = 59.4% → Shockbolt.
 - ASan: macro trigger key burst overflows `buf` (`cmd4.c`
-  `do_cmd_macro_aux()`, same bug as Zangband's). Random-key driver: leave
-  out `_` (autopick editor eats every key) and `@` (macro menu).
+  `do_cmd_macro_aux()`, same bug as Zangband's; also `autopick.c`
+  `insert_macro_line()`), knowledge monsters visual mode on an empty group
+  reads `r_info[-1]`. Random-key driver: leave out `_` (autopick editor
+  eats every key) and `@` (macro menu).
+- Explore on `X` (end of `cmd2.c`, stairs via `travel_begin()`); `X` taken
+  out of the command-menu keys. No auto_more option: `msg_line_flush()`
+  skips `-more-` under `USE_WEB`. Beginner = coffee-break (no `<`).
+  `sound.cfg` goes in the preload, not a `fetch()` (`.cfg` is served as a
+  download).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
