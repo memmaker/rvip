@@ -1275,6 +1275,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   manual, but say on the page they are rebuilt. A release zip that may hold the original
   doc is a download: ask the user, don't fetch it in a stage agent. Index checkout dirty
   from another session: clone, edit, push and `deploy.sh` from the clone.
+- **Stage 9:** one C hook `port_run_end(killer)` in MAIN.C `doquit()` and `doexit()`
+  (before its key wait): `"quit"` = quit, `"escaped"` = win only with the Sapphire in the pack
+  (else quit), rest = death. Wizard mode is immortal (`wizard == YES`): for a live death, `^W`
+  frakola, `>` x22 (wizard descends anywhere), `^W` again (wizard = 2, mortal), walk around.
+  `make.py` `ints()` wants `name[] =`: rewrite `mon_tile[55]` first (as roguepc). Run only the
+  new game's function (exec the file minus the last call line), not the whole script.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
