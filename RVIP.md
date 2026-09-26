@@ -56,7 +56,7 @@ tree; grep for what the handover names. Merge stages only when the user asks.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -1071,8 +1071,45 @@ was different.
   `port/proto.h` (included from `compat.h`). No `link()` in MEMFS → macro
   in `unixunix.c`. The page must set `ENV.HACKDIR`. Autosave: restore
   object description order (`oc_descr`) before `dorecover`.
-- `gh repo create` (public) is blocked by the auto-mode classifier: ask the
-  user to run it, then continue.
+- `gh repo create` (public) was blocked by the auto-mode classifier; from the
+  main session in bypass mode it worked (2026-09-26):
+  `gh repo create memmaker/<name> --public --source . --remote memmaker --push`.
+
+### O-SLASH'EM (0.0.7E7F3, NetHack 3.4.3 family; `~/Games/slashem`, worked example)
+- Window port + web harness copied from `~/Games/nethack50`
+  (`win/web/winweb.c`, `web/`). Same layout: `sys/unix/setup.sh`,
+  `util/makedefs`. Applies to every 3.4.3-family game.
+- **Data files:** `.lev`/`dungeon` headers hold `unsigned long` (8 bytes
+  native, 4 in wasm32) → "Configuration incompatibility". Build
+  `lev_comp`/`dgn_comp` with emcc (`-sNODERAWFS -sENVIRONMENT=node`) and run
+  them under node (`web/build.sh`).
+- `make` serial only: util's yacc rules race on `y.tab.c` under `-j`.
+- ASan: save.c `nul[40]` is written as `sizeof(struct fruit)` = 48 on
+  64-bit; use `nul[64]`.
+- `toplines` is set only by the tty port: a custom window port must copy
+  each message into it, or explore's "new message" stop never fires.
+- Explore: `test_move(TEST_TRAV)` passes closed doors, so explore opens
+  them itself (`doopen()` split into `doopen_indir(x,y)`); skip boulders;
+  remember "locked" doors per level.
+- Check where an "existing Enter menu" really is: SLASH'EM's Main Menu is
+  on Esc and `` ` ``; `~` was a duplicate binding (now explore).
+- Enter menu built from `dat/hh` at run time. Item prompts: a one-shot
+  `getobj()` hook (pushed keys get eaten by y/n floor prompts). Menu key
+  fields `unsigned char` so M- keys match.
+- No "waiting for a command" flag in 3.4.3: set one in `parse()`
+  (`web_at_cmd`) for the prompt line and the checkpoint. No `SELF_RECOVER`:
+  port `util/recover.c` into `getlock()` (~40 lines); checkpoint once right
+  after restore too.
+- No sound lib: hook in the message path (`win/web/websound.c`, the
+  USER_SOUNDS idea), wavs synthesized by `web/mksounds.py` (CC0); load the
+  music file on first play only. Docs: `parse_nethack343()` in
+  build-docs.py reads 3.4.3's column-format `hh`.
+- Web-only testing: `-D` can't unlock wizard mode (emscripten `getpwuid`),
+  use a temporary C patch and revert it; `-d` must be the first argument;
+  the browser pane has no region zoom → read canvas pixels with JS;
+  Asyncify yields every 50 ms, so a key interrupt is testable only by
+  queueing the key before the walk; synthetic pointer events can't drag
+  dividers (use `computer`).
 
 # Part W — Web port (WASM, step 7)
 
@@ -1155,6 +1192,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Decker | `~/Games/decker` (remote `memmaker`) | memmaker/decker |
 | Super-Rogue | `~/Games/srogue` | memmaker/srogue |
 | NetHack 5.0 | `~/Games/nethack50` (branch `NetHack-5.0`) | memmaker/nethack50 |
+| SLASH'EM | `~/Games/slashem` (remote `memmaker`, branch `main`) | memmaker/slashem |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
@@ -1412,3 +1450,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - Test characters: throwaway name, isolated `HOME`/save dir where the game
   allows; otherwise delete every save/notes file the test created (on the
   live site saves sit in the user's IndexedDB: test locally, not there), and nothing else.
+- **Cleaning test saves in the browser:** delete ONLY the game's own IDBFS
+  database on the test origin (`indexedDB.deleteDatabase('/<game>')`),
+  never all databases: every game on that origin keeps its saves there (one
+  agent wiped all games' local test saves on localhost).
