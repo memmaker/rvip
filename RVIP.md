@@ -347,6 +347,7 @@ Worked examples:
 | Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/zangband/ | `H` |
 | FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/frogcomposband/ | `X` |
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
+| Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
@@ -358,6 +359,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   its `dev` branch has the fix). Name the branch + commit in the handover.
 - Git drops empty folders: recreate `lib/save`, `lib/user`, `lib/apex`,
   `lib/bone`, `lib/info` (whatever `init2.c` expects) or saving fails.
+- Archive drops: check the upstream commit has content before stage 1
+  (`git ls-files -s | grep -c ' e69de29'` = empty blobs, `find . -type f
+  -size 0`). Easyband's solid RAR was committed as 210 zero-byte files by
+  p7zip/7zz; The Unarchiver's `unar` reads it. Spot-check `wc -c src/*.c`.
 
 ### A1. Compile
 - Prefer the **X11 frontend** (`main-x11.c`): old Carbon frontends don't
@@ -375,6 +380,16 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `sscanf("%lu")` into a 32-bit `u32b`; stat tables indexed with a negative
   value during birth. Remove all `.o` files afterwards (including subfolders
   like `gtk/`).
+- 2.9.x-era `h-type.h` makes `u32b` an `unsigned long` unless `L64`: on
+  64-bit hosts `Rand_div()` never returns (birth hangs). Use `int` under
+  `__LP64__` (wasm32 is unaffected, only the native ASan build shows it).
+  Old `main-gcu.c` tests `_POSIX_VERSION` before any header defines it and
+  never puts the tty raw: build the test binary with `-DUSE_TPOSIX`; current
+  ncurses needs `getcury(curscr)` for `curscr->_cury` (Easyband).
+- Variants that add objects: check every flavour table against the highest
+  sval per tval in `k_info.txt` (Easyband: food sval 20 vs 20 mushroom
+  flavours, scrolls to 52 vs `MAX_TITLES` 50); one Python max per tval
+  finds them before ASan does.
 
 ### A2. Auto-explore
 - Port the self-contained BFS explorer (Sil-Q / ToME / Quickband
@@ -514,6 +529,22 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   names against the ids before regenerating (Hengband). Old A.B./8x8
   prefs map the unknown grid to a text `x`: give it an empty cell.
   Small sheets (16 px): zoom steps in whole multiples only.
+- Some edit files have no index on `N:` lines (Easyband `r_info.txt`:
+  `N:name`, numbered in file order from 0 by `init1.c`): coverage scripts
+  and generators must fall back to file order.
+- **No big-tile mode (2.9.x):** square text cells for tiles make an 80×24
+  map a few px per grid and space the sidebar out. Add both instead
+  (Easyband `defines.h` + `main-web.c` `web_set_view()`): the map view size
+  (`SCREEN_HGT/WID`) follows the main term under `USE_WEB`, a tile takes two
+  half-width text cells (`MAP_STEP`, filler `255/255` in the second cell,
+  the page skips it and draws the tile two cells wide) in `lite_spot()`,
+  `prt_map()`, `print_rel()`, `move_cursor_relative()`; the status row
+  becomes `ROW_MAP + SCREEN_HGT` (also the literal `23` in `prt_depth()`);
+  gameplay areas keep the fixed 66×22 (town layout in `generate.c`,
+  detection and magic mapping centred on the view). `dungeon.c` sets
+  `Term->fixed_shape`: drop it for the web or `Term_resize` silently fails
+  while the page's canvas changes; after a main-term resize call
+  `do_cmd_redraw()`.
 
 ### A5. `play.sh` and windows
 - One `ANGBAND_X11_*` block per window:
@@ -801,6 +832,34 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   summon: `^A n`, Tab = enter monster id (783 Great Wyrm of Chaos), `,`
   waits. `jlicense.txt` (3) forbids sends to Hengband's own score server
   only. The browser pane is shared with other sessions: always pass `tabId`.
+
+### A-Easyband (Easyband 2.3, 2.9.3-based; `~/Games/easyband`, `HANDOVER.md`, cloud run)
+- Easyband 2.3 (Andres Zanzani) ← GSN2Band10 (Gwidon S. Naskrent) ←
+  Angband 2.9.3; archive drop, no history (`unar` for the solid RAR).
+  Sources `SRC/` (all `*.c` except `main*`/`maid-*`/`Readdib.c`;
+  `Makefile.std` is stale), prefs in `lib/user`.
+- z-term 2.9.3: `TERM_XTRA_CLEAR`, no big-tile mode (added: A4), globals
+  `inkey_flag`, `p_ptr->is_dead`, `p_ptr->depth`, `op_ptr->window_flag[]`,
+  `option_norm[OPT_*]`; `main.c` `if (!done)` chain; `init_angband()`
+  zeroes the window flags (set them after it). `USE_TRANSPARENCY` in
+  `h-config.h`, `SAFE_SETUID` off.
+- ASan: `u32b` long on LP64, flavour tables too small for the new food/
+  scroll svals, macro trigger burst (`cmd4.c`), `main-gcu.c` opaque
+  `curscr->_cury`.
+- Tiles: own Adam Bolt 16x16 = 87.8% (129 new monsters have none) →
+  Shockbolt 99.8%. Stage 4 in the cloud used square cells (no big tiles):
+  12 px grids at 1280 px, 6 px in the Mac pane; fixed on the Mac (A4).
+- Death test: `^A y n` asks for the monster's *full name*; summoned
+  monsters sleep, walk into it. Ctrl-X asks "Press Return" and shows the
+  Hall of Fame before the page's overlay.
+- Docs (cloud): `web/make-help.py` carries a `GAME` dict in the Docs
+  fields; on the Mac it went into `build-docs.py` (`parse_easyband()`:
+  2.9.3's `Name (k) or Name (rk)` help headers) and `guides.py`, generated
+  by exec-ing make-help.py with the Docs path disabled.
+- Sound: own samples for 15 events, only empty events from Dubtrain
+  (`zap`→`zap_rod`, `stairs`→`stairs_down`).
+- Messages: fold repeats in `fix_message()` but not the blank `" "` lines
+  birth writes around its `====` separator (they showed as ` (x2)`).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1958,6 +2017,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   Quickband's save). Preload to `/<name>/lib`
   (`--preload-file web/stage/lib@/<name>/lib`), `FS.chdir('/<name>')` in
   `preRun`.
+- Pre-3.0 Angband keeps the pref files in `lib/user`: don't mount IDBFS
+  there (the mount hides the preloaded files); persist `save/apex/bone`
+  plus an own `/<name>/web` for `web-layout.json` (Easyband).
 - Link `-lidbfs.js`, export `IDBFS`. In `preRun`: `FS.mkdirTree` +
   `FS.mount(IDBFS)` per save dir, then `FS.syncfs(true)` inside
   `addRunDependency`/`removeRunDependency` so `main()` waits.
@@ -2049,6 +2111,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - `incompatible-pointer-types` errors (find with
   `-Wno-error=incompatible-pointer-types` and grep); `safe_setuid_*` guarded
   with `#if defined(SET_UID) && !defined(USE_WEB)`; no X11-only helpers.
+- wasm `setuid()` fails: undefine `SAFE_SETUID` under `USE_WEB` (2.9.x
+  quits at start with "setuid(): cannot set permissions").
 - **Show crashes on the page:** a trap after an Asyncify resume is an
   *unhandled promise rejection* (bypasses `onAbort`): listen for
   `unhandledrejection` and `error`, show "The game crashed … reload".
@@ -2073,6 +2137,13 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `shift+period` arrives empty (send `>`); no keypad keys (dispatch with
   `code:'Numpad5'`); `ctrl+s` has no separate Control keydown.
 - A stale module after rebuilding: `fetch(f, {cache:'reload'})`, then reload.
+  Or serve with `Cache-Control: no-store` (a 6-line `http.server` subclass).
+- Cloud runs (no browser pane): Playwright 1.56 matches the preinstalled
+  `chromium-1194` (`npm i playwright@1.56` in a scratch dir, `NODE_PATH`);
+  a text shadow of term 0 (wrap `Module.qb.text/wipe/clear`) reads the
+  game. Attach request listeners before `goto` (`new Audio()` fetches the
+  music at load). Headless passes still miss layout problems: the Mac check
+  in the pane is required (Easyband's tiny tile map).
 - **Checklist:** title → birth → map with tiles → every window filled
   (inventory, visible list, messages, recall) → shop → stairs → help, Enter
   menu → window drag/zoom/rename, layout survives reload, zoomed map
