@@ -886,6 +886,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   (`zap`→`zap_rod`, `stairs`→`stairs_down`).
 - Messages: fold repeats in `fix_message()` but not the blank `" "` lines
   birth writes around its `====` separator (they showed as ` (x2)`).
+- Stage 9 (Easyband): hook `files.c` `close_game()` top of the `is_dead` branch (as
+  Zangband), `web_run_end()` in `main-web.c`; score = `total_points()`,
+  name = `op_ptr->full_name`, killer = `died_from` (`monster_desc(0x88)`).
+  r_info has no index numbers: killer art numbers `N:` in file order from 0.
+  Dispatched `keydown` Escape/Backspace are ignored at birth (letters work):
+  use real keys (`computer key`). `^A y n` a unique (Morgoth) in town places
+  nothing; a non-unique (Great Hell Wyrm) kills in one turn.
 
 ### A-FAangband (FAangband 2.0.1, 4.2 code base; `~/Games/faangband`, `HANDOVER.md`, cloud run)
 - Upstream NickMcConnell/FAangband `master` @ `0d85203`; A-4.2 with
@@ -931,13 +938,6 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   so on the page. Plain 2.9.x help → `web/mkmanual.py` (one `<pre>` per file,
   `help.hlp` order); join its nav links with spaces or they don't wrap at
   375 px. Slash-joined word lists (`A/B/C/D`) in shrine tables overflow too.
-- Stage 9: hook `files.c` `close_game()` top of the `is_dead` branch (as
-  Zangband), `web_run_end()` in `main-web.c`; score = `total_points()`,
-  name = `op_ptr->full_name`, killer = `died_from` (`monster_desc(0x88)`).
-  r_info has no index numbers: killer art numbers `N:` in file order from 0.
-  Dispatched `keydown` Escape/Backspace are ignored at birth (letters work):
-  use real keys (`computer key`). `^A y n` a unique (Morgoth) in town places
-  nothing; a non-unique (Great Hell Wyrm) kills in one turn.
 - Stage 8 (FAangband): the first-release date is in the r.g.r.a announcement
   (`rec.games.roguelike.angband.narkive.com`, search "New variant <name>"); old
   angband.oook.cz forum threads: web.archive.org CDX
@@ -946,6 +946,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   one `<pre>` per file in toctree order, like the 2.9.x help. A 4.2 rewrite has
   vanilla's git history and a `changes.txt` that starts at 2.0: add the GitHub
   release notes (`gh release view <tag> --json body`) and link the old diffs.
+- Stage 9 (FAangband): `web_run_end()`/`js_beacon` sat in `main-web.c` from
+  stage 1 but nothing called it: grep the caller, not the definition. Hook =
+  Tactical Angband's one line at the top of `score.c` `enter_score()` (before
+  the cheater/wizard returns); retire `Q` = `ev=quit`, winner retire = win.
+  Killer art: `make.py` `tactical('<game folder>')` for any 4.2 Shockbolt Dark
+  port. Pane keys: shifted keys (`Q`, `@`, `Y`) and typed text at prompts get
+  lost; dispatch `keydown` from JS per char. `^A` asks its confirm after the
+  first debug key; `n` + name summons (`dracolisk` kills in town in 1 turn).
 
 ### A-NPPAngband (NPPAngband 0.5.1; `~/Games/nppangband`, `HANDOVER.md`, cloud run)
 - Case A but **3.1-era** code (game-cmd.c, ui-menu.c, cmd-obj.c
