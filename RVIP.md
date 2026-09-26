@@ -954,6 +954,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Mac check of the cloud build: the map already follows the window (3.1's
   `SCREEN_HGT/WID` come from `Term->hgt/wid`), unlike Easyband. The one
   real-browser bug: sub-windows blank after every resize (W3).
+- Stage 7 (repo split as A-Easyband): `git filter-repo` keeps the hash of
+  every commit it does not touch, so the upstream commit (`b1d1d85`) stayed
+  the same here (Easyband's changed because its upstream commit itself was
+  rewritten); empty commits (a bundle-only "refresh" commit) are dropped.
+  The cloud had already written a stub `<!--og-->` block: replace it, don't
+  add a second one. `roguelikes-index` push was rejected by another
+  session's push: `git pull --rebase`, then push and deploy.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2058,6 +2065,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | FAangband | `~/Games/faangband` (remote `memmaker`, branch `main`; upstream NickMcConnell/FAangband `main` @ `0d85203`; cloud history with the `rvip/` bundle: private memmaker/faangband-cloud, `~/Games/faangband-cloud`) | memmaker/faangband |
 | MAG | `~/Games/mag` (remote `memmaker`, branch `main`; upstream = DOS source drop `~/Downloads/mag_src` @ `cc36a63`; cloud history with the `rvip/` bundle: private memmaker/mag-cloud, `~/Games/mag-cloud`) | memmaker/mag |
 | Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud, `~/Games/easyband-cloud`) | memmaker/easyband |
+| NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`; cloud history with the `rvip/` bundle: private memmaker/nppangband-cloud, `~/Games/nppangband-cloud`) | memmaker/nppangband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
