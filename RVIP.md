@@ -673,6 +673,13 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
 - Testing stairs: Ularn's level 1 breeds lemmings; test deeper stairs natively
   (keys piped into the test binary, wizard `=` + `Z` teleport; its password is
   read with `fgets(stdin)`, so native only).
+- Ularn stage 5 (web page): name = a C prompt before `makeplayer()` (`rvip_askname()`) written as
+  `name: "…"` to the game's own `.Ularnopts` in the IDBFS HOME, so `readopts()` reuses it. Death:
+  `clearvt100()` waits for a key under the scoreboard, then the page syncs and reloads (no overlay, no
+  `EXIT_RUNTIME`); `died()` has a second `exit()` that skipped the end hook. Pane clicks: JS sends
+  `0x200|row`, `wc_getch()` turns it into `i` at the command prompt and drops it elsewhere.
+  Larn's `web/deploy.sh` has no guard: copy the guard line from `roguelikes-index/deploy.sh`.
+  Browser death tests are slow (lemmings, strong classes): verify the death screen natively.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -1447,7 +1454,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   case parts). `beforeunload` warns while a game runs.
 - Export downloads the save; Import / New character clear the save dir only
   (the layout survives), write, sync, reload.
-- **Game end:** keep `quit_aux` as the web hook (`#ifndef USE_WEB` around
+- **Game end (curses/termcap games):** the game waits for a key on its last screen (from C), then the
+  page syncs and reloads for a new game (Ularn `clearvt100()`); grep every `exit(` in the death routine.
+- **Game end (z-term):** keep `quit_aux` as the web hook (`#ifndef USE_WEB` around
   main.c's `quit_hook` line), sync, show a "Play again" overlay; set
   `plog_aux` so errors show on the page. Don't use `-sEXIT_RUNTIME` for the
   end hook (IndexedDB closes before the last sync): call it from the game's
