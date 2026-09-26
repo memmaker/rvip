@@ -82,7 +82,7 @@ the orchestrator's brief says so.
 | Case | Family | Recognise it by | Worked examples |
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
-| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/) |
+| **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/); MAG (`~/Games/mag`, `HANDOVER.md`; DOS C game on BIOS int 10h/16h, R-MAG) |
 | **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Prospector (`~/Games/prospector`, `HANDOVER.md`; FreeBASIC fbgfx graphics game, own gfxlib2 driver to a canvas, own Gervais/Deon tiles); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/); Forays into Norrendrin (`~/Games/forays`, `HANDOVER.md`; C# console game → .NET browser-wasm in a Web Worker, text only; web: https://ruzzoli.de/roguelikes/forays/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
@@ -983,6 +983,28 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `exit()`) covers death, win (263) and quit (Q = 300, not 256); skip 257 (S). Killer = `monster[x].name`
   (no articles) or `whydead[x-256]`. Test the win natively: wizard `=`, `@p21` (cure potion), take it,
   walk into the town `H`, `g` (drive stdin from Python, reading `ULARN_DUMP` for positions).
+
+### R-MAG. MAG, Mike's Adventure Game (DOS 1988, C; `~/Games/mag`, cloud run)
+- **Port at the BIOS level** when the game calls it itself (`int86(0x10/0x16)`):
+  int 10h services 0/1/2/6/9 on two 80x25 pages + `_setvisualpage`, int 16h
+  with scan codes (`port/pcvideo.c`); the game's shadow screen stays intact.
+  BIOS scroll (service 6) acts on the *displayed* page.
+- **emcc takes `*.C` for C++:** compile each file with `emcc -x c -c` (one
+  command line with `-x c f -x none` is mis-ordered). Uppercase headers
+  included in lowercase: `port/inc/<lower>.h` symlinks. Strip DOS `^Z` EOF bytes.
+- **W8:** `long t; time(&t)` writes 8 bytes into 4 on wasm32; only
+  `emcc -fsanitize=address` finds it (native long is 8). Grep `time(&`.
+- **W5:** saves that `write()` structs with raw pointers restore only in the
+  same build: write a build stamp (addresses of static tables) next to the
+  save, drop saves whose stamp differs.
+- Missing data files in a source drop (`help\*`, `pics\*`): rebuild them from
+  the game's tables and draw coordinates with a script (`data/mkhelp.py`).
+- **Cloud run:** one agent did stages 1-3 with handover + commit + push per
+  stage; RogueBasin/dosgames/crpgaddict blocked by the egress proxy (search
+  result text still gives lineage), GitHub reachable; Ubuntu clang 18 has no
+  ASan runtime, gcc 13 works. Mac pickup: point `build.sh` at
+  `~/Games/rvip-tools/web/rvip-wm.js`, serve with `http.server --directory`
+  (survives `rm -rf dist`).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
