@@ -18,15 +18,39 @@ logic (tiles, menus, explore), not their frontend.
   instead of piling up notes. Say in the handover what was added.
 - Keep worked examples current: when a case gets a new example game, add it
   to its table.
-- **Work in stages** (next section): stop after every stage and wait for the
-  user before starting the next one.
+- **Work in stages** (next section): one sub-agent per stage, driven by the
+  orchestrator. No human in the loop.
 
 ## Stages and checkpoints (mandatory)
 
-An import runs in the stages below, one at a time. **At the end of every
-stage stop and wait for the user to say go.** The pause lets the user compact
-the context; the next stage must need nothing from the old context except
-the handover written at the checkpoint.
+An import runs in the stages below, one at a time. **The main session is the
+orchestrator, not the worker.** For every stage it starts one sub-agent
+(Agent tool, `model: "opus"` = Opus 5.5, brief asks for low effort), waits
+for its report, checks it against the "Done when" column, then starts the
+next stage's agent. A stage agent must need nothing from the old context
+except the handover written at the checkpoint: the brief is the only context
+it gets.
+
+The brief holds, and nothing else: the game folder; which sections of this
+file to read (Part 1 steps of the stage, the case part's matching sections,
+Part W for stage 5, Part 2); `HANDOVER.md` progress section; the standing
+rules (kill only own PIDs, no System Events, no full-screen screenshots, one
+tile set, delete only the game's own IDBFS database, deploy only from pushed
+commits, never touch other sessions' uncommitted work, rvip-tools is never
+pushed, commit trailer `Co-Authored-By: Claude Fable 5.1
+<noreply@anthropic.com>`); what to report back (the handover facts, commit
+hash, open problems, lessons for this file). Sibling worked examples to copy
+from (e.g. `~/Games/larn/port/rvip.c` for a Larn variant) go in the brief
+when the previous handover names them.
+
+The orchestrator does between stages: read the report, tick the stage in
+`~/Games/RVIP-todo.md` if the agent did not, create the GitHub repo
+(`gh repo create memmaker/<name> --public --source . --remote memmaker
+--push`, from the game folder) before stage 7, and start the next agent.
+It never reads the game source itself. When an agent reports a stage as
+failed or partial, start one more agent for the remainder with the failure
+report in its brief; after that, record the gap in the handover and move on.
+When a game is done (stage 8), start stage 1 of the next game in the todo.
 
 | Stage | Steps | Done when | Handover carries |
 |---|---|---|---|
@@ -45,12 +69,14 @@ Checkpoint, at the end of each stage:
    `## RVIP progress`: stage done, next stage, the "Handover carries" facts,
    open problems. Short: only what the next stage needs.
 3. Commit (`RVIP: stage N <topic>`).
-4. Tell the user: "Stage N done. Compact the context now (`/compact`), then
-   say `continue RVIP <name>`." Then stop. Do not start the next stage.
+4. Report to the orchestrator: stage done or not, commit hash, the handover
+   facts, open problems, lessons added to this file. Then stop. Do not start
+   the next stage.
 
-Resuming after compaction: read this file, the game's `HANDOVER.md`
-progress section and `git log --oneline -20`. Do not re-read the source
-tree; grep for what the handover names. Merge stages only when the user asks.
+A stage agent starts by reading the sections its brief names, the game's
+`HANDOVER.md` progress section and `git log --oneline -20`. Do not re-read
+the source tree; grep for what the handover names. Merge stages only when
+the orchestrator's brief says so.
 
 | Case | Family | Recognise it by | Worked examples |
 |---|---|---|---|
