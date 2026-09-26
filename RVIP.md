@@ -1680,6 +1680,20 @@ was different.
   own flag, `save_config`, and redo the screen setup a restart would do
   (`_mwx`, `load_fonts` = new `SCREENRES`): just flipping the flag (as the
   game's own config menu does) draws tiles into the text-sized layout.
+- **Windows (stage 5)**: one framebuffer, so the game names its regions:
+  `keyin` calls `rv_regions(mode, map w, map h, msg y, sidebar x)` (C struct
+  read by JS); mode > 0 only at the main prompts (`rv_menumode`), then JS
+  blits map / sidebar parts into Map / Status; mode 0 (menus, questions,
+  title, death screens) = whole screen in a pop-up over all windows. Messages
+  and inventory as text from BASIC (`dprint` → `rv_msg` with `palette_(col)`,
+  `get_item_list` → `rv_inv`), not blitted. Hidden-pane tests: dispatch a
+  `resize` to force one draw, then read the window canvases.
+- **Upstream bugs (stage 5)**: `set_globals` places stations for the default
+  75×50 map before the talents menu's "Change mapsize" → narrower map =
+  `gen_traderoutes` overflow; recompute `basis().c` there. Global keys in
+  nested `keyin`s (logbook → E → logbook…) overflow the stack: wrap `keyin`
+  with a depth counter and pass the game's own `blocked` from depth 3.
+  `max_maps` kept (unchecked `lastplanet+=1`): 400 MB stays.
 
 ### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
 
@@ -1912,6 +1926,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - Buttons never take focus (`mousedown → preventDefault()`); inputs in title
   bars stop propagation and `onKey` ignores `input/textarea`, so typing never
   reaches the game.
+- **One-framebuffer graphics games** (fbgfx, SDL blits): the game exports
+  its region rectangles and a "main prompt" flag; JS blits the regions into
+  windows and shows the whole screen in a pop-up otherwise (O-Prospector).
 - Tiles show only what the game has: no door tiles for doorways that can't
   be opened or closed (Hack, NetHack 1.3d).
 
@@ -1943,6 +1960,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   case parts). `beforeunload` warns while a game runs.
 - Export downloads the save; Import / New character clear the save dir only
   (the layout survives), write, sync, reload.
+- **Game end (games that END/exit):** call a C `rv_gameover()` before the
+  game's `END`/`exit` that notifies the page and then loops on
+  `emscripten_sleep` forever (Prospector); the page keeps the last screen,
+  syncs, reloads on the next key. `onExit` as fallback for error paths.
 - **Game end (curses/termcap games):** the game waits for a key on its last screen (from C), then the
   page syncs and reloads for a new game (Ularn `clearvt100()`); grep every `exit(` in the death routine.
 - **Game end (z-term):** keep `quit_aux` as the web hook (`#ifndef USE_WEB` around
