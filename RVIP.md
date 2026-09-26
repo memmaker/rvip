@@ -434,6 +434,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Music: the variant's own, else loop
   `~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg` at
   depth 0.
+- Testing: a script `click()` on Music is blocked by autoplay; use a real click and
+  `read_network_requests` (media never shows in `performance` entries).
 - Web port only: `main-web.c` sets `sound_hook`, forces `use_sound` on (the
   page button is the real switch), reports depth each refresh;
   `quickband.js` plays a random sample per event, loops the town music,
@@ -680,6 +682,11 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `0x200|row`, `wc_getch()` turns it into `i` at the command prompt and drops it elsewhere.
   Larn's `web/deploy.sh` has no guard: copy the guard line from `roguelikes-index/deploy.sh`.
   Browser death tests are slow (lemmings, strong classes): verify the death screen natively.
+- Ularn stage 6 (docs + sound): Larn's sound is Dubtrain samples via `web/sounds.py` (there is no
+  `mksounds.py`/CC0 set); `SOUND(e)` goes in the shared header (`src/header.h`, no-op without the
+  port), JS picks a random file per event and plays it with `rvip-sound.js`. Events Dubtrain lacks
+  (`pickup`) get a named sample in `sounds.py`. Check doc facts in the running game: README.spoilers
+  predates 1.7.0 (class list has Geek, not Adventurer).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -1565,7 +1572,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `guides.py`, then `python3 build-docs.py`. Mention the explore key,
   stair-walking and the Enter menu.
 - Every game gets **Tips** and a **new-player guide** (`guides.py`), also
-  shown in the web Help. Outside sources are allowed for them (strategy
+  shown in the web Help. Browser-only games: an "In the browser" section instead of
+  "On this computer". `make-help.py` reads the Docs at build time: after a Docs fix
+  rebuild (or rerun it into `dist/help.html`). Outside sources are allowed for them (strategy
   guides, GameFAQs, wikis); write them in your own words.
 
 ### Editing sources
