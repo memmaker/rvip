@@ -414,12 +414,25 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   item menu in `cmd-obj.c`). TinyAngband: menu on Enter/`x` with
   `command_menu` on → check it lists the added commands. ToME 2: no
   menu yet → port one. Sil-Q **done** (`src/cmd-rvip.c`, see A-Sil-Q). Tactical Angband (4.2): **done**, see A-4.2.
+  Zangband **done** (`cmd_menu()`/`box_menu()` in `util.c`, see A-Zangband).
+- Show each command's key for the *current* keyset by reverse lookup in
+  `keymap_act[mode][]`, and run the chosen underlying command past the
+  keymaps (a `raw` flag in `request_command()`), or roguelike picks the
+  wrong command.
 
 ### A3c. Inventory
 - Quickband code: `textui_inven_screen()` and `do_item_on()` in
   `cmd-obj.c` (reuses `item_actions[]`, so every command keeps its checks
   and prompts), cursor keys in `get_item()`, highlight in `show_obj_list()`
   (`obj-ui.c`), reopen hook in `textui_process_command()` (`cmd0.c`).
+- No command framework (2.7-era variants)? Key queue + preselect:
+  a table of {underlying key, name, the command's own `get_item()` tval/hook
+  and USE_* places} decides which actions fit; the chosen one sets a global
+  `get_item_preselect` and queues the key (`p_ptr->cmd.new`, no keymap);
+  `get_item()` returns that item first if mode and tester accept it.
+  Clear the preselect after the command, not after the inventory command
+  that set it, and only reopen the list when no command is queued
+  (Zangband: both bugs ate the action).
 - X11 keypad Enter + - * / . need macros in `pref-x11.prf` (`^__FF8D\r`
   etc.) or they arrive as junk.
 - Tags: 2/4/5/6/8 are cursor keys in prompts, so only @1/@3/@7/@9/@0 work
@@ -541,8 +554,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   dungeon entrance is a plain `FEAT_MORE`. Option defaults: set
   `option_info[i].o_val` by `o_text` name in `init_web()`.
 - Browser testing: `Module.qb.text(t,x,y,n,a,s)` gets a HEAPU8 pointer and
-  is looked up per call, so wrapping it gives a text shadow of term 0. IDBFS
+  is looked up per call, so wrapping it (plus `qb.wipe`/`qb.clear`) gives a
+  text shadow of term 0. Never set `window.PATH` in the page: it is
+  Emscripten's path module (IDBFS sync crashed). IDBFS
   deletes stay blocked while the game page is open (close its dbs first).
+- ASan pty driver: leave out ^Y (DSUSP on macOS) and ^Z/^C/^\ or the game
+  stops (`ps` state `T`) and the driver blocks; add a SIGALRM watchdog.
 
 ### A-FrogComposband (7.1.salmiak.6; `~/Games/frogcomposband`, `HANDOVER.md`)
 - Newest code is upstream `master` (63 commits after tag `v7.1.salmiak`);
