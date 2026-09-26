@@ -608,6 +608,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   stops (`ps` state `T`) and the driver blocks; add a SIGALRM watchdog.
 - Sound/help (stage 6): no C change needed (`TERM_XTRA_SOUND` → `js_sound`);
   `web/sounds.py` (Dubtrain map) and `web/make-help.py` (TinyAngband's + Credits).
+- Beacon (stage 9): call from `close_game()` (scores.c, `total_points()` is
+  static there) at the top of the `is_dead` branch: `kingly()` rewrites
+  `died_from` to "Ripe Old Age", retiring sets "Quitting", so test
+  `total_winner` first. Uniques are "The X": art drops the `the-` prefix.
+  Win test: the Serpent quest needs DL100 of its dungeon; a temporary build
+  setting `total_winner` in `do_cmd_suicide()` proves the retire path.
+  Keys: `computer type` is ignored by the page; dispatch `keydown` on
+  `document` (`ctrlKey` for `^A`).
 
 ### A-FrogComposband (7.1.salmiak.6; `~/Games/frogcomposband`, `HANDOVER.md`)
 - Newest code is upstream `master` (63 commits after tag `v7.1.salmiak`);
