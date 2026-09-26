@@ -312,4 +312,25 @@
 	})();
 	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
 	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
+	/* Run report (roguelikes-index/server/CONTRACT.md). q = "g=..&ev=..&..." without id/at.
+	   Stamps a unique run id + end time, keeps it in a localStorage outbox and resends
+	   (on every page load and when back online) until the server answers 2xx: a win is never lost. */
+	var OUTBOX = 'rvip-outbox';
+	function box(v) {
+		try { if (v) localStorage.setItem(OUTBOX, JSON.stringify(v)); else return JSON.parse(localStorage.getItem(OUTBOX) || '[]'); }
+		catch (e) { return v ? undefined : []; }
+	}
+	function send(url) {
+		return fetch(url, { keepalive: true, cache: 'no-store' }).then(function (r) {
+			if (r.ok) box(box().filter(function (u) { return u !== url; }));
+		}).catch(function () { /* offline: stays in the outbox */ });
+	}
+	window.RvipWM.flush = function () { box().forEach(send); };
+	window.RvipWM.report = function (q) {
+		var url = '/roguelikes/beacon?' + q + '&id=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) + '&at=' + Date.now();
+		var b = box(); b.push(url); box(b);
+		send(url);
+	};
+	window.addEventListener('online', window.RvipWM.flush);
+	setTimeout(window.RvipWM.flush, 3000);
 })();
