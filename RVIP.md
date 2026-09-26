@@ -698,6 +698,10 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   code as og.py's second loop) and bump "N classic roguelikes" in index.html's tags. Card image
   for 8x16 tiles: 24x5 tiles at 2x = 384x160. The browser pane shows the tall index page black in
   screenshots; check the card via DOM (`find`, img `naturalWidth`).
+- Ularn stage 8 (shrine): same og.py shortcut, hand-write only the shrine's `<!--og-->` block (card
+  image, card `<p>` as description). Check the tree's year and parent on the web: uLarn was 1987
+  (not the README's 1992) and predates Larn 12.4, so it moved from under 12.4 to under Larn.
+  Help files with `^[[7m` markers: escape the text once, then turn markers into `<b>`.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
