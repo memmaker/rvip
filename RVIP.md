@@ -673,6 +673,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `lib/file/credits.txt` (PosChengband = Chris Kousky, ComPosband = Gwilim
   Owen, Frog = Antero Sulka). A stale `<!--og-->` block from stage 5 must be
   replaced, not added to.
+- Stage 8: `^W`/`^A` say "not permitted" until option `allow_debug_opts`
+  is on (`!` `Y:allow_debug_opts`; PosChengband family). Shrine manual: convert
+  `lib/help/*.txt` markup (`<color:x>` spans, `<topic:>` anchors, `<link:>`
+  in-page links), not the stale white-on-black `lib/help/html/`. Tree:
+  Hengband → Chengband (2010) → PosChengband (2012) → ComPosband (2017).
 
 ### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
 - Official repo `hengband/hengband`, newest release tag = `master`; English
@@ -1527,9 +1532,24 @@ was different.
   64-bit `Integer`; the wasm ASan build (`INITIAL_MEMORY=1400MB`,
   `STACK_SIZE=32MB`) found the stack overflow. Tile coverage: dump `gt_no()`
   from a scratch copy after `load_tiles` and compare with `ti_no=` literals.
-- **Hidden browser-pane tabs** throttle `setTimeout` to 1 s (every
-  `emscripten_sleep`): in the test page route delays ≤ 20 ms through a
-  `MessageChannel` before sending keys.
+- **Hidden browser-pane tabs** (other agents front their tabs) stop rAF, so
+  the page draws nothing and screenshots are stale, and throttle `setTimeout`
+  to 1 s (every `emscripten_sleep`). From `javascript_tool`: wrap
+  `window.setTimeout` so delays ≤ 20 ms go through a `MessageChannel`, read
+  the frame with `Module._rv_frame(0)` into a canvas and POST `toDataURL()`
+  (`fetch(..., {mode:'no-cors'})`) to `shotsrv.py` on another port, then Read
+  the PNG.
+- **Explore/stairs (stage 2)**: the game had `#` autoexplore (`walking=12`,
+  `ep_autoexploreroute`) that flooded over the *true* map and never stopped on
+  messages. Fixed in the game's code: flood only seen cells (`planetmap<0` =
+  unseen), target unseen cells on that border (works at visibility 0),
+  `dprint` stops walks on a new (not repeated "(xN)") message, routine
+  at-ship messages do not; hostiles stop only within 6 cells (open planets
+  show them from afar). Stairs/ship = fixed-path walk `walking=13` whose last
+  step sets `Key` (portal / `l` launch) so the game's own handlers run. Space
+  reuses the logbook autopilot (`ap_astar`, `walking=10`) plus a pending
+  land/dock key. Station fleets (index ≤ 5) sit on stations: stopping the
+  autopilot for every fleet made `>` silently do nothing.
 
 # Part W — Web port (WASM, step 7)
 
