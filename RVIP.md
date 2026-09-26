@@ -337,7 +337,7 @@ Worked examples:
 | Sil-Q 1.5.0 | `~/Games/sil-q-1.5.0` | X11, `play.sh` (Cocoa `Sil.app` kept) | `P` |
 | Tactical Angband 0.9beta2 (4.2) | `~/Games/tactical-angband` | Cocoa app, `play.sh`; web | `p` |
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
-| Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | `H` |
+| Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/zangband/ | `H` |
 | FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -1513,6 +1513,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | SLASH'EM | `~/Games/slashem` (remote `memmaker`, branch `main`) | memmaker/slashem |
 | DynaHack | `~/Games/dynahack` (remote `memmaker`, branch `unnethack`) | memmaker/dynahack |
 | uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
+| Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
@@ -1520,6 +1521,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `web/deploy.sh` (step 9).
 - Selection page: edit → commit + push → `./deploy.sh` (check:
   `curl -s https://ruzzoli.de/roguelikes/ | diff - index.html`).
+- Build inputs taken from a sibling repo (e.g. `../quickband/web/music`)
+  go into the game's own `web/` and are committed: the build must work
+  from a fresh clone (Zangband stage 7).
 
 ### W3. z-term frontend (case A)
 - **One C file, `src/main-web.c`**, compiled with `-DUSE_WEB`, forwards the
