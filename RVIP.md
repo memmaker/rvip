@@ -348,6 +348,7 @@ Worked examples:
 | FrogComposband 7.1.salmiak.6 | `~/Games/frogcomposband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband); https://ruzzoli.de/roguelikes/frogcomposband/ | `X` |
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
+| NPPAngband 0.5.1 (3.1-era) | `~/Games/nppangband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/nppangband/ | `H` |
 | FAangband 2.0.1 (4.2) | `~/Games/faangband` (`HANDOVER.md`) | web only (`main-web.c` from Tactical Angband's); https://ruzzoli.de/roguelikes/faangband/ | `p` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -391,6 +392,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   sval per tval in `k_info.txt` (Easyband: food sval 20 vs 20 mushroom
   flavours, scrolls to 52 vs `MAX_TITLES` 50); one Python max per tval
   finds them before ASan does.
+- ASan user dir: `PRIVATE_USER_PATH "~/..."` goes through `path_parse("~")`
+  → `getpwuid()`, not `$HOME`: an isolated `HOME` does not isolate it.
+  Build the ASan objects with `-include cfg.h` (`#define PRIVATE_USER_PATH
+  "./lib/user"`) and run from a copy of `lib/` (NPP). 3.1-era extras (NPP):
+  `seen_type[]` one short in `squelch.c`, a block-scoped buffer used after
+  the block in `obj_desc_inscrip()`, an 8-byte savefile header read into
+  `byte vvv[4]` (`load.c`).
 
 ### A2. Auto-explore
 - Port the self-contained BFS explorer (Sil-Q / ToME / Quickband
@@ -424,6 +432,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   Also check `request_command()` for keys that open a command menu
   (FrogComposband: Enter/`x`/`X`); order of preference: `H`, then `X`.
 - Help files: `cmdlist.txt` / `command.txt`, `cmddesc.txt`.
+- 3.1-era code (NPP): hook `auto_explore` like `p_ptr->running` in
+  `process_player()` (key abort check + a branch before `run_step()`);
+  `<`/`>` off-stairs from `do_cmd_go_up/down`, on arrival
+  `cmd_insert(CMD_GO_DOWN)`. Monster stop with `projectable()`, but skip
+  distant `NEVER_MOVE` monsters (a mushroom patch blocks exploring for good).
 
 ### A3. Stairs
 - Walk to the nearest `CAVE_MARK` staircase, reusing the explorer with a
@@ -533,6 +546,11 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
 - Some edit files have no index on `N:` lines (Easyband `r_info.txt`:
   `N:name`, numbered in file order from 0 by `init1.c`): coverage scripts
   and generators must fall back to file order.
+- Count terrain coverage too: NPP 0.5.1's own 16x16/32x32 prefs have no
+  `F:` lines at all (terrain.txt was rewritten), so a set complete for
+  monsters/objects can be far below 95%. 3.1-era edit files: flavoured
+  kinds are drawn from `L:` (flavour) lines; terrain by name keywords,
+  order matters (`open floor` before `open `, `wall of fire` before `wall`).
 - **No big-tile mode (2.9.x):** square text cells for tiles make an 80×24
   map a few px per grid and space the sidebar out. Add both instead
   (Easyband `defines.h` + `main-web.c` `web_set_view()`): the map view size
@@ -573,7 +591,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   that (FAangband). Create the music `Audio` lazily (a `new Audio()` at load
   fetches the ogg with music off). A page without `<link rel="icon"
   href="data:,">` logs a favicon 404 in every test run.
-- Prefer the variant's samples (`lib/xtra/sound/sound.cfg`). Fill empty or
+- Prefer the variant's samples (`lib/xtra/sound/sound.cfg`). Dubtrain
+  not at hand (cloud)? Upstream Angband ships it (`lib/sounds/*.mp3` +
+  `lib/customize/sound.prf`, CC-BY 4.0): sparse
+  `git clone --filter=blob:none` of angband/angband. Fill empty or
   broken events from Dubtrain (`~/Downloads/Dubtrain Angband Sound Pack
   v3.1.0`, same event names), copy only used `.wav`s. Events neither covers
   (`angband_sound_name[]` in `variable.c`) get a close sample. Quickband:
@@ -910,6 +931,22 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   so on the page. Plain 2.9.x help → `web/mkmanual.py` (one `<pre>` per file,
   `help.hlp` order); join its nav links with spaces or they don't wrap at
   375 px. Slash-joined word lists (`A/B/C/D`) in shrine tables overflow too.
+
+### A-NPPAngband (NPPAngband 0.5.1; `~/Games/nppangband`, `HANDOVER.md`, cloud run)
+- Case A but **3.1-era** code (game-cmd.c, ui-menu.c, cmd-obj.c
+  `item_actions[]`): closer to Quickband than Zangband. Jeff Greene and
+  Diego Gonzalez; upstream nppangband/NPPAngband tag `v0.5.1`.
+- Web module `"web"` (not `"x11"`, W3); window flags after `player_birth()`
+  (W4); redraws from `p_ptr->redraw`, never `p_ptr->window` (W3).
+- Explore `H` (own `explore_seen[][]`, torch-lit floors are forgotten);
+  Enter menu = NPP's own `do_cmd_menu()` (was `^H` only) bound to `\r`/`\n`;
+  item menus on `item_actions[]` + a preselect in `do_item()`.
+- Tiles: own sets 78%/64% (no `F:` lines) → Shockbolt 99.9%,
+  `GRAPHICS_SHOCKBOLT`, bigtile (2 cells per grid). Sound: Dubtrain mp3
+  vendored from upstream Angband.
+- Mac check of the cloud build: the map already follows the window (3.1's
+  `SCREEN_HGT/WID` come from `Term->hgt/wid`), unlike Easyband. The one
+  real-browser bug: sub-windows blank after every resize (W3).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2064,6 +2101,17 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
     flags, push `EVT_RESIZE` onto term 0 if at the prompt. A `dpr` change
     also relayouts.
   - Other command loops: `grep -n EVT_RESIZE src/*.c`, check `inkey_flag`.
+- **3.1-era z-terms** (NPP, Quickband): `TERM_XTRA_CLEAR` and
+  `bigcurs_hook`, no resize hooks: after `Term_resize()` call
+  `do_cmd_redraw()` (main, at the prompt); sub-windows redraw from
+  `p_ptr->redraw` (`PR_INVEN|PR_EQUIP|PR_MESSAGE|PR_MONLIST|...` +
+  `handle_stuff()`): `p_ptr->window` is dead code there, setting it left
+  every sub-window blank after a browser resize (NPP, found on the Mac).
+  Sound via `sound_hook`, not `TERM_XTRA_SOUND`. Bigtile pad = `255/0xFF`.
+- **Module name:** registering as `"x11"` also loads `font-x11.prf` /
+  `graf-x11.prf`; NPP's `font-x11.prf` maps walls/floors to X11-font glyphs
+  (map showed only `@`): register as `"web"` and add `[EQU $SYS web]` to
+  the `pref.prf` line that loads the keysym macros.
 
 ### W4. Windows (step 5)
 - All games use `rvip-wm.js`: `RvipWM({area, menu, wins, multi, single,
@@ -2119,6 +2167,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   a savefile brings its own flags, so old test saves keep old routing).
   Check nothing after `init_web()` resets them: Hengband 3.x `init_other()`
   hard-sets term 1/2 (call the table from there under `USE_WEB`).
+  NPP: `init_angband()` zeroes `op_ptr->window_flag[]` after `init_web()`:
+  set them right after `player_birth()` (`web_new_character()`).
   At most 8 terms (`window_flag[8]`). A new `PW_` flag (e.g. a Character
   window) also needs a `window_flag_desc[]` entry, or `window_mask` drops it.
 - Buttons never take focus (`mousedown → preventDefault()`); inputs in title
@@ -2230,7 +2280,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   game; native tolerates it). Find all with
   `emcc -fsyntax-only -Wno-everything -Wcast-function-type-strict` per file
   and write wrappers with the real signature (Quickband `OPTION_ACTION` in
-  `cmd4.c`: `=` → `w` crashed). Usual places: menu/command tables, hooks,
+  `cmd4.c`: `=` → `w` crashed). NPP's `option_actions[]` has the same casts. Usual places: menu/command tables, hooks,
   `qsort` comparators. Last resort `-sEMULATE_FUNCTION_POINTER_CASTS`.
   Test: open every options entry, subwindow flags all on. Casts that only
   swap typed pointers for `void *` (`vec_free_f`, `vec_cmp_f`) keep the wasm
@@ -2273,7 +2323,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `chromium-1194` (`npm i playwright@1.56` in a scratch dir, `NODE_PATH`);
   a text shadow of term 0 (wrap `Module.qb.text/wipe/clear`) reads the
   game. Attach request listeners before `goto` (`new Audio()` fetches the
-  music at load). Headless passes still miss layout problems: the Mac check
+  music at load). Keys by dispatching `keydown` on `document`,
+  `waitText(regex)` over the shadow instead of sleeps (NPP `web/test/lib.mjs`);
+  log 4xx with `page.on('response')` (the console omits the URL). Emsdk
+  `install latest` works in the container (~2 min); record absolute paths. Headless passes still miss layout problems: the Mac check
   in the pane is required (Easyband's tiny tile map).
 - **Checklist:** title → birth → map with tiles → every window filled
   (inventory, visible list, messages, recall) → shop → stairs → help, Enter
@@ -2322,6 +2375,11 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   parser change compare the other pages with a copy made before. A row
   whose left text reaches the right key with one space (Hengband `>` /
   `^Z`) merges: cut it in the entry's lambda, not in the game's help.
+- Cloud run (no Docs folder): `make-help.py` self-contained (game text
+  inline, key list from the game's own help), shaped like a `GAMES`/`GUIDES`
+  entry; on the Mac generate the entry from it (exec it with the Docs lookup
+  off) and let `make-help.py` prefer the Docs entry when it exists (NPP,
+  Easyband).
 
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
@@ -2333,6 +2391,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `~/Games/rvip-tools/shotsrv.py`), in your own tab. Never take full-screen
   screenshots or send global keystrokes (no System Events).
 - Kill only the server PID you started.
+- Deterministic Angband-family tests: debug `^A` (confirm `y`) `z` zaps the
+  monsters in sight; death without a monster: `Q` → `y` → `y` → `@` (3.1).
 - **Parallel imports share things:** agents of one session share the
   scratchpad folder and the browser pane. Use a subfolder of your own for
   scratch files, check a port with `lsof -iTCP:<port> -sTCP:LISTEN` before
