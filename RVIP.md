@@ -1777,6 +1777,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 | FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
+| LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
