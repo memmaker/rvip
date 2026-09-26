@@ -83,7 +83,7 @@ the orchestrator's brief says so.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Prospector (`~/Games/prospector`, `HANDOVER.md`; FreeBASIC fbgfx graphics game, own gfxlib2 driver to a canvas, own Gervais/Deon tiles); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Prospector (`~/Games/prospector`, `HANDOVER.md`; FreeBASIC fbgfx graphics game, own gfxlib2 driver to a canvas, own Gervais/Deon tiles); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/); Forays into Norrendrin (`~/Games/forays`, `HANDOVER.md`; C# console game → .NET browser-wasm in a Web Worker, text only; web: https://ruzzoli.de/roguelikes/forays/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -1622,6 +1622,17 @@ was different.
   (`_mwx`, `load_fonts` = new `SCREENRES`): just flipping the flag (as the
   game's own config menu does) draws tiles into the text-sized layout.
 
+### O-Forays (Forays into Norrendrin 0.8.4, C#; `~/Games/forays`, worked example, cloud run)
+
+- **Route: .NET browser-wasm, no Emscripten, no workload.** `Microsoft.NET.Sdk.WebAssembly` + `RuntimeIdentifier browser-wasm` builds with the plain SDK (Mono interpreter; runtime pack from nuget.org). Workloads (`wasm-tools`) only for relink/AOT. Mac: official `dotnet-install.sh --channel 10.0 --install-dir ~/.dotnet` (brew cask needs sudo). `PublishTrimmed` + `TrimMode=full`: 27 MB → 6.4 MB.
+- **Blocking input without Asyncify:** runtime in a module Web Worker, keys through a SharedArrayBuffer ring, `waitKey` blocks in `Atomics.wait`; the game loop stays synchronous. Needs cross-origin isolation: `web/coi-sw.js` (service worker adding COOP/COEP, scope = game folder) for plain static hosts.
+- **Frontend:** `Forays/Term.cs` replaces `System.Console` (`Console.` → `Term.`); the game's `Screen.memory` (88×28) is the cell buffer, presented with the GL build's palette at every key wait/sleep. Browser `code`/`key` → `ConsoleKeyInfo` in C# (printables through the game's own char table: any layout). Files mirrored to IndexedDB `/forays/files`. Page state = one JSON from `Rvip.Info()` (panes, whole-screen flag, prompt, log delta, inventory/equipment/visible).
+- **ASan substitute (managed code):** same sources built natively with a headless backend fed seeded random keys, each run ended by save → load in a new process (`web/native/run-seeds.sh`). Found upstream's broken save/load and a file-name crash in minutes.
+- **Mono wasm bug:** storing into a generic `T[,]` threw `ArrayTypeMismatchException` (net8 and net10, fine natively): keep generic 2-D containers on a 1-D array. Bisect with a step counter + one try/catch (console output is lost at the crash).
+- **Stages 2–3:** upstream already had explore (`x`) and travel; the stairs walk flag must survive the arrival message (cancel in `Interrupt()` only when not yet on the stairs). One item cursor in the game's single item prompt (`GetItemSelection`) serves every "Which item?"; `Term.Push(key)` lets any other key run as a command from a list.
+- **Autosave** in a save-on-quit game: call the game's save at the command prompt with no keys pending; delete the save after a finished run. **Sound:** none in the game → 7 WAVs synthesized at build time (`web/make-sounds.py`).
+- No tileset exists (the GL build draws font sheets): text mode.
+
 # Part W — Web port (WASM, step 7)
 
 How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
@@ -1893,6 +1904,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   parallel (`xargs -P $(sysctl -n hw.ncpu) -n 1 sh -c '...' _`; `-I{}`
   hits macOS xargs' 255-byte limit), link once; source list from
   `Makefile.am` `*_SOURCES` (include `.cc`, e.g. bundled `fmt/format.cc`).
+- **C# games:** no Emscripten; .NET browser-wasm with the plain SDK, blocking input via Worker + `Atomics.wait` (O-Forays).
 - Package only the data the game reads (no X11 fonts, BMPs); the server
   **denies `*.txt`**, so text data goes inside `.data`.
 
@@ -1910,6 +1922,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   Test: open every options entry, subwindow flags all on. Casts that only
   swap typed pointers for `void *` (`vec_free_f`, `vec_cmp_f`) keep the wasm
   signature and are harmless; look for changed arity or int/float.
+- **Mono wasm (C#):** generic `T[,]` stores can throw `ArrayTypeMismatchException` that native code never sees → 1-D arrays (O-Forays).
 - K&R code: link and read every `wasm-ld: function signature mismatch`
   (undeclared void calls, wrong argument counts, mismatched externs); add
   prototypes (Part R).
@@ -2005,6 +2018,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - Test characters: throwaway name, isolated `HOME`/save dir where the game
   allows; otherwise delete every save/notes file the test created (on the
   live site saves sit in the user's IndexedDB: test locally, not there), and nothing else.
+- **The browser pane does not run service workers** (registration fails, the script is never fetched): pages that get COOP/COEP from a service worker (Forays `coi-sw.js`) need a local server that sends the headers itself.
 - **Cleaning test saves in the browser:** delete ONLY the game's own IDBFS
   databases on the test origin. IDBFS makes one database per mount point
   (z-term pages: `/<game>/lib/save`, `/<game>/lib/user`, …), so
