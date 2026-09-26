@@ -969,6 +969,16 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   The cloud had already written a stub `<!--og-->` block: replace it, don't
   add a second one. `roguelikes-index` push was rejected by another
   session's push: `git pull --rebase`, then push and deploy.
+- Stage 8: check what the acronym stands for before writing it: stages 5-7
+  invented "Not Pure Plain Angband"; the only source (RogueBasin's page
+  title) says "No Pet Peeves Angband", so card, og, help, README and the
+  Docs entry all needed fixing. First release 0.1.0 = 24 April 2003 on
+  Angband 3.0.3 (RogueBasin infobox via `action=raw`, 0.2.0 announcement on
+  narkive); card/tree year = first release, as Hengband. `NPPchanges.txt` is
+  cp1252 (0x85 = …, not NEL): decode cp1252 for the shrine changelog.
+  Easyband's `mkmanual.py` works for 3.1-era help after `\r`→`\n` and
+  `_` in link names (`insc_macro.txt`). oook.cz and Google Groups rate-limit
+  (429): take facts from RogueBasin and narkive.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
