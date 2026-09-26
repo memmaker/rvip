@@ -62,6 +62,7 @@ When a game is done (stage 8), start stage 1 of the next game in the todo.
 | 6 Docs + sound | 6, 6b, Part 2 "Docs page" | docs built, sound off by default | — |
 | 7 Publish | 8, 9, 10, self-improve | pushed, `git status` clean, tree entry deployed, RVIP.md updated | — |
 | 8 Shrine | 11 | shrine page deployed, Info button + tree ✦ + game-title link live | missing manual/walkthrough reported |
+| 9 Graveyard + leaderboard | 12 | beacon seen for quit (and death if reachable), killer PNGs deployed | fields sent, fields missing and why |
 
 Checkpoint, at the end of each stage:
 1. Test the stage's result in a running game (Part 2 testing rules).
@@ -268,6 +269,34 @@ right after the gold name; the game page's `#bar h1` text becomes
 `<a href="../shrine/<web-name>.html">` (plus `#bar h1 a { color: inherit;
 text-decoration: none; }`). Commit + push both repos, run both
 `deploy.sh` (step 9), check the three links on the live site.
+
+**12. Graveyard and leaderboard (every game).** The game reports each
+finished run to `/roguelikes/beacon`; the server turns the nginx log into
+`data/runs.json` for `graveyard.html` and `leaderboard.html`. Contract:
+`~/Games/roguelikes-index/server/CONTRACT.md`. Worked examples: `rogue5.4`
+(`rip.c` death/total_winner, `main.c` quit), `hack` (`hack.end.c` done),
+`umoria` (`game_death.cpp` endGame).
+- **Hook the game's code**, never the screen: call a `js_beacon` EM_JS in
+  `port/be_web.c(pp)` from the function that ends the run (death, win,
+  quit), reading the game's own variables. Keepalive `no-cors` fetch, all
+  values URL-encoded, errors swallowed (must not break offline play).
+- Send `g` (site slug), `ev` (death|win|quit), `name`, `killer`, `depth`,
+  `score` (the game's canonical score, what its high-score list uses),
+  `turns`, `lvl`. Omit what the game doesn't know.
+- **Real player name**: Emscripten's `getpwuid()` gives `web_user`. If the
+  game never asks, prompt once in the page JS, keep it in localStorage key
+  `<g>-name` (all games share one origin), pass it by env/option
+  (`web/rogue54.js`: `ROGUEOPTS=name=`).
+- **Killer** = the monster name as the game stores it, articles ("a ",
+  "an ", "the ") stripped, so it matches the art slug.
+- **Killer art**: add the game to `roguelikes-index/killers/make.py`, which
+  writes `killers/<g>/<slug>.png` (32px) from the tile set the port shows
+  by default; ASCII games: the glyph in game font and colour. Slug =
+  lowercase, every non `[a-z0-9]` → `-`, no collapsing.
+- Test: patch `window.fetch` in the page to capture the beacon URL, quit a
+  game (death too if cheap). The Claude browser's user agent is filtered
+  server-side, so test runs never reach the live board.
+- Commit + push both repos, run both `deploy.sh` (step 9).
 
 ---
 
