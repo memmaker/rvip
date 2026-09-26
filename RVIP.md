@@ -753,6 +753,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   shop, `g` walks there. ASan: `term_erase()` stepped to column -1 on
   attr 0xFF (colour menu index wraps), racial `U` `/` read
   `power_desc[-15]`.
+- Stage 5: 8 terms, all flags exist (`SubWindowRedrawingFlag`: Objects =
+  `FOUND_ITEMS`, Character = `PLAYER`, Recall = `MONSTER_LORE|
+  ITEM_KNOWLEDGE`); wrong-content bug = `init_other()` overwriting them.
+  `js_quit(msg, p_ptr->is_dead)`; Last words loop cut under `USE_WEB`.
+  Death test: `"` `Y:allow_debug_opts`, `^A k` (ball on self, 1000000,
+  type 10) or suicide `Q y @`. Native ASan build: stage 1's `srcs.txt`
+  lacks later files (`cmd-explore.cpp`); `record-play-movie.cpp` needs
+  `-include sys/time.h`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1800,6 +1808,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `crt_at_cmd`). rvip-wm.js creates the box in `#t-map .body`, hides it on
   a key only while `atCmd`, and shows it again when a poll comes from
   inside a question. No per-game hide logic, no game-side element.
+  z-term (row 0 drawn on the canvas too): page CSS `#t-main .wm-topl`
+  one cell row high, full width, opaque, `white-space: pre` (size from CSS
+  vars the page sets per zoom), else the box wraps over the item list.
   Exempt: Decker, AlphaMan (whole-screen games).
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
@@ -1826,6 +1837,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `init_web()` from one table matching the page's `TERMS` (runs before
   birth and load; birth code may fill empty windows with its own defaults,
   a savefile brings its own flags, so old test saves keep old routing).
+  Check nothing after `init_web()` resets them: Hengband 3.x `init_other()`
+  hard-sets term 1/2 (call the table from there under `USE_WEB`).
   At most 8 terms (`window_flag[8]`). A new `PW_` flag (e.g. a Character
   window) also needs a `window_flag_desc[]` entry, or `window_mask` drops it.
 - Buttons never take focus (`mousedown → preventDefault()`); inputs in title
@@ -1867,9 +1880,11 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `plog_aux` so errors show on the page. Don't use `-sEXIT_RUNTIME` for the
   end hook (IndexedDB closes before the last sync): call it from the game's
   exit function before `exit()`.
-- Hengband family (`floors.c` `init_saved_floors()`): a reload leaves
-  `<save>.Fnn` temp floors behind → "delete old temporal files?" at start:
-  set `force = TRUE` under `USE_WEB`.
+- Hengband family (`floors.c` / 3.x `floor/floor-save.cpp`
+  `init_saved_floors()`): a reload leaves `<save>.Fnn` temp floors behind →
+  "delete old temporary files?" at start (`n` quits): set `force` under
+  `USE_WEB`. Death prompts that loop ("Last words" + "Are you sure?"): one
+  prompt on the web, Esc keeps the default.
 - Save name: uid is 0 and `SET_UID` stays: `-uPLAYER` via `Module.arguments`
   → `/lib/save/0.PLAYER`. Games naming saves after the character: pass the
   newest save's name (push into `Module.arguments`, don't replace the array).
