@@ -1575,6 +1575,17 @@ was different.
   reuses the logbook autopilot (`ap_astar`, `walking=10`) plus a pending
   land/dock key. Station fleets (index ≤ 5) sit on stations: stopping the
   autopilot for every fleet made `>` silently do nothing.
+- **Enter menu / item menus (stage 3)**: all in BASIC with the game's own
+  `menu()`. The main loops set a shared mode right before their `keyin`;
+  `keyin` copies and clears it (nested `keyin`s in menus see 0), turns Enter
+  into the menu and feeds the chosen key back into its own flow (global keys,
+  `allowed` filter, caller's `If Key=` chains). Filter the command table by the
+  prompt's `allowed` string: the sidebar command list (`comstr`) lies. Item
+  actions: preselect via a shared index that `get_item` returns; only let
+  `findbest` take it for the types the action uses (display code calls
+  `findbest` every turn and ate it). `grep -a` on `main.bas` (Latin-1 bytes,
+  plain grep may print nothing). Native ASan with 64-bit
+  `Integer` finds digit buffers sized for 32 bit (`credits()` `z(12)`).
 
 # Part W — Web port (WASM, step 7)
 
