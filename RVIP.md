@@ -1301,6 +1301,12 @@ was different.
 - Testing: `resize_window` sends no `resize` to a background pane tab
   (dispatch one); `deleteDatabase` from the game's own page is "blocked",
   run it from a plain page on the same origin; `-D` not available on the web.
+- Beacon (step 12): call `js_beacon` from `done()` right after `calc_score()`,
+  not at its end: bones/dump/RIP wait for keys, a tab closed there loses the
+  run. A static "killer monster" set in `done_in_by()` must be reset after the
+  report (the next game in the same page would inherit it). DEFIED (escaped
+  with the Amulet) counts as `win`. Cheap death test: Wizard zaps the starting
+  wand of fire at `.`. The pane's `type` action drops keys here: send `key`.
 
 # Part W — Web port (WASM, step 7)
 
