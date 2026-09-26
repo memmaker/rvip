@@ -337,7 +337,7 @@ Worked examples:
 | Sil-Q 1.5.0 | `~/Games/sil-q-1.5.0` | X11, `play.sh` (Cocoa `Sil.app` kept) | `P` |
 | Tactical Angband 0.9beta2 (4.2) | `~/Games/tactical-angband` | Cocoa app, `play.sh`; web | `p` |
 | Umoria 5.7.15 | `~/Games/umoria` | curses shim + X11 (Part R frontend), `play.sh` | `g` |
-| Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | (stage 2) |
+| Zangband 2.7.6 | `~/Games/zangband` (`HANDOVER.md`) | web only (`main-web.c` from TinyAngband) | `H` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
 Quickband did every step (item menus: 3c; sound and town music: 6b) and is
@@ -372,6 +372,13 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `pathfind.c` `explore_step()`): known grids only (`CAVE_MARK` or seen),
   one step per game turn via an `auto_explore` flag checked in the main loop
   next to `running`, cleared in `disturb()`, reset on new level.
+- "Known" must not shrink: variants that forget torch-lit floors
+  (Zangband: `view_torch_grids` off) need the explorer's own seen array
+  (Quickband's `explore_seen`), or it walks back and forth for thousands of
+  turns. Also stop when a step did not move the player (an unseen monster
+  is attacked silently) and without light.
+- New-message stop: snapshot `message_num()` and set `auto_explore` *before*
+  the move, so messages and `disturb()` from the move itself win.
 - Open doors by calling the open helper directly, not an "alter" command
   that prompts for a direction. Locked door: stop, mark it, skip it on the
   next press.
@@ -385,6 +392,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   "stairs" target. Keep any autosave/prompt when on the stairs. Don't walk to
   quest entrances; keep special surface behaviour (ToME/TinyAngband
   wilderness map) untouched.
+- The monster-in-view refusal is for explore only: a stair walk may flee
+  (`disturb()` still stops it each time a monster moves).
 
 ### A3b. Enter menu
 - **Reuse the variant's own menu** and rebind it to Enter (`'\r'`, `'\n'`)
@@ -514,7 +523,19 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `graf-new.prf` against every `N:` of `r/k/f/t_info`) → Shockbolt.
 - ASan (native `-DUSE_GCU`, pty + random keys, isolated `HOME`): window flag
   loop over 32 entries of a 15-entry table (`init2.c`), help menu keys `u`–`z`
-  past `hook[62]` (`files.c`), figurine name out of scope (`flavor.c`).
+  past `hook[62]` (`files.c`), figurine name out of scope (`flavor.c`),
+  macro trigger key burst overflows `tmp` (`cmd4.c`), birth Escape indexes
+  `strings[INVALID_CHOICE]` (`ui.c` `get_player_sort_choice()`).
+- Explore (`H`, end of `cmd2.c`): BFS array indexed from
+  `p_ptr->min_wid/min_hgt` (wilderness window 144x144); in the wilderness
+  only the current town's block rectangle (`place[p_ptr->place_num]`,
+  x/y/xsize/ysize in 16-grid blocks); traps/shops/locked doors are fields
+  (`field_first_known(FTYPE_TRAP)`, `FTYPE_BUILD`, `FTYPE_DOOR`); the town's
+  dungeon entrance is a plain `FEAT_MORE`. Option defaults: set
+  `option_info[i].o_val` by `o_text` name in `init_web()`.
+- Browser testing: `Module.qb.text(t,x,y,n,a,s)` gets a HEAPU8 pointer and
+  is looked up per call, so wrapping it gives a text shadow of term 0. IDBFS
+  deletes stay blocked while the game page is open (close its dbs first).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
