@@ -659,6 +659,10 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   handlers catch Ctrl+letter before Tab/^E/^P tab keys (use 4/6 or `/`).
   Test items: Beginner Rogue has food/scrolls; Alchemist (5) sells
   potions; roguelike via `!` `Y:rogue_like_commands`.
+- Stage 5: 8 terms incl. Objects (`PW_OBJECT_LIST`) and a new Character
+  window (`PW_PLAYER` 0x1000, `fix_player()` in `py_info.c`); `PW_SPELL`
+  is a no-op upstream. Death test without wizard mode: `Q y @` (suicide =
+  real death path); the tombstone's ESC skips the sheet; no score list.
 
 ### A-Hengband (3.0.2.4-Beta, C++20; `~/Games/hengband`, `HANDOVER.md`)
 - Official repo `hengband/hengband`, newest release tag = `master`; English
@@ -1707,6 +1711,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `init_web()` from one table matching the page's `TERMS` (runs before
   birth and load; birth code may fill empty windows with its own defaults,
   a savefile brings its own flags, so old test saves keep old routing).
+  At most 8 terms (`window_flag[8]`). A new `PW_` flag (e.g. a Character
+  window) also needs a `window_flag_desc[]` entry, or `window_mask` drops it.
 - Buttons never take focus (`mousedown → preventDefault()`); inputs in title
   bars stop propagation and `onKey` ignores `input/textarea`, so typing never
   reaches the game.
@@ -1746,6 +1752,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `plog_aux` so errors show on the page. Don't use `-sEXIT_RUNTIME` for the
   end hook (IndexedDB closes before the last sync): call it from the game's
   exit function before `exit()`.
+- Hengband family (`floors.c` `init_saved_floors()`): a reload leaves
+  `<save>.Fnn` temp floors behind → "delete old temporal files?" at start:
+  set `force = TRUE` under `USE_WEB`.
 - Save name: uid is 0 and `SET_UID` stays: `-uPLAYER` via `Module.arguments`
   → `/lib/save/0.PLAYER`. Games naming saves after the character: pass the
   newest save's name (push into `Module.arguments`, don't replace the array).
