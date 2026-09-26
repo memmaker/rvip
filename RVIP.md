@@ -1632,6 +1632,7 @@ was different.
 - **Stages 2–3:** upstream already had explore (`x`) and travel; the stairs walk flag must survive the arrival message (cancel in `Interrupt()` only when not yet on the stairs). One item cursor in the game's single item prompt (`GetItemSelection`) serves every "Which item?"; `Term.Push(key)` lets any other key run as a command from a list.
 - **Autosave** in a save-on-quit game: call the game's save at the command prompt with no keys pending; delete the save after a finished run. **Sound:** none in the game → 7 WAVs synthesized at build time (`web/make-sounds.py`).
 - No tileset exists (the GL build draws font sheets): text mode.
+- **Stage 7:** a cloud run's repo carries the procedure bundle (`rvip/`): rename it (`gh repo rename <name>-cloud`), `git filter-repo --path rvip --invert-paths` in a fresh clone, point `build.sh` at `~/Games/rvip-tools/web/`, then `gh repo create` the public repo from that clone. Card image of a text game: 48×10 cells of the web build's grid drawn with the game's own font sheet (`ForaysImages/font8x16.png`, 8×16 + 1 px gap) = 384×160.
 
 # Part W — Web port (WASM, step 7)
 
@@ -1719,6 +1720,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 | FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
+| Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
@@ -2018,7 +2020,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - Test characters: throwaway name, isolated `HOME`/save dir where the game
   allows; otherwise delete every save/notes file the test created (on the
   live site saves sit in the user's IndexedDB: test locally, not there), and nothing else.
-- **The browser pane does not run service workers** (registration fails, the script is never fetched): pages that get COOP/COEP from a service worker (Forays `coi-sw.js`) need a local server that sends the headers itself.
+- **The browser pane runs no service worker on a local `http://` server** (registration fails, the script is never fetched; on https://ruzzoli.de it works): pages that get COOP/COEP from a service worker (Forays `coi-sw.js`) need a local server that sends the headers itself (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`).
 - **Cleaning test saves in the browser:** delete ONLY the game's own IDBFS
   databases on the test origin. IDBFS makes one database per mount point
   (z-term pages: `/<game>/lib/save`, `/<game>/lib/user`, …), so
