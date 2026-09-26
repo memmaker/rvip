@@ -548,7 +548,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   to `dist/sound`). Dubtrain v3.1.0's cfg names some missing wavs
   (`mco_bite_crunch.wav`): skip files that do not exist. Newer variants add
   events (Frog: `glass`): its assert names them, add them to `MAP`.
-- Music: the variant's own, else loop
+  Variant set with a licence readme that covers most events (Hengband,
+  CC0): fill its gaps from its *own* samples (`FILL` map in
+  `~/Games/hengband/web/sounds.py`), one source, one licence; copy only
+  cfg-referenced wavs (unreferenced ones may come from elsewhere).
+- Music: the variant's own if its readme allows redistribution (Hengband
+  `lib/xtra/music`: CC0/CC BY, credit the readme, ship it in
+  `dist/music`), picked per depth group as its `music.cfg`
+  (`hengband.js` `updateMusic()`), else loop
   `~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg` at
   depth 0.
 - Testing: a script `click()` on Music is blocked by autoplay; use a real click and
@@ -761,6 +768,12 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   type 10) or suicide `Q y @`. Native ASan build: stage 1's `srcs.txt`
   lacks later files (`cmd-explore.cpp`); `record-play-movie.cpp` needs
   `-include sys/time.h`.
+- Stage 6: help markers `***** <OriginalKeyset>` / `<RogueKeyset>` /
+  `<SpecialKeys>` (no indent). Own sound (CC0) + music (CC0/CC BY) in the
+  `lib/xtra` submodule, both used. Licence = `lib/help/jlicense.txt`
+  (Japanese only): Angband licence + keep notices, state changes, no
+  score-server sends; no GPL. Birth for tests: `b a` `a y` `a y` Esc,
+  autoroller `n 2` ×6, Enter ×4.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2037,7 +2050,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - Two keysets: `all` = original list + the roguelike list with
   " (roguelike keyset)" appended (Zangband entry in `build-docs.py`).
   `parse_table()` strips PosChengband-family `<color:x>` markup; after a
-  parser change compare the other pages with a copy made before.
+  parser change compare the other pages with a copy made before. A row
+  whose left text reaches the right key with one space (Hengband `>` /
+  `^Z`) merges: cut it in the entry's lambda, not in the game's help.
 
 ### Editing sources
 - Some sources mix LF and CRLF lines. Python in text mode silently turns
