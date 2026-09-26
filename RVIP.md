@@ -305,6 +305,12 @@ finished run to `/roguelikes/beacon`; the server turns the nginx log into
 - Test: patch `window.fetch` in the page to capture the beacon URL, quit a
   game (death too if cheap). The Claude browser's user agent is filtered
   server-side, so test runs never reach the live board.
+- **Golden rule: a win is never lost.** Winning takes weeks; its record is
+  sacred. Every game must send `ev=win` from the code path that ends a won
+  run (test that the path is reached, not just that it compiles). The
+  server keeps each win as its own write-once file
+  (`/var/lib/roguelikes-stats/wins/<g>/`, see CONTRACT.md); never write
+  code or run commands that overwrite, move or delete those files.
 - Commit + push both repos, run both `deploy.sh` (step 9).
 
 ---
