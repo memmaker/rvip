@@ -83,7 +83,7 @@ the orchestrator's brief says so.
 |---|---|---|---|
 | **A** | Angband and Moria variants | `main-*.c` frontends, z-term (`z-term.c`), `lib/pref`, `lib/edit` | Quickband (most complete), TinyAngband, ToME 2, Sil-Q, Tactical Angband |
 | **R** | Rogue variants (Rogue, Advanced Rogue, XRogue, …) and other plain-curses games (Larn) | plain `curses` calls (`wrefresh`, `newwin`), one 80×24 screen | XRogue (`~/Games/xrogue`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/xrogue/); Rogue PC (`~/Games/roguepc`, SDL2); Larn (`~/Games/larn`, `HANDOVER.md`; web: https://ruzzoli.de/roguelikes/larn/); uLarn (`~/Games/ularn`, `HANDOVER.md`; termcap Larn variant, same pane shim; web: https://ruzzoli.de/roguelikes/ularn/) |
-| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/) |
+| **O** | anything else | — | Omega (`~/Games/omega`, `HANDOVER.md`; curses, web tiles from Kinder's WinOmega (char|colour table); web: https://ruzzoli.de/roguelikes/omega/); ZAPM (`~/Games/zapm`, `HANDOVER.md`; C++ curses + panels, text only; web: https://ruzzoli.de/roguelikes/zapm/); PRIME (`~/Games/prime`, `HANDOVER.md`; ZAPM variant, own X11 `shInterface`, NotEye tiles; web: https://ruzzoli.de/roguelikes/prime/); AlphaMan (`~/Games/alphaman`; QuickBASIC 4.5 → QB64-PE, text only; web via FreeBASIC + Emscripten: https://ruzzoli.de/roguelikes/alphaman/, shrine done); Prospector (`~/Games/prospector`, `HANDOVER.md`; FreeBASIC fbgfx graphics game, own gfxlib2 driver to a canvas, own Gervais/Deon tiles); Decker (`~/Games/decker`, `HANDOVER.md`; Windows MFC GUI game → MFC shim on SDL2; web: https://ruzzoli.de/roguelikes/decker/); Hack 1.0.3 (`~/Games/hack`, `HANDOVER.md`; termcap game, stdout through a VT100 interpreter, DawnLike/NetHack tiles; web: https://ruzzoli.de/roguelikes/hack/); SLASH'EM (`~/Games/slashem`, `HANDOVER.md`; NetHack 3.4.3 family, window port from nethack50, own tiles; web: https://ruzzoli.de/roguelikes/slashem/); DynaHack (`~/Games/dynahack`, `HANDOVER.md`; NetHack4/NitroHack family, new client `web/webwin.c` on the game library, 3.4.3 tiles; web: https://ruzzoli.de/roguelikes/dynahack/) |
 
 Moria variants built on plain curses (e.g. Umoria) are case A for features
 and case R for the frontend (curses shim, panes). Umoria notes: end of
@@ -1455,6 +1455,44 @@ was different.
   with the Amulet) counts as `win`. Cheap death test: Wizard zaps the starting
   wand of fire at `.`. The pane's `type` action drops keys here: send `key`.
 
+### O-Prospector (R197, FreeBASIC graphics game; `~/Games/prospector`, worked example)
+- **Source**: Google Code svn archives are working copies without history
+  (snapshot = first commit); data files may only be in the author's release
+  zips: find them with the Wayback CDX API
+  (`web.archive.org/cdx/search/cdx?url=<site>*`), fetch with `id_` URLs.
+- **FB graphics games (fbgfx, `SCREENRES`)** on the web: build gfxlib2 too
+  (`make gfxlib2 TARGET=wasm32-unknown-emscripten` in the fbc clone) and link
+  your own GFXDRIVER (`port/webgfx.c`: `__fb_gfx_drivers_list`,
+  `fb_hScreenInfo`, `fb_GfxGetJoystick`) before `libfbgfx.a`, so the SDL1 js
+  driver is never pulled. Export a frame function that converts the visible
+  page's dirty lines to RGBA (`__fb_gfx->framebuffer`, `dirty[]`, `bpp`) and a
+  key function posting `EVENT_KEY_PRESS` (`fb_hPostEvent`) plus
+  `fb_hPostKey(ascii or (scancode<<8)|0xFF)`.
+- **Old FB source on FB 1.2x**: `STRING*N` is now N space-padded chars; old
+  code expects the null-terminated N+1 layout (key compares, `desig<>""`
+  loops hang, record layouts) → regex every `STRING*N` to `ZSTRING*(N+1)`.
+  Custom `DRAW STRING` blenders take `ULONG`; `"&18"` lexes as a number;
+  `SELECT CASE AS CONST` and `ON ERROR GOTO` emit computed gotos (wasm cannot):
+  drop `AS CONST`, guard `ON ERROR` with `#ifndef __FB_JS__`.
+- **js rtlib stubs**: `DIR$` finds nothing (compile `rtlib/unix/file_dir.c`
+  into the game); the termlib console needs `__fb_rtlib` (a no-op stub via
+  `--pre-js` when the game is graphics-only).
+- **Emscripten FS**: `CHDIR "dir"` + `CHDIR ".."` through a symlinked folder
+  lands in the target's parent: mount IDBFS on each writable folder instead
+  of symlinking folders (file symlinks are fine).
+- **Stack**: FB locals are big arrays on the C stack (`words(6023) as string`)
+  and menus recurse: 1 MB overflowed silently into the heap (bad free in a
+  string destructor). Use 8 MB like native; find it with
+  `-sSTACK_OVERFLOW_CHECK=2`. 342 MB of static arrays → `INITIAL_MEMORY=400MB`.
+- **ASan both ways**: native headless build (darwin fbc, gfxlib2 compiled from
+  source, `fb_Delay` replaced by a key feeder) finds overflows fast but has
+  64-bit `Integer`; the wasm ASan build (`INITIAL_MEMORY=1400MB`,
+  `STACK_SIZE=32MB`) found the stack overflow. Tile coverage: dump `gt_no()`
+  from a scratch copy after `load_tiles` and compare with `ti_no=` literals.
+- **Hidden browser-pane tabs** throttle `setTimeout` to 1 s (every
+  `emscripten_sleep`): in the test page route delays ≤ 20 ms through a
+  `MessageChannel` before sending keys.
+
 # Part W — Web port (WASM, step 7)
 
 How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
@@ -1716,6 +1754,10 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   **denies `*.txt`**, so text data goes inside `.data`.
 
 ### W8. Code fixes to expect
+- **Stack overflow is silent**: the default 64 KB-1 MB stack runs into
+  static data/heap and shows up later as a bad free or garbage; check with
+  `-sSTACK_OVERFLOW_CHECK=2` and size `-sSTACK_SIZE` like native (8 MB)
+  for code with big local arrays or deep recursion (Prospector).
 - **Function-pointer casts trap** (`function signature mismatch`, kills the
   game; native tolerates it). Find all with
   `emcc -fsyntax-only -Wno-everything -Wcast-function-type-strict` per file
