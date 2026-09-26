@@ -868,6 +868,15 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   only hunks the cloud lacks (`git checkout stash@{0} -- <file>` when the
   cloud never touched the file). Card year from the archive's entry dates
   (`lsar -l`) when the files carry none.
+- Stage 8: dates of 2000-era variants: Bablos' Angband variant list
+  (`angband.pwp.blueyonder.co.uk/<name>.html`) has per-version dates and
+  source/Amiga links; web.archive.org is blocked for WebFetch but `curl`
+  works (`archive.org/wayback/available?url=…`, then the `id_` raw URL).
+  RogueBasin's "latest" date can be the Amiga release. Base version
+  disagreed three ways (page 2.9.1, `defines.h` 2.9.2, readme 2.9.3): say
+  so on the page. Plain 2.9.x help → `web/mkmanual.py` (one `<pre>` per file,
+  `help.hlp` order); join its nav links with spaces or they don't wrap at
+  375 px. Slash-joined word lists (`A/B/C/D`) in shrine tables overflow too.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
