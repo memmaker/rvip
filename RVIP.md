@@ -664,6 +664,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   keeps them only while a menu sets `wc_raw` (else `j`/`k` can't be both command and cursor).
   `Uhelp` page 2 is tab-separated: expand tabs, columns 0/27/56, a cell starts only after a
   blank. Item actions are verb + slot letter (`T` takes none, `w-` puts away); no floor offers.
+- Ularn stage 4 (tiles): same Amiga set in primeau's ULarn mode (`m1u m19u m34u`, `m39v`,
+  `m57v`-`m65v`; objects 15<->16, 80<->82, 93-98 -> o95-o100); `port/mktiles.py` counts the ids from
+  `src/data.c`/`itm.h` and asserts a file per id (100%). Hero = `@` at `playerx/playery` (Larn:
+  standout blank). A disguised mimic gets the tile of the monster it shows, not text.
+- **Key polls: test -1 before masking.** `be_poll() & 0xff` made "no key" 255, so every walk
+  stopped after one step (unnoticed since stage 3: check `~` still walks after any key change).
 - Testing stairs: Ularn's level 1 breeds lemmings; test deeper stairs natively
   (keys piped into the test binary, wizard `=` + `Z` teleport; its password is
   read with `fgets(stdin)`, so native only).
@@ -841,6 +847,9 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   monster/object/feature name, ASCII for anything without a match; random
   appearances (potions, scrolls, rings, wands) hash into NetHack's
   appearance tiles.
+- Browser checks: `build.sh` recreates `web/dist`, so a `http.server` started in it serves 404s
+  (restart it); a hidden pane can return a stale screenshot, so check tiles by canvas pixels
+  (a tile cell has exact palette colours, a text cell antialiased greys).
 - Find the tile for a map cell from the game's own lists (monster at that
   position whose type equals the shown char — mimics stay disguised —,
   object at that position), not from the character alone. Composite sprites
