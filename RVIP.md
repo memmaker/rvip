@@ -1677,6 +1677,8 @@ was different.
 - No tileset exists (the GL build draws font sheets): text mode.
 - **Stage 7:** a cloud run's repo carries the procedure bundle (`rvip/`): rename it (`gh repo rename <name>-cloud`), `git filter-repo --path rvip --invert-paths` in a fresh clone, point `build.sh` at `~/Games/rvip-tools/web/`, then `gh repo create` the public repo from that clone. Card image of a text game: 48×10 cells of the web build's grid drawn with the game's own font sheet (`ForaysImages/font8x16.png`, 8×16 + 1 px gap) = 384×160.
 - **Stage 8:** a licence’s © start year is when work began, not the birth year: Forays says 2011, RogueBasin dates 0.5.0 to 28 Jan 2012 (card and tree fixed). No changelog file? Build `changelog.txt` from `gh api repos/<o>/<r>/releases` notes + `git log`. A debug menu behind `if(false)` counts as “no cheats in any build”.
+- **Stage 9:** hook the one place every finished run passes (Forays: `Main.cs` right after the game loop, `if(!Global.SAVING)`), game → `ITermBackend.Beacon` → worker `postMessage` → page `RvipWM.report`. Killer = the damage source's `Name.Singular` saved in the death branch (not the "killed by …" text). No XP level: omit `lvl`; score = depth (the high score list's rank).
+- **Service-worker COOP/COEP shims break the beacon:** `new Response(res.body, {status: 204})` throws → "Failed to fetch", the report never leaves the outbox. Pass `null` as body for 101/204/205/304 (`web/coi-sw.js`). Test the outbox empties, not just that the URL was built.
 
 ### O-LambdaRogue (LambdaRogue 1.6.4, Free Pascal + JEDI-SDL; `~/Games/lambdarogue`, worked example, cloud run)
 
