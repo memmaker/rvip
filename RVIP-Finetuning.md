@@ -49,6 +49,70 @@ through `port/`). The JS layer only draws it.
   means `tilesReady = false`, and cells fall back to text. Guard `onload` so
   a tile sheet that finishes loading late can't turn tiles back on after
   None was picked.
+- **Autosave must not touch the screen.** Leaving the tab (`visibilitychange`)
+  requests an autosave, which calls the game's own save routine. Routines
+  written to save-and-exit often end by clearing the screen (Super-Rogue
+  `save_file()`: `wclear(cw); draw(cw)`), so the map stayed blank until the
+  next turn. Guard these calls with `#ifndef __EMSCRIPTEN__`. To test,
+  count lit map pixels, run `Module.xr.requestSave()`, count them again, and
+  check that the save file's mtime changed.
+- **DawnLike floors are autotiles.** In `Objects/Floor.png`, every floor
+  style (tile, brick, stone, dirt, grass, and a day and a night version of
+  each) comes as 16 variants. Each variant draws a border on some of its
+  sides. DawnLikeAtlas names them `<style> floor <sides>`, where `<sides>`
+  lists the bordered sides in the order n s w e: `c` (no border), `n`, `s`,
+  `w`, `e`, `ns`, `we`, `nw`, `ne`, `sw`, `se`, `nsw`, `nse`, `nwe`, `swe`,
+  `nswe` (bordered all round, a lone tile). Never use a single fixed
+  variant: `nswe` tiled across a room is a grid of boxes, and `c` alone
+  loses the frame DawnLike draws along walls.
+  - **Rule:** a floor cell gets a border on each orthogonal side whose
+    neighbour is not the same floor kind (wall, rock, blank/unknown, a
+    different floor). Doors, stairs, traps and items lying on this floor
+    count as the same kind. Room floors then get a rim along the walls, and
+    corridors (dirt) become paths bordered on both sides. Take the neighbour
+    from the **real level** (Rogue: `stdscr`), never from the player's view
+    (`cw`). In a dark room or corridor only the 8 cells around the hero are
+    shown, so a view-based rule puts a rim around the lit area that moves
+    with the hero. A border belongs to the terrain; it gives away at most
+    that a seen cell's neighbour is a wall. Secret doors count as wall. An item, trap or
+    stairs covers the terrain on the level map, and items can be dropped in
+    corridors: ask the game which floor lies under them (Super-Rogue
+    `roomin()`: in a room → room floor, else corridor). Use that for the
+    neighbour test and for the floor drawn under the sprite.
+  - **Sheet:** `mkdawn.py` puts all 16 variants of each floor style it uses
+    into 16 consecutive slots by mask (bits n=8 s=4 w=2 e=1; slot base+m
+    holds the variant named by the set bits' letters in n s w e order, or
+    `c` for m = 0, so base+15 is `nswe`). The lookup in `tiles.c` returns
+    `FLOOR_BASE + mask`. Worked example: Super-Rogue (`T_FLOORS`/`T_CORRS`
+    appended by `mktiles.py`, where the NetHack sheet repeats its single
+    floor 16 times so both sheets keep the same slots; `kind()` +
+    `autotile()` in `port/tiles.c`; the map flush already recomputes every
+    cell).
+  - **Redraw:** a floor cell's tile depends on its neighbours, so when a
+    cell changes (a wall or corridor is discovered), send its 4 neighbours
+    again as well. Recomputing the whole 80x24 map on every flush is fine
+    and simpler.
+  - Walls already autotile by name (`lit brick wall left right`, …), which
+    works the same way (sides with a wall neighbour).
+- **DawnLike animation (opt-in).** DawnLike draws a second frame for
+  every character and for some objects: the `*0.png`/`*1.png` sheet pairs
+  (Characters/*, Objects: water, lava, pits, doors, torches, ores; Items/Chest).
+  DawnLikeAtlas lists both frames (`frame` column 0/1, same col/row).
+  - `mkdawn.py` also writes `tiles-dawn-1.png`: the same slots with the
+    sprite from the `...1.png` sheet where it exists, else frame 0 again.
+  - Tiles button: NetHack → DawnLike (still) → **DawnLike|a** (animated) →
+    None. The entry is `['tiles-dawn.png', 'DawnLike|a', 'tiles-dawn-1.png']`.
+  - Every 500 ms, unless `document.hidden`, the map draws from the other
+    sheet. Redraw **only the animated cells**: when the frame-1 sheet has
+    loaded, compare the two sheets once per 16x16 slot (`getImageData`) and
+    set `anim[slot]`. Then redraw a map cell only if `anim[t] || anim[u]`
+    (its sprite or the floor under it), and call `drawCursor()` afterwards.
+    One canvas pass uses a single sheet, so a combined atlas would render
+    no faster. Only the map animates; the Inventory and Visible icons stay
+    still.
+  - Worked example: Super-Rogue (`web/srogue.js` `findAnim`, 53 animated
+    slots). To test in the browser pane (always hidden), override
+    `document.hidden` and compare `canvas.toDataURL()` 500 ms apart.
 - **No cursor on the hero.** `drawCursor` skips the map cell at the hero's
   position.
 - **Zoom is on the Map title bar** (the A−/A+ buttons that the WM puts on
@@ -65,6 +129,19 @@ through `port/`). The JS layer only draws it.
     bitmap font the map text isn't bold.
   To test locally, link `dist/fonts` to `roguelikes-index/fonts` (remove the
   link afterwards).
+
+## Crashes
+
+- **"The game crashed (unreachable)" = a call with the wrong argument count.**
+  In K&R C, `unconfuse();` compiles against `unconfuse(fromfuse)`. Natively
+  it only reads a garbage argument; in wasm a direct call to a definition
+  in another file with a different signature traps. (`-sEMULATE_FUNCTION_
+  POINTER_CASTS` only helps calls through function pointers.) The linker
+  names every such call: run the build and read its warnings,
+  `sh web/build.sh 2>&1 | grep -A2 "signature mismatch"`. Fix each call
+  with the argument the definition expects; the build must print no
+  such warning. Super-Rogue had two: `unconfuse()` in the potion of extra
+  healing, and `teleport(rndspot)` in the pool trap.
 
 ## Movement
 

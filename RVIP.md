@@ -36,8 +36,8 @@ file to read (Part 1 steps of the stage, the case part's matching sections,
 Part W for stage 5, Part 2); `HANDOVER.md` progress section; the standing
 rules (kill only own PIDs, no System Events, no full-screen screenshots, one
 tile set, delete only the game's own IDBFS database, deploy only from pushed
-commits, never touch other sessions' uncommitted work, rvip-tools is never
-pushed, commit trailer `Co-Authored-By: Claude Fable 5.1
+commits, never touch other sessions' uncommitted work, commit
+trailer `Co-Authored-By: Claude Fable 5.1
 <noreply@anthropic.com>`); what to report back (the handover facts, commit
 hash, open problems, lessons for this file). Sibling worked examples to copy
 from (e.g. `~/Games/larn/port/rvip.c` for a Larn variant) go in the brief
