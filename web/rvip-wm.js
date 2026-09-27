@@ -1,7 +1,6 @@
 /*
  * rvip-wm.js: the tiling window manager of every RVIP web port (RVIP.md 5b).
- * Master copy: ~/Games/rvip-tools/web/rvip-wm.js; each game vendors a copy
- * in its web/ (web/sync-wm.sh or `cp`), so deploys stay self-contained.
+ * The only copy: games load it as ../rvip-wm.js; roguelikes-index/deploy.sh uploads it.
  *
  * The game owns its windows (<div class="win" id="t-ID"> with a title bar
  * <div class="t"><span class="name">) and draws into them; this file only

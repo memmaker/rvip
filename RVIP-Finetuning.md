@@ -2,7 +2,7 @@
 
 UI polish for web ports, done first on Rogue 3.6 (`~/Games/rogue3.6`,
 2026-09-27). Apply the same items to other ports. Shared code is in
-`rvip-tools/web/rvip-wm.js` (one copy, build.sh copies it into dist).
+`rvip-tools/web/rvip-wm.js` (one copy; games load ../rvip-wm.js, roguelikes-index/deploy.sh uploads it).
 
 The rule for every item: **what to show is the game's decision** (native C
 through `port/`). The JS layer only draws it.

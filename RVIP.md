@@ -1260,8 +1260,7 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
 - **Cloud run:** one agent did stages 1-3 with handover + commit + push per
   stage; RogueBasin/dosgames/crpgaddict blocked by the egress proxy (search
   result text still gives lineage), GitHub reachable; Ubuntu clang 18 has no
-  ASan runtime, gcc 13 works. Mac pickup: point `build.sh` at
-  `~/Games/rvip-tools/web/rvip-wm.js`, serve with `http.server --directory`
+  ASan runtime, gcc 13 works. Mac pickup: page loads `../rvip-wm.js`, serve with `http.server --directory`
   (survives `rm -rf dist`).
 - **Tiles (R4):** DawnLike by name from DawnLikeAtlas `renamed/`: some
   sprites lack the `_0/_1` suffix, some names are misspelt (`storrmwyrm`);
@@ -2070,8 +2069,9 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
   `~/Games/xrogue/web/` + `port/be_web.c` (curses shim, fixed-size panes,
   no z-term). Rogue 3.6 is the reference for windows and map scrolling.
 - Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`, the
-  only copy: `build.sh` copies it straight into `dist`; never keep or patch
-  one in a game's `web/`.
+  only copy, locally and on the server (`/roguelikes/rvip-wm.js`, uploaded by
+  `roguelikes-index/deploy.sh`). Pages load `../rvip-wm.js` (same for `rvip-sound.js`); never copy them
+  into a game (not `web/`, not `dist`).
 
 ### W0. Presentation lives in the game (rule)
 - **Presentation changes originate in the game's native/WASM code.** The JS
