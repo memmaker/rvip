@@ -2083,6 +2083,13 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
   visible list) comes from the game as its own pane/grid, not cropped out of
   a composited screen in JS. A game that draws one 80×N screen gets pane
   routing in its shim (Part R "R-frontend"), not JS-side slicing.
+- **All text a game sends to a sub-window is trimmed by the game** (every
+  port, when adapting: inventory, equipment, status, messages, visible and
+  other lists, pop-ups): no trailing whitespace on a line, no empty lines
+  after the last one. A grid-backed pane (curses shim) sends its used
+  extent (`be_extent(pane, cols, rows)`, cells in use: Rogue 3.6
+  `port/wcurses.c` pflush) whenever it changes; the page sizes the canvas
+  from that and never trims, scans or scales the grid itself.
 - **Colours always come from the game backend** and are defined in the game
   code (WASM side), never in the frontend/JS: the game sends a colour with
   every cell, list line and message.
@@ -2248,14 +2255,11 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
   text over the map in a pop-up.
-- **Text feeds are sent trimmed, text windows never scale.** Every text
-  feed from the game (inventory, status, messages, lists) has no trailing
-  whitespace on a line and no empty lines after the last one; a grid-backed
-  pane is trimmed to its used cells before display. A text window shows its
-  text at the size the user chose with A+/A−, whatever the window or text
-  size, and scrolls when it does not fit: never scale a canvas to fit the
-  window (a canvas with blank columns scaled into a narrow window shrank the
-  text, and A+/A− changed nothing visible: Rogue 3.6, 2026-09-27).
+- **Text windows never scale.** A text window shows its text (trimmed by the
+  game, W0) at the size the user chose with A+/A−, whatever the window or
+  text size, and scrolls when it does not fit. Never scale a canvas to fit
+  the window: a full-grid canvas scaled into a narrow window shrank the
+  text and A+/A− changed nothing visible (Rogue 3.6, 2026-09-27).
 - **Map camera: the player is always centred** (clamped at the map edges; a
   map smaller than its window is centred). The map never shrinks or clips
   when zoomed in. Single- and multi-window mode alike.
