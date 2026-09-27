@@ -125,14 +125,21 @@ through `port/`). The JS layer only draws it.
 - **No cursor on the hero.** `drawCursor` skips the map cell at the hero's
   position.
 - **Zoom is on the Map title bar** (the A−/A+ buttons that the WM puts on
-  every window). There are no zoom buttons in the top bar. The WM `font`
-  callback maps `map` → `zoomMap`.
-- **A−/A+ sizes one window only.** The WM calls `font(id, d)` with the
-  window's id; keep one size per id (`L.fs[id]`, default 13) and apply it
-  only to that window. Never one shared `L.font` for all text windows (Hack,
+  every window). There are no zoom buttons in the top bar. The map zooms
+  through `zoom: { map: zoomMap }`.
+- **A−/A+ sizes one window only, and the WM keeps the sizes.** It stores
+  `state.fs[id]` in its layout state and sets it as that window's `.body`
+  font-size (also on load). The game keeps no sizes (`fs()`, `L.fs`,
+  `L.font`, `zoomText`, `zoomList` go) and passes `zoom: {id: fn(size, d)}`
+  only for windows that redraw or scale (canvas map, z-term/curses canvas
+  panes); `RvipWM.fontSize(id)` reads a size (e.g. pop-up = `fontSize('msg')`).
+  No new `font(id, d)` callbacks (legacy, still works). Never one shared `L.font` for all text windows (Hack,
   NetHack 1.3d/5.0, SLASH'EM, DynaHack, Omega and Prospector did: A+ on
   Inventory grew Messages and Status too). Pop-up text follows Messages.
-  Old layout files: seed `L.fs` from the old `font` value.
+  Old layout files: seed `L.wm.fs` from the old `L.fs` / `font` values once.
+- **Shared app code comes from `../rvip-app.js`** (`RvipApp({...})`): IDBFS
+  sync, Export/Import save, New game, crash status, Help panel. The game
+  only passes its save-file hooks; it keeps no copy of that code.
 - **Fonts.** Both choosers list the index page's `fonts/*.woff` (build.sh
   writes `fonts.json`). The fonts load from `../fonts/<name>.woff` with
   `FontFace`, and both choices are stored in the layout file with the other

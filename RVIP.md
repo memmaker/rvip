@@ -2070,7 +2070,7 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
   no z-term). Rogue 3.6 is the reference for windows and map scrolling.
 - Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`, the
   only copy, locally and on the server (`/roguelikes/rvip-wm.js`, uploaded by
-  `roguelikes-index/deploy.sh`). Pages load `../rvip-wm.js` (same for `rvip-sound.js`); never copy them
+  `roguelikes-index/deploy.sh`). Pages load `../rvip-wm.js` (same for `rvip-app.js`, `rvip-sound.js`); never copy them
   into a game (not `web/`, not `dist`).
 
 ### W0. Presentation lives in the game (rule)
@@ -2228,9 +2228,17 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 
 ### W4. Windows (step 5)
 - All games use `rvip-wm.js`: `RvipWM({area, menu, wins, multi, single,
-  state, save, layout(rects), font(id,d), onReset})`, windows are `#t-<id>`
+  state, save, layout(rects), zoom, noFont, onReset})`, windows are `#t-<id>`
   with a `.t .name` title bar and a `.body`. It gives the tiling layout,
   gutters, Windows drop-down, rename/A−/A+ on hover, one/multi-window toggle.
+- **Font sizes are the WM's.** A−/A+ sets `state.fs[id]` (8..28 px, saved
+  with the layout) as that window's `.body` font-size, also on load.
+  `zoom: {id: fn(size, d)}` only for windows that redraw or scale (canvas
+  map, z-term/curses canvas panes); `RvipWM.fontSize(id)` reads a size.
+  The old `font(id, d)` callback (game keeps sizes) still works; don't add new ones.
+- **App code is `rvip-app.js`** (`RvipApp({name, save, clear, put, ...})`):
+  IDBFS sync, Export/Import save, New game, crash status, Help panel. No game
+  keeps its own `syncFiles`/`exportSave`/`importSave`/`newGame`/`crashed`/`toggleHelp`.
 - Message history: repeats fold to `message (xN)` in the game code (its
   message routine / history, e.g. `hist()` in `port/wcurses.c`), which tells
   the page to replace its last line. A div-list log uses
