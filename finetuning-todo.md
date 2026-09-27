@@ -25,13 +25,17 @@ Checked so far: umoria (done in `f8ed7e9`) and hengband (per-window sizes were a
 - `logEnd` should always scroll to the bottom, as the checklist says. Today it scrolls only if the view was already at the bottom. alphaman, prospector and lambdarogue force the scroll in their own code.
 - Optional: a `.wm-ic` that takes the sprite's own size (Larn/uLarn tiles are 8×16); an option in `RvipWM.visible` to leave out the Items section (dynahack); "Zoom in/out" tooltips when A−/A+ zoom the map.
 
-## 4. Tiles: None needs a native text switch
+## 4. Tiles: None needs a native text switch — done (quickband 2ac13ca, tinyangband 12e8268, tactical-angband b1b12da)
 
 These ports always draw tiles: quickband, tinyangband, tactical-angband. Port FAangband's `web_set_tiles(int)` (the switch happens at the command prompt, then the visuals reload). tome2, zangband and sil-q already have one.
 
-## 5. Font choosers missing
+## 5. Font choosers missing — done (nppangband f6fe480, quickband 9736cb6, easyband f885cca, frogcomposband d4e6c64, sil-q 47bf403, zangband 1e3ad59, tome2 607d36e, tactical-angband f0b6a9b, tinyangband 3eb9a0f)
 
 nppangband, quickband, easyband, frogcomposband, sil-q, zangband, tome2, tactical-angband and tinyangband have none. faangband commit `8d6169d` shows how to add them to a z-term port.
+
+## 5a. Map font vs. cell size (z-term ports)
+
+In the ports that took faangband's font code, map cells in text mode follow the tile zoom, not the chosen font. The map font changes the glyphs, not the grid. A wide bitmap font (Rainbow100) overlaps itself on the map, and nppangband's panes look widely letter-spaced with IBM EGA 9x8. Either scale the glyphs to the cell, or size the map cells from the font in text mode. Affected: faangband and the nine ports in §5.
 
 ## 6. DawnLike not done
 
