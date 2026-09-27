@@ -45,6 +45,7 @@
 		'padding:4px 0;box-shadow:0 6px 24px rgba(0,0,0,.5);font-size:13px}' +
 		'.wm-menu label{display:flex;gap:8px;align-items:center;padding:3px 12px;cursor:pointer;white-space:nowrap}' +
 		'.wm-menu label:hover{background:#22222a}' +
+		'.wm-menu[hidden]{display:none}' +
 		'.wm-menu hr{border:0;border-top:1px solid var(--line,#2b2b33);margin:5px 0}' +
 		'.wm-menu button{display:block;width:100%;margin:0;padding:4px 14px;border:0;border-radius:0;background:none;text-align:left;white-space:nowrap}' +
 		'.wm-menu button:hover{background:#22222a}' +
@@ -66,10 +67,12 @@
 		n.a = replace(n.a, id, sub); n.b = replace(n.b, id, sub); return n;
 	}
 
+	function addCSS() { if (!document.getElementById('wm-css')) { var st = el('style'); st.id = 'wm-css'; st.textContent = CSS; document.head.appendChild(st); } }
+
 	window.RvipWM = function (o) {
 		var area = o.area, wm = { rects: {} }, ids = o.wins.map(function (w) { return w.id; });
 		var S, bars = [], barEls = [], drop = el('div', 'wm-drop'), menu = null, saveT = 0;
-		if (!document.getElementById('wm-css')) { var st = el('style'); st.id = 'wm-css'; st.textContent = CSS; document.head.appendChild(st); }
+		addCSS();
 		drop.hidden = true; area.appendChild(drop);
 
 		function valid(t) { var l = leaves(t); return l.length && l.every(function (id) { return ids.indexOf(id) >= 0; }) && new Set(l).size === l.length; }
@@ -237,7 +240,7 @@
 	 * at a time; a click outside, Esc or a button in it closes it ---- */
 	var drops = [];
 	window.RvipWM.dropdown = function (b, menu) {
-		menu.classList.add('wm-menu'); menu.hidden = true; document.body.appendChild(menu); drops.push(menu);
+		addCSS(); menu.classList.add('wm-menu'); menu.hidden = true; document.body.appendChild(menu); drops.push(menu);
 		b.addEventListener('click', function (e) {
 			e.stopPropagation();
 			var open = menu.hidden;
@@ -298,7 +301,7 @@
 		l.appendChild(d);
 		if (l.childNodes.length > 500) l.removeChild(l.firstChild);
 	}
-	function logEnd(l, f) { var end = l.scrollTop + l.clientHeight >= l.scrollHeight - 4; f(); if (end) l.scrollTop = l.scrollHeight; }
+	function logEnd(l, f) { f(); l.scrollTop = l.scrollHeight; }
 	/* The map camera (RVIP.md W4), one for every game: the game sends the player's map cell, the page
 	   calls this with the player's centre (x, y) in the map canvas `cv` (w × h px, shown in a vw × vh
 	   window; default: its parent). Player centred, clamped at the map edges; a map smaller than its

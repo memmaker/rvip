@@ -19,7 +19,7 @@ Not applicable: forays (C#), boss-beyond-moria and lambdarogue (Pascal).
 
 Checked so far: umoria (done in `f8ed7e9`) and hengband (per-window sizes were already there; its pop-ups are drawn by the game). All other branches predate these items. The A−/A+ note names hack, nethack13d, nethack50, slashem, dynahack, omega and prospector as ports with one shared font size.
 
-## 3. Shared `web/rvip-wm.js`
+## 3. Shared `web/rvip-wm.js` — done (dropdown CSS, logEnd)
 
 - `RvipWM.dropdown()` should inject the WM CSS itself, plus a `.wm-menu[hidden]{display:none}` rule. Today the CSS comes only from `RvipWM()`, so a page that uses the drop-down without the WM gets an unstyled menu. alphaman and decker carry a copy of the rules in `index.html`; remove it once this is in.
 - `logEnd` should always scroll to the bottom, as the checklist says. Today it scrolls only if the view was already at the bottom. alphaman, prospector and lambdarogue force the scroll in their own code.
