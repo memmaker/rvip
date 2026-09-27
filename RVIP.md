@@ -2150,13 +2150,13 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 | FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
-| Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud, `~/Games/forays-cloud`) | memmaker/forays |
+| Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`; cloud history with the `rvip/` bundle: private memmaker/forays-cloud) | memmaker/forays |
 | Hengband | `~/Games/hengband` (remote `memmaker`, branch `master`; upstream hengband/hengband `master` @ `bf1054199`; submodule `lib/xtra`) | memmaker/hengband |
-| LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud, `~/Games/lambdarogue-cloud`) | memmaker/lambdarogue |
-| FAangband | `~/Games/faangband` (remote `memmaker`, branch `main`; upstream NickMcConnell/FAangband `main` @ `0d85203`; cloud history with the `rvip/` bundle: private memmaker/faangband-cloud, `~/Games/faangband-cloud`) | memmaker/faangband |
-| MAG | `~/Games/mag` (remote `memmaker`, branch `main`; upstream = DOS source drop `~/Downloads/mag_src` @ `cc36a63`; cloud history with the `rvip/` bundle: private memmaker/mag-cloud, `~/Games/mag-cloud`) | memmaker/mag |
-| Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud, `~/Games/easyband-cloud`) | memmaker/easyband |
-| NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`; cloud history with the `rvip/` bundle: private memmaker/nppangband-cloud, `~/Games/nppangband-cloud`) | memmaker/nppangband |
+| LambdaRogue | `~/Games/lambdarogue` (remote `memmaker`, branch `main`; upstream = Google Code archive `LambdaRouge_1.6.4_src.zip` @ `798c8e6`; cloud history with the `rvip/` bundle: private memmaker/lambdarogue-cloud) | memmaker/lambdarogue |
+| FAangband | `~/Games/faangband` (remote `memmaker`, branch `main`; upstream NickMcConnell/FAangband `main` @ `0d85203`; cloud history with the `rvip/` bundle: private memmaker/faangband-cloud) | memmaker/faangband |
+| MAG | `~/Games/mag` (remote `memmaker`, branch `main`; upstream = DOS source drop `~/Downloads/mag_src` @ `cc36a63`; cloud history with the `rvip/` bundle: private memmaker/mag-cloud) | memmaker/mag |
+| Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`; cloud history with the `rvip/` bundle: private memmaker/easyband-cloud) | memmaker/easyband |
+| NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`; cloud history with the `rvip/` bundle: private memmaker/nppangband-cloud) | memmaker/nppangband |
 | Prospector | `~/Games/prospector` (remote `memmaker`, branch `main`; upstream = Google Code rlprospector svn r197 snapshot @ `7aba66b` + `R197prospector_l.zip` data @ `1b928c0`) | memmaker/prospector |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
