@@ -2248,13 +2248,14 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
   text over the map in a pop-up.
-- **Text panes fit the columns in use**, not the full grid: an 80-column
-  inventory canvas scaled into a narrow window shrinks its text, and A+/A−
-  then change nothing visible. Scale by the widest non-blank column and let
-  the blank rest clip; re-fit when that width changes (Rogue 3.6 bug,
-  2026-09-27).
-  A fixed-height list (inventory slots + totals row) fits its width only
-  and scrolls vertically, or its empty rows shrink it by height.
+- **Text feeds are sent trimmed, text windows never scale.** Every text
+  feed from the game (inventory, status, messages, lists) has no trailing
+  whitespace on a line and no empty lines after the last one; a grid-backed
+  pane is trimmed to its used cells before display. A text window shows its
+  text at the size the user chose with A+/A−, whatever the window or text
+  size, and scrolls when it does not fit: never scale a canvas to fit the
+  window (a canvas with blank columns scaled into a narrow window shrank the
+  text, and A+/A− changed nothing visible: Rogue 3.6, 2026-09-27).
 - **Map camera: the player is always centred** (clamped at the map edges; a
   map smaller than its window is centred). The map never shrinks or clips
   when zoomed in. Single- and multi-window mode alike.
