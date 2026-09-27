@@ -2253,6 +2253,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   then change nothing visible. Scale by the widest non-blank column and let
   the blank rest clip; re-fit when that width changes (Rogue 3.6 bug,
   2026-09-27).
+  A fixed-height list (inventory slots + totals row) fits its width only
+  and scrolls vertically, or its empty rows shrink it by height.
 - **Map camera: the player is always centred** (clamped at the map edges; a
   map smaller than its window is centred). The map never shrinks or clips
   when zoomed in. Single- and multi-window mode alike.
