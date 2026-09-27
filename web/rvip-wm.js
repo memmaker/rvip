@@ -329,6 +329,28 @@
 			wait: function (a) { atCmd = !!a; if (!atCmd && txt) box().hidden = false; }
 		};
 	})();
+	/* Pop-up over the map (menus, lists, multi-line questions). It starts inside the map
+	 * window's body, never over its title bar, and stays inside the game area (it may
+	 * spread over the windows right of / below the map; it scrolls when larger).
+	 * RvipWM.popup(pop) puts it at the body's top-left; o.x shifts it right by o.x px
+	 * (clamped so it stays inside); o.center centres it on the body. Call it after the
+	 * pop-up is filled and shown. RvipWM.popupBox() = the room it has, {w, h}. */
+	function popRect(pop) {
+		var body = document.querySelector('#t-map .body, #t-main .body'), par = pop ? pop.offsetParent : body && body.offsetParent;
+		if (!body || !par) return null;
+		var r = body.getBoundingClientRect(), g = par.getBoundingClientRect();
+		return { x: r.left - g.left, y: r.top - g.top, bw: r.width, bh: r.height, w: g.right - r.left, h: g.bottom - r.top };
+	}
+	window.RvipWM.popupBox = function () { var r = popRect(); return r ? { w: r.w, h: r.h } : { w: 0, h: 0 }; };
+	window.RvipWM.popup = function (pop, o) {
+		o = o || {};
+		var r = popRect(pop);
+		if (!r) return;
+		pop.style.maxWidth = r.w + 'px'; pop.style.maxHeight = r.h + 'px';
+		var w = pop.offsetWidth, h = pop.offsetHeight;
+		pop.style.left = r.x + (o.center ? Math.max(0, (r.bw - w) / 2) : Math.max(0, Math.min(r.w - w, o.x || 0))) + 'px';
+		pop.style.top = r.y + (o.center ? Math.max(0, (r.bh - h) / 2) : 0) + 'px';
+	};
 	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
 	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
 	/* Run report (roguelikes-index/server/CONTRACT.md). q = "g=..&ev=..&..." without id/at.

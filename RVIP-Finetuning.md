@@ -113,6 +113,15 @@ through `port/`). The JS layer only draws it.
   - Worked example: Super-Rogue (`web/srogue.js` `findAnim`, 53 animated
     slots). To test in the browser pane (always hidden), override
     `document.hidden` and compare `canvas.toDataURL()` 500 ms apart.
+- **Pop-ups go through `RvipWM.popup(pop, o)`.** Menus, lists and
+  multi-line questions (`#pop`) start inside the map window's **body**:
+  never over its title bar, and never offset by the margin that centres the
+  map canvas. They stay inside the game area and scroll when larger. Default
+  is the body's top-left; `{ x: px }` shifts right (clamped), `{ center: true }`
+  centres on the body. `RvipWM.popupBox()` gives the room `{w, h}` for
+  scaling a pop-up canvas. Call it after the pop-up is filled and shown.
+  Don't compute the position from `rects.map`: that is the whole window,
+  title bar included (Hack's startup questions covered the "Map" title).
 - **No cursor on the hero.** `drawCursor` skips the map cell at the hero's
   position.
 - **Zoom is on the Map title bar** (the A−/A+ buttons that the WM puts on
