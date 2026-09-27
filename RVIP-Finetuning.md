@@ -127,6 +127,12 @@ through `port/`). The JS layer only draws it.
 - **Zoom is on the Map title bar** (the A−/A+ buttons that the WM puts on
   every window). There are no zoom buttons in the top bar. The WM `font`
   callback maps `map` → `zoomMap`.
+- **A−/A+ sizes one window only.** The WM calls `font(id, d)` with the
+  window's id; keep one size per id (`L.fs[id]`, default 13) and apply it
+  only to that window. Never one shared `L.font` for all text windows (Hack,
+  NetHack 1.3d/5.0, SLASH'EM, DynaHack, Omega and Prospector did: A+ on
+  Inventory grew Messages and Status too). Pop-up text follows Messages.
+  Old layout files: seed `L.fs` from the old `font` value.
 - **Fonts.** Both choosers list the index page's `fonts/*.woff` (build.sh
   writes `fonts.json`). The fonts load from `../fonts/<name>.woff` with
   `FontFace`, and both choices are stored in the layout file with the other
