@@ -10,14 +10,16 @@ through `port/`). The JS layer only draws it.
 ## Lists and icons
 
 - **Inventory pane icons.** `wc_inv()` asks `be_icons()`, which is true when
-  a tile set is loaded. With icons on, the row is `a)    name`: the icon goes
-  in cols 3-4 and col 5 stays blank. With icons off (text mode) the row is
+  a tile set is loaded. With icons on, the row is `a)   name`: the name starts
+  at col 5 and the icon is centred across cols 2-4. The gap on each side is
+  then about a third of a cell, as tight as the Visible list's (a blank cell
+  on both sides looked loose). With icons off (text mode) the row is
   `a) ! name`: the item's own symbol, with no gap. `be_invfg(y, css, tile)`
   sends the colour and the tile.
   Watch out: `false >= 0` is true in JS, so write
   `p === P_INV && T.rowIcon ? T.rowIcon[y] : -1`.
 - **Icons keep the image's aspect ratio.** The tile is drawn square, with a
-  side of `min(2*cw, ch)`, centred on cols 3-4. Each cell draws it clipped
+  side of `min(2*cw, ch)`, centred on cols 2-4. Each cell draws it clipped
   to itself, so a wide or tall font never stretches the icon.
 - **Visible list icons.** Each line is `M<glyph><name>\t<css>\t<tile>` (the
   same for `I`). Call it as `RvipWM.visible(body, s, iconFn)`. When iconFn
@@ -82,9 +84,18 @@ through `port/`). The JS layer only draws it.
 - Menu buttons are full-width rows (left-aligned, highlighted on hover, no
   borders). The menu has no minimum width, so it is as wide as its content.
 - **File ▾:** Export save, Import save, then New game below a separator.
-- The top bar is: Help · Windows ▾ · Tiles · Font · Audio ▾ · File ▾.
+- **Top bar order:** Help · File ▾ | Windows ▾ · Tiles · Font · Audio ▾,
+  with one divider after File and no others.
 - **Key hints** fill the free space on the right of the bar, as `<kbd>` keys
   on one line (cut off with … when narrow). Where the game has them, list
   auto-explore, inventory, command menu and command help. For Rogue 3.6
   that is `x` explore · `i` inventory · `Enter` command menu · `?` command
   help.
+
+## Sound
+
+- Check every mapped sample by ear, not only by its `sound.cfg` event name.
+  Angband's `miss` is `plc_miss_arrow2.wav`, an arrow, so Rogue's melee
+  misses sounded like bow shots. `web/sounds.py` overrides it:
+  `used['miss'] = ['plc_miss_swish.wav']`. The `hit` samples (hay, body)
+  already sound like melee.
