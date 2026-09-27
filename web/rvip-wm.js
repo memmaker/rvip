@@ -16,9 +16,14 @@
  *     state: saved || null,                           // from the game's IDBFS layout file
  *     save: function (state) {},                      // store state (debounce is ours)
  *     layout: function (rects) {},                    // rects[id] = [x, y, w, h] of shown windows
- *     font: function (id, d) {}                       // A− / A+ on a title bar (omit: no buttons)
+ *     zoom: { map: function (size, d) {} },           // windows that redraw/scale on A− / A+
+ *     noFont: 'map'                                   // a window without A− / A+
  *   });
  *   wm.apply()  after a resize;  wm.shown(id);  wm.reset();  wm.rects
+ * A− / A+ on a title bar: the WM keeps one size per window (state.fs[id], 8..28 px,
+ * default: the body's CSS font-size), sets it as the window body's font-size (also
+ * on load) and calls zoom[id](size, d) if given. RvipWM.fontSize(id) reads it.
+ * Legacy: with font: function (id, d) {} the game keeps sizes itself (WM stores none).
  */
 (function () {
 	'use strict';
@@ -76,16 +81,19 @@
 		drop.hidden = true; area.appendChild(drop);
 
 		function valid(t) { var l = leaves(t); return l.length && l.every(function (id) { return ids.indexOf(id) >= 0; }) && new Set(l).size === l.length; }
-		function fresh() { return { v: 2, mode: 'multi', multi: clone(o.multi), single: clone(o.single), titles: {} }; }
+		function fresh() { return { v: 2, mode: 'multi', multi: clone(o.multi), single: clone(o.single), titles: {}, fs: {} }; }
 		S = fresh();
 		if (o.state && o.state.v === 2) {
 			if (o.state.mode === 'single') S.mode = 'single';
 			if (valid(o.state.multi)) S.multi = o.state.multi;
 			if (o.state.titles) ids.forEach(function (id) { if (typeof o.state.titles[id] === 'string') S.titles[id] = o.state.titles[id].slice(0, 40); });
+			if (o.state.fs) ids.forEach(function (id) { var v = +o.state.fs[id]; if (v >= 8 && v <= 28) S.fs[id] = v; });
 		}
+		cur = { S: S, body: body };
 		function tree() { return S.mode === 'single' ? S.single : S.multi; }
 		function save() { clearTimeout(saveT); saveT = setTimeout(function () { o.save(clone(S)); }, 300); }
 		function win(id) { return document.getElementById('t-' + id); }
+		function body(id) { var w = win(id); return w && (w.querySelector('.body') || w); }
 		function title(id) { return S.titles[id] || o.wins[ids.indexOf(id)].title; }
 
 		/* ---- placing ---- */
@@ -152,7 +160,7 @@
 			}
 			wm.apply(); save();
 		}
-		wm.reset = function () { var t = S.titles; S = fresh(); S.titles = {}; ids.forEach(function (id) { titleEl(id); }); wm.apply(); save(); };
+		wm.reset = function () { var t = S.titles; S = fresh(); cur.S = S; ids.forEach(function (id) { titleEl(id); fontSet(id); }); wm.apply(); save(); };
 
 		/* ---- title bars: hover buttons, rename, drag to rearrange ---- */
 		function titleEl(id) { var w = win(id), n = w && w.querySelector('.t .name'); if (n) n.textContent = title(id); }
@@ -173,12 +181,18 @@
 			if (!t) { t = el('div', 't'); t.appendChild(el('span', 'name')); w.insertBefore(t, w.firstChild); }
 			var nm = t.querySelector('.name'), bs = el('span', 'wm-btns');
 			bs.appendChild(btn('✎', 'Rename this window', function () { rename(id, nm); }));
-			if (o.font && id !== o.noFont) { bs.appendChild(btn('A−', 'Smaller text', function () { o.font(id, -1); })); bs.appendChild(btn('A+', 'Bigger text', function () { o.font(id, 1); })); }
+			if (id !== o.noFont) { bs.appendChild(btn('A−', 'Smaller text', function () { fontBy(id, -1); })); bs.appendChild(btn('A+', 'Bigger text', function () { fontBy(id, 1); })); }
 			bs.appendChild(btn('×', 'Close this window (Windows menu brings it back)', function () { toggle(id, false); }));
-			t.appendChild(bs); titleEl(id);
+			t.appendChild(bs); titleEl(id); fontSet(id);
 			nm.addEventListener('dblclick', function () { rename(id, nm); });
 			t.addEventListener('pointerdown', function (e) { if (e.button === 0 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') drag(id, e); });
 		});
+		function fontSet(id) { var b = !o.font && body(id); if (b) b.style.fontSize = S.fs[id] ? S.fs[id] + 'px' : ''; }
+		function fontBy(id, d) {
+			if (o.font) { o.font(id, d); return; }
+			S.fs[id] = Math.max(8, Math.min(28, window.RvipWM.fontSize(id) + d));
+			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](S.fs[id], d); save();
+		}
 		function drag(id, e0) {
 			var g = area.getBoundingClientRect(), target = null, side = null, moved = false;
 			function hit(m) {
@@ -238,7 +252,13 @@
 	};
 	/* ---- top-bar drop-down: button b opens element menu below it; one open
 	 * at a time; a click outside, Esc or a button in it closes it ---- */
-	var drops = [];
+	var drops = [], cur = null;
+	/* the size A− / A+ gave window id (px), else its body's CSS font-size */
+	window.RvipWM.fontSize = function (id) {
+		var b = cur && cur.body(id);
+		return (cur && cur.S.fs[id]) || (b && parseFloat(getComputedStyle(b).fontSize)) || 13;
+	};
+
 	window.RvipWM.dropdown = function (b, menu) {
 		addCSS(); menu.classList.add('wm-menu'); menu.hidden = true; document.body.appendChild(menu); drops.push(menu);
 		b.addEventListener('click', function (e) {
