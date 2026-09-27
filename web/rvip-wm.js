@@ -43,13 +43,15 @@
 		'.win>.t input{flex:1;min-width:0;font:inherit;color:inherit;background:#000;border:1px solid var(--accent,#d9b24c)}' +
 		'.wm-drop{position:absolute;z-index:4;background:rgba(217,178,76,.25);border:2px solid var(--accent,#d9b24c);pointer-events:none}' +
 		'.wm-menu{position:fixed;z-index:20;background:var(--panel,#16161a);border:1px solid var(--line,#2b2b33);border-radius:6px;' +
-		'padding:6px 0;min-width:190px;box-shadow:0 6px 24px rgba(0,0,0,.5);font-size:13px}' +
+		'padding:4px 0;box-shadow:0 6px 24px rgba(0,0,0,.5);font-size:13px}' +
 		'.wm-menu label{display:flex;gap:8px;align-items:center;padding:3px 12px;cursor:pointer;white-space:nowrap}' +
 		'.wm-menu label:hover{background:#22222a}' +
 		'.wm-menu hr{border:0;border-top:1px solid var(--line,#2b2b33);margin:5px 0}' +
-		'.wm-menu button{margin:2px 12px}' +
+		'.wm-menu button{display:block;width:100%;margin:0;padding:4px 14px;border:0;border-radius:0;background:none;text-align:left;white-space:nowrap}' +
+		'.wm-menu button:hover{background:#22222a}' +
 		'.wm-list{overflow:auto!important;padding:3px 8px;font:13px/1.45 ui-monospace,Menlo,monospace;color:#dcdcdc}' +
-		'.wm-list b{display:inline-block;min-width:1.2em}.wm-vh{color:var(--dim,#8a8a96);margin-top:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}';
+		'.wm-list>div:not(.wm-vh){display:flex;align-items:center;gap:6px}.wm-ic{flex:none;width:16px;height:16px}' +
+		'.wm-list b{flex:none;min-width:1.2em;text-align:center}.wm-vh{color:var(--dim,#8a8a96);margin-top:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}';
 
 	function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt) e.textContent = txt; return e; }
 	function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -119,7 +121,15 @@
 			function move(m) {
 				b = e._b;
 				var p = v ? m.clientY - g.top - b.box[1] : m.clientX - g.left - b.box[0], len = v ? b.box[3] : b.box[2];
+				/* nested parallel bars keep their absolute position: only this edge moves */
+				var k = v ? 1 : 0, keep = bars.filter(function (x) { return x.n !== b.n && x.n.d === b.n.d && leaves(x.n).every(function (id) { return leaves(b.n).indexOf(id) >= 0; }); })
+					.map(function (x) { return [x.n, x.r[k]]; });
 				b.n.r = Math.max(0.03, Math.min(0.97, p / (len - GUT)));
+				keep.forEach(function (q) {     /* pre-order: parents fixed before children */
+					bars = []; walk(tree(), [0, 0, area.clientWidth, area.clientHeight], true, {});
+					var nb = bars.filter(function (x) { return x.n === q[0]; })[0];
+					q[0].r = Math.max(0.03, Math.min(0.97, (q[1] - nb.box[k]) / (nb.box[k + 2] - GUT)));
+				});
 				wm.apply();
 			}
 			function up() { e.classList.remove('drag'); e.removeEventListener('pointermove', move); e.removeEventListener('pointerup', up); save(); }
@@ -219,36 +229,45 @@
 		if (o.menu) {
 			var b = o.menu; b.textContent = 'Windows ▾'; b.title = 'Window layout: one or multi-window, show or hide windows';
 			var nb = b.cloneNode(true); b.replaceWith(nb); b = nb;   /* drop the game's old reset handler */
-			menu = el('div', 'wm-menu'); menu.hidden = true; document.body.appendChild(menu); buildMenu();
-			b.addEventListener('click', function (e) {
-				e.stopPropagation();
-				if (!menu.hidden) { menu.hidden = true; return; }
-				var r = b.getBoundingClientRect(); menu.style.left = r.left + 'px'; menu.style.top = r.bottom + 4 + 'px'; menu.hidden = false;
-			});
-			menu.addEventListener('click', function (e) { e.stopPropagation(); });
-			document.addEventListener('click', function () { menu.hidden = true; });
-			document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { menu.hidden = true; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+			menu = el('div'); buildMenu(); window.RvipWM.dropdown(b, menu);
 		}
 		wm.state = function () { return clone(S); };
 		return wm;
+	};
+	/* ---- top-bar drop-down: button b opens element menu below it; one open
+	 * at a time; a click outside, Esc or a button in it closes it ---- */
+	var drops = [];
+	window.RvipWM.dropdown = function (b, menu) {
+		menu.classList.add('wm-menu'); menu.hidden = true; document.body.appendChild(menu); drops.push(menu);
+		b.addEventListener('click', function (e) {
+			e.stopPropagation();
+			var open = menu.hidden;
+			drops.forEach(function (m) { m.hidden = true; });
+			if (!open) return;
+			var r = b.getBoundingClientRect(); menu.style.left = r.left + 'px'; menu.style.top = r.bottom + 4 + 'px'; menu.hidden = false;
+		});
+		menu.addEventListener('click', function (e) { e.stopPropagation(); if (e.target.tagName === 'BUTTON') menu.hidden = true; });
+		document.addEventListener('click', function () { menu.hidden = true; });
+		document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { menu.hidden = true; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 	};
 	/* ---- shared content helpers ---- */
 	/* Visible window: s = lines "M<glyph><name>[\t<css colour>]" (monster) or
 	 * "I<glyph><name>[\t<css colour>]" (item); name and colour come from the
 	 * game (RVIP W0), nothing is guessed here */
-	window.RvipWM.visible = function (body, s) {
+	/* icon(t): optional, an element for the tile number after the colour field */
+	window.RvipWM.visible = function (body, s, icon) {
 		if (body._vis === s) return;
 		body._vis = s;
 		var mon = [], itm = [];
 		s.split('\n').forEach(function (l) {
 			if (!l) return;
 			var g = l.charAt(1), f = l.slice(2).split('\t'), name = f[0], col = f[1] || null;
-			if (l.charAt(0) === 'M') mon.push([g, name, col]);
-			else itm.push([g, name, col]);
+			if (l.charAt(0) === 'M') mon.push([g, name, col, f[2]]);
+			else itm.push([g, name, col, f[2]]);
 		});
 		function group(rows) {                     /* "3 × giant rat" */
 			var out = [], seen = {};
-			rows.forEach(function (r) { var k = r[0] + r[1]; if (seen[k]) seen[k][3]++; else out.push(seen[k] = [r[0], r[1], r[2], 1]); });
+			rows.forEach(function (r) { var k = r[0] + r[1]; if (seen[k]) seen[k][3]++; else out.push(seen[k] = [r[0], r[1], r[2], 1, r[3]]); });
 			return out;
 		}
 		body.innerHTML = '';
@@ -257,7 +276,8 @@
 			sec[1].forEach(function (r) {
 				var d = document.createElement('div'), b = document.createElement('b');
 				b.textContent = r[0]; if (r[2]) b.style.color = d.style.color = r[2];
-				d.appendChild(b); d.appendChild(document.createTextNode(' ' + (r[3] > 1 ? r[3] + ' × ' : '') + r[1]));
+				var ic = icon && r[4] !== undefined && icon(+r[4]);
+				d.appendChild(ic || b); d.appendChild(document.createTextNode(' ' + (r[3] > 1 ? r[3] + ' × ' : '') + r[1]));
 				body.appendChild(d);
 			});
 		});
