@@ -94,8 +94,21 @@ through `port/`). The JS layer only draws it.
 
 ## Sound
 
-- Check every mapped sample by ear, not only by its `sound.cfg` event name.
-  Angband's `miss` is `plc_miss_arrow2.wav`, an arrow, so Rogue's melee
-  misses sounded like bow shots. `web/sounds.py` overrides it:
-  `used['miss'] = ['plc_miss_swish.wav']`. The `hit` samples (hay, body)
-  already sound like melee.
+Don't trust the event names in DASP's `sound.cfg` (the Dubtrain Angband
+Sound Pack): Angband's `miss` event is a bow sample. Pick the attack sounds
+from this list.
+
+| Sample | Kind | DASP event |
+|---|---|---|
+| `plc_hit_hay.wav`, `plc_hit_body.wav` | melee hit | `hit` |
+| `plc_hit_anvil.wav`, `plc_hit_anvil2.wav` | melee hit (hard) | `hit_good`, `hit_hi_superb` |
+| `plc_hit_groan.wav`, `plc_hit_grunt.wav`, `plc_hit_grunt2.wav` | melee hit (voice) | `hit_great`, `hit_superb`, `hit_hi_great` |
+| `plc_miss_swish.wav` | **melee miss** (a swing) | `shoot` (!) |
+| `plc_miss_arrow.wav`, `plc_miss_arrow2.wav` | **bow**: arrow flies | `shoot`, `miss` (!) |
+| `plc_hit_arrow.wav` | **bow**: arrow hits | `shoot_hit` |
+| `mco_hit_whip.wav` | monster melee hit | `mon_hit` |
+
+- A melee `miss` is `plc_miss_swish.wav`. `web/sounds.py` overrides it:
+  `used['miss'] = ['plc_miss_swish.wav']`.
+- Use the arrow samples only for missile fire (bows, slings, thrown items),
+  when the game raises a separate sound for that.
