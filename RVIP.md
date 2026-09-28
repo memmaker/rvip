@@ -1025,6 +1025,23 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   block-scoped `buf2` after the block (the NPP bug again); format-string
   bugs (`fprintf(fff, buf)`, `strnfmt(desc, n, buf)` from `user.*.svg`);
   randart speed precedence (`p >= c ? 4000 : 8000` always true).
+- Stage 2: explore `H` (original keyset) and `O` (free in both: the
+  roguelike `H` is a `C:1` "run west" keymap, `X` a `w0` keymap in both,
+  `` ` `` is Escape via `USE_BACKQUOTE_AS_ESCAPE`). Code at the end of
+  `cmd2.c` (Easyband's port). Sangband specifics: traps live in `t_list`,
+  not features: avoid `cave_trap() && cave_visible_trap()` except
+  `cave_glyph()`; rubble, water and trees are `TF_PASSABLE` (walk, no
+  digging), lava is avoided, shop entrances (`cave_shop_bold`) too; stairs
+  = `cave_up_stairs()/cave_down_stairs()` (include the `LESS2/MORE2`
+  shafts); doors 33..47 are locked/jammed (all look alike): the walk stops
+  once ("The door is locked."), marks it and skips it; `monster_desc(0x0C)`
+  ("something" for a partly seen monster, not "it").
+- The character is born standing on the town's `>` and with an unlit torch
+  in the pack (tests: `wb`). Weak characters are disturbed by every
+  townsperson moving in view (`monmove.c`), so a town stair walk makes 1-3
+  steps per press: by design (A3), press again.
+- The map is centred on the player, so `@` hardly moves on screen: tests
+  read the position from an exported `web_where()` (depth<<16|y<<8|x).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2503,6 +2520,11 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   log 4xx with `page.on('response')` (the console omits the URL). Emsdk
   `install latest` works in the container (~2 min); record absolute paths. Headless passes still miss layout problems: the Mac check
   in the pane is required (Easyband's tiny tile map).
+  Build shadow rows with `Array.from(row, c => c || ' ')`, not `.map()`:
+  `map` skips the holes of a sparse row and the text shifts left (NPP's and
+  Sangband's first `lib.mjs` had this; `@` was read at the wrong column).
+  With a centred map read positions from an exported C getter, not the
+  screen.
 - **Checklist:** title → birth → map with tiles → every window filled
   (inventory, visible list, messages, recall) → shop → stairs → help, Enter
   menu → window drag/zoom/rename, layout survives reload, zoomed map
