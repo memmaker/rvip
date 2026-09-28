@@ -2321,7 +2321,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   and all games share the origin (a shared `/lib/save` made TinyAngband load
   Quickband's save). Preload to `/<name>/lib`
   (`--preload-file web/stage/lib@/<name>/lib`), `FS.chdir('/<name>')` in
-  `preRun`.
+  `preRun`. One persistent folder: mount it at `RvipApp.dir` with
+  `RvipApp.mount(done, old)` (rvip-app.js; `old = {dir, files}` moves files
+  once from a former mount); never a shared name like `/save` or `/hack`.
 - Pre-3.0 Angband keeps the pref files in `lib/user`: don't mount IDBFS
   there (the mount hides the preloaded files); persist `save/apex/bone`
   plus an own `/<name>/web` for `web-layout.json` (Easyband).
