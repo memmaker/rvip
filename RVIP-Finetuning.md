@@ -143,6 +143,9 @@ through `port/`). The JS layer only draws it.
 - **Shared app code comes from `../rvip-app.js`** (`RvipApp({...})`): IDBFS
   sync, Export/Import save, New game, crash status, Help panel. The game
   only passes its save-file hooks; it keeps no copy of that code.
+- **No localStorage, only IndexedDB** (RVIP.md 5): tile set, player name
+  and every other setting live in the game's IDBFS folder (layout file or
+  `web-name` / `web-tiles`); store a tile set by its name, never an index.
 - **Own IndexedDB folder:** a game with one persistent folder mounts it at
   `RvipApp.dir` ('/' + its URL folder) via `RvipApp.mount(done, old)`; never
   a shared name like `/save` or `/hack` (IDBFS names the database after the
