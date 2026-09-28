@@ -166,9 +166,10 @@
 		/* ---- title bars: hover buttons, rename, drag to rearrange ---- */
 		function titleEl(id) { var w = win(id), n = w && w.querySelector('.t .name'); if (n) n.textContent = title(id); }
 		function rename(id, nameEl) {
-			var i = el('input'); i.value = title(id); nameEl.replaceWith(i); i.focus(); i.select();
+			var i = el('input'), fin = false; i.value = title(id); nameEl.replaceWith(i); i.focus(); i.select();
 			function done(ok) {
-				if (!i.parentNode) return;
+				if (fin || !i.parentNode) return;   /* Enter, then the blur that removing the input fires */
+				fin = true;
 				if (ok) { var v = i.value.trim(); if (v && v !== o.wins[ids.indexOf(id)].title) S.titles[id] = v; else delete S.titles[id]; save(); }
 				i.replaceWith(nameEl); titleEl(id); if (menu) buildMenu();
 			}

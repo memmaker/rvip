@@ -1089,6 +1089,32 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `COL_MAP` too). `object_attr()` returns the stored shimmer colour for
   egos/artifacts: guard it when the char is a tile. Equippy chars → the
   edit-file glyph (sidebar stays text).
+- Stage 5 web page. Saves named after the character: `main.c` sets a default
+  name from `user_name()` under `SET_UID` ("web_user" in wasm), which makes
+  `play_game()` try `0.web_user` and fall back to the start menu; skip it
+  under `USE_WEB` and pass no `-u`: `savefile_load(FALSE)` then loads the
+  newest *living* entry of `user.0.svg` by itself. A loaded character next
+  shows its sheet with "['Q' to quit, 'C' to play another character, ...]"
+  (`play_game()` loop): `break` there under `USE_WEB` unless dead (a test
+  that sent `Q`/Esc there quit the game). Export = every `0.<Name>` +
+  `user.0.svg` as one RvipApp bundle (`root` = the save dir); a lone
+  imported savefile gets a one-line `user.0.svg` (`1<Name>@<Name> ...`).
+  `save_player()` never called `web_sync_files()`: add it at its end.
+  `fix_message()` draws bottom-up: under `USE_WEB` clear and draw only
+  `message_num()` rows (skip the oldest blank ones: birth adds `" "`
+  separators) so the log fills from the top. Sub-window resize at the
+  prompt: `window_stuff()` right after `web_apply_layout()` (else they
+  refill only on the next turn). Look (`l`) cycles stairs and shop
+  entrances before town monsters (tests: press space until Recall fills).
+  Stores are found in text mode as digits on the map; the store screen has
+  "Item Description" / "Gold Remaining". Sangband's `Q` is save + quit
+  (suicide only for winners/ironman): tests die via debug `^A j` 60 +
+  `^A s` 30 + `,` (answer `Die?` with `y` in wizard mode); the tombstone
+  menu's Esc asks "Do you want to quit? [y/n]". Game end: `main()` calls
+  `cleanup_angband()` before `quit(NULL)`, so `p_ptr->is_dead` is garbage in
+  `quit_aux`: record it right after `play_game()` (`web_game_end()`) and
+  pass -1/0/1 (never played / saved / died) to the page's overlay text.
+  Tests: `web/test/stage5.mjs` (W10 checklist, 52 checks), `resize.mjs`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2366,6 +2392,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   z-term (row 0 drawn on the canvas too): page CSS `#t-main .wm-topl`
   one cell row high, full width, opaque, `white-space: pre` (size from CSS
   vars the page sets per zoom), else the box wraps over the item list.
+  Set those vars in `fitCanvas()` times its scale: a main canvas CSS-scaled
+  below 80 cols (narrow Map window) otherwise gets a box taller than row 0
+  that hides row 1 (Sangband).
   Exempt: Decker, AlphaMan (whole-screen games).
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
