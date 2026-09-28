@@ -357,7 +357,7 @@ Worked examples:
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
 | NPPAngband 0.5.1 (3.1-era) | `~/Games/nppangband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/nppangband/ | `H` |
-| Sangband 1.0.2 (Marrick z-term) | `~/Games/sangband` (`HANDOVER.md`) | web only (`main-web.c` from Easyband's) | (stage 2) |
+| Sangband 1.0.2 (Marrick z-term) | `~/Games/sangband` (`HANDOVER.md`) | web only (`main-web.c` from Easyband's); https://ruzzoli.de/roguelikes/sangband/ | `H` (roguelike `O`) |
 | FAangband 2.0.1 (4.2) | `~/Games/faangband` (`HANDOVER.md`) | web only (`main-web.c` from Tactical Angband's); https://ruzzoli.de/roguelikes/faangband/ | `p` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -1135,6 +1135,29 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   terms require it). Verify audio with `page.on('request')` after a real
   `page.click()` on the checkbox (a user gesture), and check decoding with
   `new Audio(u).onloadedmetadata`.
+- Stage 7 publish. The public repo existed from stage 1 (remote `origin`, no
+  `rvip/` bundle inside): no filter-repo split, history kept. Upstream has its
+  own `s-readme.txt`, so a new `README.md` carries the port facts. `build.sh`
+  resolves the shared files as `RVIP_WEB` (`~/Games/rvip-tools/web`, cloud
+  `/home/user/rvip/web`) and `ROGUELIKES` (`~/Games/roguelikes-index`, cloud
+  `/home/user/roguelikes`) and links them with `dist` into `web/serve/`
+  (gitignored): a fresh clone builds and serves as on the server
+  (stage1.mjs passed from `git clone` + build). **og.py** had matched no card
+  since cards carry `data-year` (`<div class="card">` regex): fixed to
+  `<div class="card"[^>]*>`; it needs Python 3.12+ (f-string with `\"`) and
+  its card image regex wants `<img src=` first (put a class after `src`).
+  Cloud: run only its second loop for the one game (no Chrome). A stage-5
+  hand-written `<meta name="description">` must go when the og block lands.
+  Card image = the user's choice, the project's square title splash
+  `news.png` (403x376): `object-fit:contain` in the 12:5 box made it tiny and
+  unreadable, so `img.splash` = `cover` + `object-position:50% 0` (logo +
+  dragon, the file itself stays whole for og). Year: the played version's
+  release (1.0.2 = 2011-03-31, Google Code downloads JSON `releaseDate`), as
+  NPP 0.5.1 / ZAPM 0.8.2; the 1994 birth goes on a tree node `Sangband` with
+  the played build as its child (Zangband pattern). Parent = Angband (2.5
+  via Chris Petit's Bangband, per `docs/manual.txt` history); `s-readme.txt`
+  says "based on Angband and also on Oangband" (Marrick's 1.0 code), so not
+  under Oangband. RogueBasin/tangaria are blocked from the cloud proxy.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -2300,6 +2323,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`) | memmaker/easyband |
 | NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`) | memmaker/nppangband |
 | Prospector | `~/Games/prospector` (remote `memmaker`, branch `main`; upstream = Google Code rlprospector svn r197 snapshot @ `7aba66b` + `R197prospector_l.zip` data @ `1b928c0`) | memmaker/prospector |
+| Sangband | `~/Games/sangband` (remote `origin`, branch `main`; upstream = Google Code skills-angband svn trunk r313 `source-archive.zip` @ `230e028`) | memmaker/sangband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
