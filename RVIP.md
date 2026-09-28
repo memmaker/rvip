@@ -1346,6 +1346,16 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `>` in town walks to the caverns entrance `O`, never to the volcanic shaft `I`.
   NLarn has no `--more--` (3d: nothing to do). Test deep levels natively with wizard
   mode (`^W` `y`, `-` = one level down) through a pty.
+- Stage 3 (games whose inventory has **no item letters**, NLarn: cursor list + action
+  keys): give each shown row a page-relative letter (a = first row on screen), so
+  letters become the items' main actions and the old action keys (`d`, `e`, `u`...)
+  move into the item menu (Enter). Build the Enter menu at run time from the help file
+  when its command lines have a fixed form (`` `KEY`k`end` text ``); keep help lines
+  short enough for the menu to fit. Harmless town chatter: hook the game's log call
+  of the peaceful monster (`monster_is_friendly()`) and ignore exactly the text it
+  added, instead of matching message strings. Testing with pyte: use
+  `TERM=screen-256color` (xterm-256color's REP sequence is not supported by pyte and
+  leaves stale cells that look like redraw bugs).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
