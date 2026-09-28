@@ -1368,6 +1368,22 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   set for (`wc_settile`); the shim sends it only while the composed cell still comes
   from stdscr with that char+attr, so animations, targeting and panels fall back to text
   without extra hooks.
+- Stage 5 (web page, ncurses + panels): route **stdscr only** to the region panes (map,
+  status; the map pane gets the stdscr cells even under a pop-up) and compose the shown
+  **panels** into one `P_POP` pane (their bounding box; send its screen origin so clicks
+  map back to screen cells). A status area split over the screen (right column + two
+  lines under the map) becomes one Status pane by stacking the line segments in
+  `route()`. Messages and Inventory: the game draws them into plain `newwin()` windows
+  registered with `wc_pane(win, pane)` (sent when touched, trimmed to the used extent,
+  per-row icon via `wc_rowtile()`), from its own data (log entries oldest first, the
+  inventory sorted like its `i` list). **Watch multi-statement print macros**
+  (`mvwaprintw` = `wattron; mvwprintw; wattroff`): `if (x) mvwaprintw(...)` printed
+  "(empty)" on every repaint. Autosave: flag `web_at_cmd` around the command read in
+  the main loop, `game_save()` from `be_getkey()` with a flag that skips its "Saving..."
+  pop-up. Games whose death loops back to their own main menu need the page's end
+  handling only for `main()` returning (quit, save-and-exit, menu quit). Headless
+  save/reload tests need `launchPersistentContext` (a fresh context has no IndexedDB),
+  and a save at turn 1 shows "New Game", not "Continue".
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
