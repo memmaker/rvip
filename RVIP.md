@@ -1384,6 +1384,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   handling only for `main()` returning (quit, save-and-exit, menu quit). Headless
   save/reload tests need `launchPersistentContext` (a fresh context has no IndexedDB),
   and a save at turn 1 shows "New Game", not "Continue".
+  Map cell size: fit the whole map into the Map body in `layout(rects)` (every mode
+  switch, drag and resize), unless A−/A+ on the Map title bar chose a zoom, kept per
+  window mode (`L.mt[wm.mode()]`); one window = Messages on top, map with the Status
+  column on its right (the game's own screen shape). `main()` returning (save-and-exit,
+  menu quit): sync, then `location.reload()` after ~1 s instead of a "Play again" card.
+  The git proxy refuses deleting remote branches (403): leave parking branches for the user.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
