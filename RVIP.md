@@ -1172,6 +1172,24 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   ("Control:") then `w` works; say so in Cheats. The game page's title link was
   already in the page copied from NPP (check before editing).
 
+- Stage 9 graveyard. Hook `files.c` `close_game()` top of the `is_dead` branch
+  (before `close_game_aux()`), NPP's `web_run_end()`/`js_beacon` with
+  Sangband's strings: win = `total_winner` (retire `Q`, "Ripe Old Age"), quit =
+  "(Quit the game)" (only an **ironman** character's `Q` is suicide; birth
+  `=` options → `ironman_play`), plain `Q` = save & quit sends nothing. No
+  character level: `lvl` = `p_ptr->power` (the score record's "Current Player
+  Power"). Write `""` not `''` in EM_JS bodies (clang warns
+  `-Winvalid-pp-token` on the empty char constant). **The win path can be
+  tested for real**: `^A j 101`, zap the whole level with count `0250` + `^A z`
+  (DL101 often generates Morgoth, and a living unique can't be summoned),
+  `^A n 768`, then poke his `monster_type` in the wasm heap (scan `HEAPU8` for
+  s16b `r_idx` next to `web_where()`: set hp 0, csleep 255, speed 1, energy 0,
+  stunned) and bump him; `Q` → retire → `ev=win`. FORCE_DEPTH uniques can't be
+  summoned above their level. `graf32-g.prf` writes `R:<idx>:+row:+col`
+  (decimal), not `0xAA/0xCC`: own `sangband()` in `killers/make.py`. Earlier
+  stage tests that end a run need a `/roguelikes/beacon` route (python
+  http.server answers 404 → "no 4xx" checks fail).
+
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
   4.2's `main-x11.c` has no tiles. Give it its own `BUNDLE_IDENTIFIER`
