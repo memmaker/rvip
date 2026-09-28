@@ -159,8 +159,16 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   NetHack tiles for ZAPM (sci-fi) and wants text only there. A **NotEye
   release** of a game means a tile sheet in its repo (`gfx/`, loaded by
   `lua/<game>.lua`): show it to the user first (crops at 2×) and let them
-  decide tiles vs text. For PRIME they chose its tiles, with RLTiles only
-  for gaps that don't need to look futuristic.
+  decide tiles vs text. For PRIME they chose its tiles (its RLTiles gap
+  fill predates the one-set rule below).
+- **One coherent tile set, never mixed** (user rule, 2026-09-28): pick the
+  set with the most coverage, preferably one that ships with the original
+  project (source tree, binary/Windows release: check `lib/xtra/graf` for
+  sheets with `file`, not just the prefs). No gap filling from another set
+  (no Shockbolt stand-ins over an Adam Bolt/Gervais sheet or vice versa):
+  a grid the set lacks gets that set's own closest/generic tile, or text.
+  Measure and report the coverage of every candidate set (monsters,
+  objects, flavours, features) and why the chosen one won.
 - **Text next to square tiles looks bad.** Only the map is tiled; messages,
   status, lists and help go to text windows with a normal font.
 - **Period fonts** (original text mode, CP437 box drawing, IBM/Amstrad/
@@ -349,6 +357,7 @@ Worked examples:
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
 | NPPAngband 0.5.1 (3.1-era) | `~/Games/nppangband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/nppangband/ | `H` |
+| Sangband 1.0.2 (Marrick z-term) | `~/Games/sangband` (`HANDOVER.md`) | web only (`main-web.c` from Easyband's); https://ruzzoli.de/roguelikes/sangband/ | `H` (roguelike `O`) |
 | FAangband 2.0.1 (4.2) | `~/Games/faangband` (`HANDOVER.md`) | web only (`main-web.c` from Tactical Angband's); https://ruzzoli.de/roguelikes/faangband/ | `p` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -609,7 +618,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   CC0): fill its gaps from its *own* samples (`FILL` map in
   `~/Games/hengband/web/sounds.py`), one source, one licence; copy only
   cfg-referenced wavs (unreferenced ones may come from elsewhere).
-- Music: the variant's own if its readme allows redistribution (Hengband
+- Music: the variant's own if its readme allows redistribution (Sangband:
+  `.it`/`.mid` rendered to ogg, `jukebox()` in the page, A-Sangband; Hengband
   `lib/xtra/music`: CC0/CC BY, credit the readme, ship it in
   `dist/music`), picked per depth group as its `music.cfg`
   (`hengband.js` `updateMusic()`), else loop
@@ -994,6 +1004,191 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   names start with "The"). Debug summon: count `0588` then `^A y n` (the
   number goes in the count, no prompt); keys via dispatched `keydown`
   (`computer key shift+q` gave `q`, `type Q` nothing; ctrl: `{key:'a', ctrlKey:true}`).
+
+### A-Sangband (Sangband 1.0.2, Skills Angband; `~/Games/sangband`, `HANDOVER.md`, cloud run)
+- Leon Marrick's z-term (Oangband/3.0 era, shared with FAangband 1.x):
+  `Term->cols/rows` (not `wid/hgt`), `Term_keypress(int)`, 128 colours in
+  `color_table[]` (`max_system_colors = MAX_COLORS`), no `main-x11.c` in the
+  svn source. `main.c` has `modules[]` with `(int, char **)` init: add
+  `{ "web", help_web, init_web }`; `pref.prf` loads `pref-x11.prf` for
+  `$SYS web` (keysym macros), `font-x11.prf` stays out (X11 glyph numbers).
+- Term 1 is the special map window (`TERM_MAP`, SDL/Windows only): leave
+  `angband_term[1]` NULL as `main-gcu.c` does; sub-windows start at 2. Web
+  terms map to `angband_term[0,2..7]`. Set `mapped_flag` on every web term.
+  `intrface.c` is the SDL/Windows GUI layer: don't compile it. Main term
+  resize = `calc_map_size(cols - COL_MAP, rows - ROW_MAP - 1)` +
+  `do_cmd_redraw()`; `switch_display_hook` a no-op (as gcu). Max 255 cols.
+- auto_more: no such option; the `(+)` prompt (`msg_flush()`) is skipped by
+  `message_to_window` only once `window_stuff()` has seen a Messages term,
+  so birth still stopped: under `USE_WEB` test the option itself and make
+  it default on (`option_norm[]`). center_player: no option either; maximal
+  panel clearance centres (`verify_panel()`): `clear_y = clear_x = 99`
+  after `init_angband()` (pref.prf's `t:` line sets 2/4 there).
+- Web fixes: `PRIVATE_USER_PATH` (h-config.h *and* config.h) and
+  `safe_setuid_*` (`setegid`, z-file.c) off under `USE_WEB`. Savefile is
+  named after the character (`0.Tester`) plus `user.0.svg`, and a start
+  menu lists them (`c) Tester`).
+- emcc ASan (`-fsanitize=address`) forces `EXIT_RUNTIME`: IndexedDB closes
+  at quit and the save is not there after a reload. ASan-build artefact,
+  test persistence with the normal build. Found: `print_tomb()` used a
+  block-scoped `buf2` after the block (the NPP bug again); format-string
+  bugs (`fprintf(fff, buf)`, `strnfmt(desc, n, buf)` from `user.*.svg`);
+  randart speed precedence (`p >= c ? 4000 : 8000` always true).
+- Stage 2: explore `H` (original keyset) and `O` (free in both: the
+  roguelike `H` is a `C:1` "run west" keymap, `X` a `w0` keymap in both,
+  `` ` `` is Escape via `USE_BACKQUOTE_AS_ESCAPE`). Code at the end of
+  `cmd2.c` (Easyband's port). Sangband specifics: traps live in `t_list`,
+  not features: avoid `cave_trap() && cave_visible_trap()` except
+  `cave_glyph()`; rubble, water and trees are `TF_PASSABLE` (walk, no
+  digging), lava is avoided, shop entrances (`cave_shop_bold`) too; stairs
+  = `cave_up_stairs()/cave_down_stairs()` (include the `LESS2/MORE2`
+  shafts); doors 33..47 are locked/jammed (all look alike): the walk stops
+  once ("The door is locked."), marks it and skips it; `monster_desc(0x0C)`
+  ("something" for a partly seen monster, not "it").
+- The character is born standing on the town's `>` and with an unlit torch
+  in the pack (tests: `wb`). Weak characters are disturbed by every
+  townsperson moving in view (`monmove.c`), so a town stair walk makes 1-3
+  steps per press: by design (A3), press again.
+- The map is centred on the player, so `@` hardly moves on screen: tests
+  read the position from an exported `web_where()` (depth<<16|y<<8|x).
+- Stage 3: Easyband's `cmd_menu()`/`inven_screen()` port fits (3.0-era
+  `get_item()`, no command framework). Sangband differences: `inkey(int
+  allow_mouse)` with its own `MOUSEKEY` protocol (MOUSEKEY, button, x, y,
+  term in the key queue) — wire the page's clicks to it and menus get mouse
+  for free (`inkey(ALLOW_CLICK)`); arrows/keypad come as plain digits via
+  the pref-x11.prf macros, so menus need no keysym parsing (Easyband used
+  `inkey_base` and had to); `request_command()` already has `skip_keymap`
+  (use it for menu-queued commands). `screen_save()` only saves at depth 1:
+  the load+save redraw trick works only from the command prompt.
+  3c "every item prompt with a cursor" (neither sibling had it): record
+  row → slot in `show_inven/equip/floor()`, force `command_see` in
+  `get_item()`, cursor keys before the switch (digit @-tags win).
+  Sources are CRLF, some mixed: Python text-mode rewrites silently convert
+  whole files to LF (a 10k-line diff) — patch bytes or restore per line.
+- Stage 4 tiles: the source *does* ship sheets (`lib/xtra/graf/32x32.bmp`
+  Gervais + `16x16.bmp` Adam Bolt, 8-bit + 1-bit masks, mask 1 = clear;
+  stage 1 looked only at the prefs). Windows release: byte-identical. Mode
+  `GRAPHICS_DAVID_GERVAIS2` = `$GRAF 32x32-g` → `tiles.prf` →
+  `graf32-g.prf` (`+N` = N|0x80; sheet 128×30). Coverage 99.4% as shipped,
+  100% after fixing its typos with same-sheet tiles (`+3:/+18` shifts the
+  `B:` player lines, `+4/71` = text 'G', `R:2:1:+9`, `K:785:+2:+`, a
+  duplicate `K:192`, `R:367` under Shrieker 49); 16x16-g 91.0%. `R:0:0:0`
+  = player from the race × specialty `B:` lines. Lurkers use an empty
+  sprite on purpose (they look like floor). `web/mkgraf.py` (bmp+mask →
+  RGBA PNG), `web/tile-coverage.py [prf]`.
+- No big-tile mode and the map term is the main term: Easyband's
+  `MAP_STEP/MAP_VSTEP` fits, and Sangband already sizes the view by
+  `map_rows/map_cols` (`calc_map_size()` gets grids, not cells). Pads
+  `255/255` after the first cell (`map_pad()`). The front end decides per
+  cell in C from `Term->scr`: a tile with a pad to its right = big tile; a
+  tile followed by a blank = list icon over two cells (Visible list,
+  inventory `a) X name`); else one cell. A pad redrawn alone repaints its
+  anchor (once per flush); text after an icon repaints the icon; text over
+  an anchor blanks only *its* pads (a sidebar row ending at `COL_MAP` must
+  not wipe the tile row below it: zoom 2 showed notches). Mouse → grid
+  needs `(x - COL_MAP) / MAP_STEP` (the original look double-click forgot
+  `COL_MAP` too). `object_attr()` returns the stored shimmer colour for
+  egos/artifacts: guard it when the char is a tile. Equippy chars → the
+  edit-file glyph (sidebar stays text).
+- Stage 5 web page. Saves named after the character: `main.c` sets a default
+  name from `user_name()` under `SET_UID` ("web_user" in wasm), which makes
+  `play_game()` try `0.web_user` and fall back to the start menu; skip it
+  under `USE_WEB` and pass no `-u`: `savefile_load(FALSE)` then loads the
+  newest *living* entry of `user.0.svg` by itself. A loaded character next
+  shows its sheet with "['Q' to quit, 'C' to play another character, ...]"
+  (`play_game()` loop): `break` there under `USE_WEB` unless dead (a test
+  that sent `Q`/Esc there quit the game). Export = every `0.<Name>` +
+  `user.0.svg` as one RvipApp bundle (`root` = the save dir); a lone
+  imported savefile gets a one-line `user.0.svg` (`1<Name>@<Name> ...`).
+  `save_player()` never called `web_sync_files()`: add it at its end.
+  `fix_message()` draws bottom-up: under `USE_WEB` clear and draw only
+  `message_num()` rows (skip the oldest blank ones: birth adds `" "`
+  separators) so the log fills from the top. Sub-window resize at the
+  prompt: `window_stuff()` right after `web_apply_layout()` (else they
+  refill only on the next turn). Look (`l`) cycles stairs and shop
+  entrances before town monsters (tests: press space until Recall fills).
+  Stores are found in text mode as digits on the map; the store screen has
+  "Item Description" / "Gold Remaining". Sangband's `Q` is save + quit
+  (suicide only for winners/ironman): tests die via debug `^A j` 60 +
+  `^A s` 30 + `,` (answer `Die?` with `y` in wizard mode); the tombstone
+  menu's Esc asks "Do you want to quit? [y/n]". Game end: `main()` calls
+  `cleanup_angband()` before `quit(NULL)`, so `p_ptr->is_dead` is garbage in
+  `quit_aux`: record it right after `play_game()` (`web_game_end()`) and
+  pass -1/0/1 (never played / saved / died) to the page's overlay text.
+  Tests: `web/test/stage5.mjs` (W10 checklist, 52 checks), `resize.mjs`.
+- Stage 6 docs + sound. The game's own `lib/help/cmdlist.txt` can be stale:
+  check each row against `pref.prf` keymaps (`A:` action / `C:1:` key) and
+  `process_command()` before parsing it into the Help (Sangband's roguelike
+  `a`/`z` were swapped, `p` and `G` described removed commands). Two-column
+  lists split at a fixed column (40); roguelike rows that equal the original
+  up to plural/punctuation are noise, drop them. Sound: 3.0-era `sound.cfg`
+  names files with the wrong case (`yes.wav` for `Yes.wav`), with stray commas
+  and files never shipped: match case-insensitively, drop the missing, fill
+  empty events from Dubtrain (`web/dubtrain`, used mp3s only). `use_sound` is
+  0 and nothing sets it without `intrface.c`: set `SOUND_AND_MUSIC` in the web
+  init or no TERM_XTRA_SOUND ever arrives. Sangband (and Oangband-family 3.0
+  games) ship **their own music** (`lib/xtra/music`, `.it`/`.mid` +
+  `jukebox.cfg`, danger themes from `danger_music_level()`): render to ogg
+  once (`web/music.sh`: openmpt123, timidity + FluidR3 GM, ffmpeg vorbis q0;
+  cloud: `apt-get update` first) and port `intrface.c`'s `jukebox()` to the
+  page; ship the jukebox.cfg credit text next to the oggs (Reenen Laurie's
+  terms require it). Verify audio with `page.on('request')` after a real
+  `page.click()` on the checkbox (a user gesture), and check decoding with
+  `new Audio(u).onloadedmetadata`.
+- Stage 7 publish. The public repo existed from stage 1 (remote `origin`, no
+  `rvip/` bundle inside): no filter-repo split, history kept. Upstream has its
+  own `s-readme.txt`, so a new `README.md` carries the port facts. `build.sh`
+  resolves the shared files as `RVIP_WEB` (`~/Games/rvip-tools/web`, cloud
+  `/home/user/rvip/web`) and `ROGUELIKES` (`~/Games/roguelikes-index`, cloud
+  `/home/user/roguelikes`) and links them with `dist` into `web/serve/`
+  (gitignored): a fresh clone builds and serves as on the server
+  (stage1.mjs passed from `git clone` + build). **og.py** had matched no card
+  since cards carry `data-year` (`<div class="card">` regex): fixed to
+  `<div class="card"[^>]*>`; it needs Python 3.12+ (f-string with `\"`) and
+  its card image regex wants `<img src=` first (put a class after `src`).
+  Cloud: run only its second loop for the one game (no Chrome). A stage-5
+  hand-written `<meta name="description">` must go when the og block lands.
+  Card image = the user's choice, the project's square title splash
+  `news.png` (403x376): `object-fit:contain` in the 12:5 box made it tiny and
+  unreadable, so `img.splash` = `cover` + `object-position:50% 0` (logo +
+  dragon, the file itself stays whole for og). Year: the played version's
+  release (1.0.2 = 2011-03-31, Google Code downloads JSON `releaseDate`), as
+  NPP 0.5.1 / ZAPM 0.8.2; the 1994 birth goes on a tree node `Sangband` with
+  the played build as its child (Zangband pattern). Parent = Angband (2.5
+  via Chris Petit's Bangband, per `docs/manual.txt` history); `s-readme.txt`
+  says "based on Angband and also on Oangband" (Marrick's 1.0 code), so not
+  under Oangband. RogueBasin/tangaria are blocked from the cloud proxy.
+- Stage 8 shrine. The cloud proxy blocked every history site this time
+  (RogueBasin, web.archive.org, narkive, angband.live, wikipedia; WebFetch too):
+  don't retry, take trivia from the Google Code archive JSON, which stays
+  reachable (`storage.googleapis.com/google-code-archive/v2/code.google.com/<p>/`
+  `project.json`, `issues-page-N.json`, `issues/issue-N.json`; `wikis.json` 403)
+  and from the shipped change logs/manual (HTML comments count). Sangband ships a
+  finished `docs/manual.html`: copy it unchanged, plus `web/mkmanual.py` for
+  `lib/help` (NPP's script), the command card PDF and `docs/changes-*.txt`
+  (some CR-only, cp1252). Count races from the birth menu loop (`MAX_RACES`),
+  not the help text: stage 6's guide said twelve, the game offers fourteen.
+  Wizard mode's `Ctrl+W` closes the browser tab: the z-term `^` prefix
+  ("Control:") then `w` works; say so in Cheats. The game page's title link was
+  already in the page copied from NPP (check before editing).
+
+- Stage 9 graveyard. Hook `files.c` `close_game()` top of the `is_dead` branch
+  (before `close_game_aux()`), NPP's `web_run_end()`/`js_beacon` with
+  Sangband's strings: win = `total_winner` (retire `Q`, "Ripe Old Age"), quit =
+  "(Quit the game)" (only an **ironman** character's `Q` is suicide; birth
+  `=` options → `ironman_play`), plain `Q` = save & quit sends nothing. No
+  character level: `lvl` = `p_ptr->power` (the score record's "Current Player
+  Power"). Write `""` not `''` in EM_JS bodies (clang warns
+  `-Winvalid-pp-token` on the empty char constant). **The win path can be
+  tested for real**: `^A j 101`, zap the whole level with count `0250` + `^A z`
+  (DL101 often generates Morgoth, and a living unique can't be summoned),
+  `^A n 768`, then poke his `monster_type` in the wasm heap (scan `HEAPU8` for
+  s16b `r_idx` next to `web_where()`: set hp 0, csleep 255, speed 1, energy 0,
+  stunned) and bump him; `Q` → retire → `ev=win`. FORCE_DEPTH uniques can't be
+  summoned above their level. `graf32-g.prf` writes `R:<idx>:+row:+col`
+  (decimal), not `0xAA/0xCC`: own `sangband()` in `killers/make.py`. Earlier
+  stage tests that end a run need a `/roguelikes/beacon` route (python
+  http.server answers 404 → "no 4xx" checks fail).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1528,7 +1723,8 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     original sheets → `tilesets/dawnlike_names.tsv` (name, frame, sheet,
     col, row; 5,239 matched, 111 atlas-only extras skipped). **Map by name**:
     look up each monster/item of the variant in the TSV (grep), write the
-    table in `mkdawn.py`, fall back to NetHack tiles for gaps. Names are the
+    table in `mkdawn.py`, gaps → DawnLike's own closest sprite (never
+    another set: Part 1 step 4). Names are the
     atlas author's reading of the art, so check odd matches in the preview.
   - Licence **CC BY 4.0**. Credit DragonDePlatino *and* DawnBringer (palette)
     on the Help page and README. The author also asks that the Platino
@@ -2229,6 +2425,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | Easyband | `~/Games/easyband` (remote `memmaker`, branch `main`; upstream = archive `easyband23_src.rar` @ `2c3e95b`) | memmaker/easyband |
 | NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`) | memmaker/nppangband |
 | Prospector | `~/Games/prospector` (remote `memmaker`, branch `main`; upstream = Google Code rlprospector svn r197 snapshot @ `7aba66b` + `R197prospector_l.zip` data @ `1b928c0`) | memmaker/prospector |
+| Sangband | `~/Games/sangband` (remote `origin`, branch `main`; upstream = Google Code skills-angband svn trunk r313 `source-archive.zip` @ `230e028`) | memmaker/sangband |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
@@ -2347,6 +2544,9 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   z-term (row 0 drawn on the canvas too): page CSS `#t-main .wm-topl`
   one cell row high, full width, opaque, `white-space: pre` (size from CSS
   vars the page sets per zoom), else the box wraps over the item list.
+  Set those vars in `fitCanvas()` times its scale: a main canvas CSS-scaled
+  below 80 cols (narrow Map window) otherwise gets a box taller than row 0
+  that hides row 1 (Sangband).
   Exempt: Decker, AlphaMan (whole-screen games).
 - **Like Rogue 3.6** (`~/Games/rogue3.6/web/rogue36.js`): map, messages
   (with history), status, inventory and visible list in their own windows,
@@ -2549,6 +2749,11 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   log 4xx with `page.on('response')` (the console omits the URL). Emsdk
   `install latest` works in the container (~2 min); record absolute paths. Headless passes still miss layout problems: the Mac check
   in the pane is required (Easyband's tiny tile map).
+  Build shadow rows with `Array.from(row, c => c || ' ')`, not `.map()`:
+  `map` skips the holes of a sparse row and the text shifts left (NPP's and
+  Sangband's first `lib.mjs` had this; `@` was read at the wrong column).
+  With a centred map read positions from an exported C getter, not the
+  screen.
 - **Checklist:** title → birth → map with tiles → every window filled
   (inventory, visible list, messages, recall) → shop → stairs → help, Enter
   menu → window drag/zoom/rename, layout survives reload, zoomed map
