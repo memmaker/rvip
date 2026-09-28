@@ -1356,6 +1356,18 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   added, instead of matching message strings. Testing with pyte: use
   `TERM=screen-256color` (xterm-256color's REP sequence is not supported by pyte and
   leaves stale cells that look like redraw bugs).
+- Stage 4 (tiles, Larn family): memmaker/larn and ularn have no `claude/rvip-finetuning`
+  branch; their `master` cycles **Amiga -> None** only (no DawnLike), so NLarn does the
+  same. Read the ids from the game's X-macro enums (`#define X_ENUM(M) \ M(ID,) ...`) in
+  the generator and assert one tile per id. Amiga Larn has no outdoor terrain (town
+  grass, trees, water, lava, mountains): recolour Amiga tiles (`TINTS` in `port/mktiles.py`,
+  e.g. the wall texture in blue/orange, the floor dot in green) rather than mixing sets.
+  Flavoured items (rings, amulets) take the tile of their random material index, not
+  their kind. **ncurses games that paint the map in one function:** compute the tiles at
+  its end from game data (`tiles_paint()`) and store each with the stdscr cell it was
+  set for (`wc_settile`); the shim sends it only while the composed cell still comes
+  from stdscr with that char+attr, so animations, targeting and panels fall back to text
+  without extra hooks.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
