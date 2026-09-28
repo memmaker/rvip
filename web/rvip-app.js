@@ -14,12 +14,32 @@
  *   app.running  (the game sets it true in onRuntimeInitialized; false stops key handling)
  *   app.status(msg, isError);  app.sync(cb);  app.crashed(err)  (Module.onAbort)
  *   app.exportSave(); app.importSave(file); app.newGame(); app.toggleHelp()
+ * RvipApp.dir: the game's IndexedDB folder, '/' + its URL folder (unique on the server, so no two games
+ *   share one: IDBFS names the database after the mount point). RvipApp.mount(err => ..., old) mounts and
+ *   loads it; old = { dir: '/save', files: ['x.sav'] } moves those files over once from a folder used before.
  * Buttons it wires if present: #btn-export #btn-import #import-file #btn-new #btn-help #help-close;
  * #status, #help, #help-body as in every game's index.html. While help is open it takes all keys.
  */
 (function () {
 	'use strict';
 	function $(id) { return document.getElementById(id); }
+
+	var dir = '/' + (location.pathname.split('/').filter(function (p) { return p && !/\./.test(p); }).pop() || 'game');
+
+	function mount(done, old) {
+		var F = Module.FS;
+		F.mkdirTree(dir); F.mount(Module.IDBFS, {}, dir);
+		F.syncfs(true, function (err) {
+			if (!old || old.files.some(function (f) { return F.analyzePath(dir + '/' + f).exists; })) return done(err);
+			F.mkdirTree(old.dir); F.mount(Module.IDBFS, {}, old.dir);
+			F.syncfs(true, function () {
+				old.files.forEach(function (f) {
+					try { F.writeFile(dir + '/' + f, F.readFile(old.dir + '/' + f)); F.unlink(old.dir + '/' + f); } catch (e) { /* not there */ }
+				});
+				F.syncfs(false, function () { F.unmount(old.dir); F.syncfs(false, function () { done(err); }); });
+			});
+		});
+	}
 
 	window.RvipApp = function (o) {
 		var app = { running: false }, syncing = false, again = false, cbs = [], helpLoaded = false;
@@ -122,4 +142,6 @@
 		if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 		return app;
 	};
+	RvipApp.dir = dir;
+	RvipApp.mount = mount;
 })();
