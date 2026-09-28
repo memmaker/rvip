@@ -1042,6 +1042,20 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   steps per press: by design (A3), press again.
 - The map is centred on the player, so `@` hardly moves on screen: tests
   read the position from an exported `web_where()` (depth<<16|y<<8|x).
+- Stage 3: Easyband's `cmd_menu()`/`inven_screen()` port fits (3.0-era
+  `get_item()`, no command framework). Sangband differences: `inkey(int
+  allow_mouse)` with its own `MOUSEKEY` protocol (MOUSEKEY, button, x, y,
+  term in the key queue) — wire the page's clicks to it and menus get mouse
+  for free (`inkey(ALLOW_CLICK)`); arrows/keypad come as plain digits via
+  the pref-x11.prf macros, so menus need no keysym parsing (Easyband used
+  `inkey_base` and had to); `request_command()` already has `skip_keymap`
+  (use it for menu-queued commands). `screen_save()` only saves at depth 1:
+  the load+save redraw trick works only from the command prompt.
+  3c "every item prompt with a cursor" (neither sibling had it): record
+  row → slot in `show_inven/equip/floor()`, force `command_see` in
+  `get_item()`, cursor keys before the switch (digit @-tags win).
+  Sources are CRLF, some mixed: Python text-mode rewrites silently convert
+  whole files to LF (a 10k-line diff) — patch bytes or restore per line.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
