@@ -147,7 +147,9 @@ through `port/`). The JS layer only draws it.
   `RvipApp.dir` ('/' + its URL folder) via `RvipApp.mount(done, old)`; never
   a shared name like `/save` or `/hack` (IDBFS names the database after the
   mount point, so omega/roguepc and hack/nethack13d overwrote each other).
-  Moving off an old name: pass `old = {dir, files}` to move the files once.
+  Moving off an old name: pass `old = {dir, files}` to move the files once
+  (only when that database exists: `indexedDB.databases()`; mounting a
+  missing one creates it, empty, on every load).
 - **Fonts.** Both choosers list the index page's `fonts/*.woff` (build.sh
   writes `fonts.json`). The fonts load from `../fonts/<name>.woff` with
   `FontFace`, and both choices are stored in the layout file with the other

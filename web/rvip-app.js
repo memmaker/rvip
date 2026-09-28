@@ -39,6 +39,12 @@
 		F.mkdirTree(dir); F.mount(Module.IDBFS, {}, dir);
 		F.syncfs(true, function (err) {
 			if (!old || old.files.some(function (f) { return F.analyzePath(dir + '/' + f).exists; })) return done(err);
+			/* only if that database exists: mounting it would create an empty one on every load */
+			(indexedDB.databases ? indexedDB.databases() : Promise.resolve([{ name: old.dir }])).then(function (dbs) {
+				if (dbs.some(function (d) { return d.name === old.dir; })) move(err); else done(err);
+			}, function () { done(err); });
+		});
+		function move(err) {
 			F.mkdirTree(old.dir); F.mount(Module.IDBFS, {}, old.dir);
 			F.syncfs(true, function () {
 				old.files.forEach(function (f) {
@@ -46,7 +52,7 @@
 				});
 				F.syncfs(false, function () { F.unmount(old.dir); F.syncfs(false, function () { done(err); }); });
 			});
-		});
+		}
 	}
 
 	window.RvipApp = function (o) {
