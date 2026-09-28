@@ -4,13 +4,21 @@
  *
  *   var app = RvipApp({
  *     name: 'hack',                                  // console tag; errors from <name>-core*.js are crashes
- *     save: function () { return path || null; },   // the save file in Module.FS (Export save)
- *     clear: function () {},                          // delete the save files (New game, Import save)
- *     put: function (file, data) { return err; },     // write an imported save (Uint8Array); a string = refuse with that message
+ *     save: function () { return path || null; },   // the save file in Module.FS (Export save); an array of
+ *                                                    //   paths = one JSON bundle {key: base64} (<name>-save.json)
+ *     clear: function () {},                          // delete the save files (New game, Import save); may return a Promise
+ *     put: function (file, data) { return err; },     // write an imported save (Uint8Array); a string = refuse with that
+ *                                                    //   message; a bundle calls it once per file with {name: key}; may be async
  *     exportName: function (path) {},                 // optional: download name (default: basename)
  *     flush: function (done) {},                      // optional: have the game write its save first, then done()
- *     helpText: '...'                                 // optional: shown if help.html won't load
+ *     helpText: '...',                                // optional: shown if help.html won't load
+ *     noSave: '...',                                  // optional: Export message when there is no save yet
+ *     root: '/game',                                  // optional: bundle keys are paths minus this (default: basename)
+ *     read: function (path) {},                       // optional: bytes (or a Promise) of a save outside Module.FS
+ *     sync: function (cb) {},                         // optional: persist a store outside Module.FS, then cb(err)
+ *     newGame: function () {}                         // optional: replaces New game (e.g. restart only, saves kept)
  *   });
+ *   save/read may return Promises. Bundles import whatever their file name if the file parses as one.
  *   app.running  (the game sets it true in onRuntimeInitialized; false stops key handling)
  *   app.status(msg, isError);  app.sync(cb);  app.crashed(err)  (Module.onAbort)
  *   app.exportSave(); app.importSave(file); app.newGame(); app.toggleHelp()
@@ -50,12 +58,12 @@
 
 		/* write IDBFS to IndexedDB; cb(err) when done; calls during a sync join the next one */
 		app.sync = function (cb) {
-			if (!FS()) { if (cb) cb(); return; }
+			if (!o.sync && !FS()) { if (cb) cb(); return; }
 			if (typeof cb === 'function') cbs.push(cb);
 			if (syncing) { again = true; return; }
 			syncing = true;
 			var mine = cbs; cbs = [];
-			FS().syncfs(false, function (err) {
+			(o.sync || function (f) { FS().syncfs(false, f); })(function (err) {
 				syncing = false;
 				if (err) app.status('Saving to browser storage (IndexedDB) failed: ' + err + '. Use "Export save" to keep a copy.', true);
 				mine.forEach(function (f) { f(err); });
@@ -64,34 +72,62 @@
 		};
 		function reload(err) { if (!err) location.reload(); }
 
+		function b64(u8) { var t = ''; for (var i = 0; i < u8.length; i += 0x8000) t += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(t); }
+		function unb64(t) { var b = atob(t), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+		function read(p) { return Promise.resolve(o.read ? o.read(p) : FS().readFile(p)); }
+		function key(p) { return o.root && p.indexOf(o.root) === 0 ? p.slice(o.root.length) : p.split('/').pop(); }
+		function download(data, name) {
+			var a = document.createElement('a');
+			a.href = URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }));
+			a.download = name;
+			document.body.appendChild(a); a.click();
+			setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+		}
+		function fail(err) { app.status('Export failed: ' + (err && err.message || err), true); }
 		app.exportSave = function () {
 			(o.flush && app.running ? o.flush : function (f) { f(); })(function () {
-				var p = o.save();
-				if (!p) { flash('There is no saved game yet.'); return; }
-				var a = document.createElement('a');
-				a.href = URL.createObjectURL(new Blob([FS().readFile(p)], { type: 'application/octet-stream' }));
-				a.download = o.exportName ? o.exportName(p) : p.split('/').pop();
-				document.body.appendChild(a); a.click();
-				setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+				Promise.resolve(o.save()).then(function (p) {
+					if (!p || !p.length) { flash(o.noSave || 'There is no saved game yet.'); return; }
+					if (!Array.isArray(p)) return read(p).then(function (d) { download(d, o.exportName ? o.exportName(p) : p.split('/').pop()); });
+					return Promise.all(p.map(read)).then(function (ds) {
+						var bundle = {};
+						p.forEach(function (f, i) { bundle[key(f)] = b64(ds[i]); });
+						download(JSON.stringify(bundle), o.name + '-save.json');
+					});
+				}).catch(fail);
 			});
 		};
+		/* a bundle: a JSON object of base64 strings -> [[key, bytes], ...], else null */
+		function unbundle(data) {
+			if (data[0] !== 123) return null;   /* '{' */
+			try {
+				var b = JSON.parse(new TextDecoder().decode(data)), ks = Object.keys(b);
+				if (!ks.length || ks.some(function (k) { return typeof b[k] !== 'string'; })) return null;
+				return ks.map(function (k) { return [k, unb64(b[k])]; });
+			} catch (e) { return null; }
+		}
 		app.importSave = function (file) {
 			var r = new FileReader();
 			r.onload = function () {
 				if (!confirm('Replace the current game with "' + file.name + '"?')) return;
 				app.running = false;
-				o.clear();
-				var err = o.put(file, new Uint8Array(r.result));
-				if (typeof err === 'string') { app.status(err, true); return; }
-				app.sync(reload);
+				var data = new Uint8Array(r.result), list = unbundle(data) || [[null, data]];
+				Promise.resolve(o.clear()).then(function () {
+					return list.reduce(function (pr, e) {
+						return pr.then(function (err) { return typeof err === 'string' ? err : o.put(e[0] === null ? file : { name: e[0] }, e[1]); });
+					}, Promise.resolve());
+				}).then(function (err) {
+					if (typeof err === 'string') { app.status(err, true); return; }
+					app.sync(reload);
+				}).catch(function (err) { app.status('Import failed: ' + (err && err.message || err), true); });
 			};
 			r.readAsArrayBuffer(file);
 		};
 		app.newGame = function () {
+			if (o.newGame) return o.newGame();
 			if (!confirm('Delete the saved game in this browser and start a new one?')) return;
 			app.running = false;
-			o.clear();
-			app.sync(reload);
+			Promise.resolve(o.clear()).then(function () { app.sync(reload); });
 		};
 
 		app.crashed = function (err) {
