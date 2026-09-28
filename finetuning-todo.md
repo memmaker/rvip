@@ -37,7 +37,7 @@ nppangband, quickband, easyband, frogcomposband, sil-q, zangband, tome2, tactica
 
 In the ports that took faangband's font code, map cells in text mode follow the tile zoom, not the chosen font. The map font changes the glyphs, not the grid. A wide bitmap font (Rainbow100) overlaps itself on the map, and nppangband's panes look widely letter-spaced with IBM EGA 9x8. Either scale the glyphs to the cell, or size the map cells from the font in text mode. Affected: faangband and the nine ports in §5.
 
-## 6. DawnLike not done
+## 6. DawnLike — done (umoria: DawnLike + animated, mkdawn.py)
 
 The DawnLike items (floor autotiles, animation) are not done in umoria, which has only Shockbolt tiles and would need a full `mkdawn.py` slot map. All other ports that use DawnLike have them.
 
