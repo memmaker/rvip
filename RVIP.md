@@ -1314,6 +1314,29 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `make.py` `ints()` wants `name[] =`: rewrite `mon_tile[55]` first (as roguepc). Run only the
   new game's function (exec the file minus the last call line), not the whole script.
 
+### R-NLarn. NLarn (C99 on GLib + ncursesw/panels; `~/Games/nlarn`, cloud run)
+- **GLib: measure first** (`grep -ohE '\bg_[a-z0-9_]+' src/*.c | sort -u`). NLarn uses
+  146 GLib calls and no GObject/GIO/main loop: a libc subset (`port/glib/glib.h`,
+  `glib.c`, `glib/gi18n.h`, `glib/gstdio.h`, found via `-Iport/glib`, ~1900 lines incl.
+  GKeyFile, GOptionContext, GHashTable, stable merge sorts) was far cheaper than a
+  meson cross build. Check it natively before the wasm build: gcc + shim + the real
+  ncurses + ASan, driven through a pty (`pty.fork()` + `pyte` screen, `pip install pyte`).
+- ncurses + panels game: the shim composes stdscr + visible panels in `doupdate()`,
+  resolves colour pairs (256-colour palette + the game's `init_color`) to RGB in C and
+  sends changed cells through one `route()` function (stage 1: whole screen, later
+  regions/panels to panes). `NCURSES_VERSION` defined so the game takes its ncurses paths.
+- Games with a user-dir option (`-D/--userdir`): pass the IDBFS mount in
+  `Module.arguments` instead of changing code; the lib dir follows argv[0]'s dir, so
+  preload to `/<name>-data/lib` and `FS.mkdirTree` + `FS.chdir` there in `preRun`
+  (the packager creates the folder only later: chdir alone throws ErrnoError).
+- setjmp/longjmp (death/quit jump back to `main()`) works under Asyncify with the
+  default JS SjLj.
+- Cloud: emsdk's `-sUSE_ZLIB` download (github archive URL) is refused (403): seed
+  `cache/ports/zlib/zlib-<ver>/` from `git clone -b v<ver> https://github.com/madler/zlib`
+  and write the archive URL into `cache/ports/zlib/.emscripten_url` (EMCC_LOCAL_PORTS
+  does not work for zlib: no `.SUBDIR`).
+- Text-shadow tests: anchor regexes (`/ T \d+/` for the turn; `/T \d+/` matched "INT 12").
+
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
   UltraRogue, Advanced Rogue 5.8/7.7; forks under `memmaker/`): copy
