@@ -349,6 +349,7 @@ Worked examples:
 | Hengband 3.0.2.4-Beta (C++20) | `~/Games/hengband` (`HANDOVER.md`) | web only (`main-web.cpp` from Frog's) | (stage 2) |
 | Easyband 2.3 (2.9.3) | `~/Games/easyband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/easyband/ | `H` |
 | NPPAngband 0.5.1 (3.1-era) | `~/Games/nppangband` (`HANDOVER.md`) | web only (`main-web.c` from Zangband's); https://ruzzoli.de/roguelikes/nppangband/ | `H` |
+| Sangband 1.0.2 (Marrick z-term) | `~/Games/sangband` (`HANDOVER.md`) | web only (`main-web.c` from Easyband's) | (stage 2) |
 | FAangband 2.0.1 (4.2) | `~/Games/faangband` (`HANDOVER.md`) | web only (`main-web.c` from Tactical Angband's); https://ruzzoli.de/roguelikes/faangband/ | `p` |
 | BOSS 2.4b | `~/Games/boss` (`HANDOVER.md`) | Free Pascal, own `crt` unit + Omega's X11 text window, `play.sh` | `g` |
 
@@ -994,6 +995,36 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   names start with "The"). Debug summon: count `0588` then `^A y n` (the
   number goes in the count, no prompt); keys via dispatched `keydown`
   (`computer key shift+q` gave `q`, `type Q` nothing; ctrl: `{key:'a', ctrlKey:true}`).
+
+### A-Sangband (Sangband 1.0.2, Skills Angband; `~/Games/sangband`, `HANDOVER.md`, cloud run)
+- Leon Marrick's z-term (Oangband/3.0 era, shared with FAangband 1.x):
+  `Term->cols/rows` (not `wid/hgt`), `Term_keypress(int)`, 128 colours in
+  `color_table[]` (`max_system_colors = MAX_COLORS`), no `main-x11.c` in the
+  svn source. `main.c` has `modules[]` with `(int, char **)` init: add
+  `{ "web", help_web, init_web }`; `pref.prf` loads `pref-x11.prf` for
+  `$SYS web` (keysym macros), `font-x11.prf` stays out (X11 glyph numbers).
+- Term 1 is the special map window (`TERM_MAP`, SDL/Windows only): leave
+  `angband_term[1]` NULL as `main-gcu.c` does; sub-windows start at 2. Web
+  terms map to `angband_term[0,2..7]`. Set `mapped_flag` on every web term.
+  `intrface.c` is the SDL/Windows GUI layer: don't compile it. Main term
+  resize = `calc_map_size(cols - COL_MAP, rows - ROW_MAP - 1)` +
+  `do_cmd_redraw()`; `switch_display_hook` a no-op (as gcu). Max 255 cols.
+- auto_more: no such option; the `(+)` prompt (`msg_flush()`) is skipped by
+  `message_to_window` only once `window_stuff()` has seen a Messages term,
+  so birth still stopped: under `USE_WEB` test the option itself and make
+  it default on (`option_norm[]`). center_player: no option either; maximal
+  panel clearance centres (`verify_panel()`): `clear_y = clear_x = 99`
+  after `init_angband()` (pref.prf's `t:` line sets 2/4 there).
+- Web fixes: `PRIVATE_USER_PATH` (h-config.h *and* config.h) and
+  `safe_setuid_*` (`setegid`, z-file.c) off under `USE_WEB`. Savefile is
+  named after the character (`0.Tester`) plus `user.0.svg`, and a start
+  menu lists them (`c) Tester`).
+- emcc ASan (`-fsanitize=address`) forces `EXIT_RUNTIME`: IndexedDB closes
+  at quit and the save is not there after a reload. ASan-build artefact,
+  test persistence with the normal build. Found: `print_tomb()` used a
+  block-scoped `buf2` after the block (the NPP bug again); format-string
+  bugs (`fprintf(fff, buf)`, `strnfmt(desc, n, buf)` from `user.*.svg`);
+  randart speed precedence (`p >= c ? 4000 : 8000` always true).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
