@@ -2233,8 +2233,14 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   gutters, Windows drop-down, rename/A−/A+ on hover, one/multi-window toggle.
   `wm.mode()` reads it ('multi'/'single'), `wm.mode(m)` sets it (Rogue PC:
   One window = the PC text screen, F12 toggles).
-- **Font sizes are the WM's.** A−/A+ sets `state.fs[id]` (8..28 px, saved
-  with the layout) as that window's `.body` font-size, also on load.
+- **Font sizes are the WM's, one per window and mode.** A−/A+ sets
+  `state.fs[id]` (multi) or `state.fs1[id]` (one window) (8..28 px, or
+  `fontMax[id]`; saved with the layout) as that window's `.body`
+  font-size, also on load and on a mode switch. One window usually shows
+  more than the map (Omega: the whole screen), so a multi-window zoom there
+  clipped side panel, messages and lists. A mode switch runs
+  `layout(rects)`; read the sizes there: `wm.zoomed(id)` is the size set
+  in this mode, 0 if none (fit the window). No game keeps its own zoom.
   `zoom: {id: fn(size, d)}` only for windows that redraw or scale (canvas
   map, z-term/curses canvas panes); `RvipWM.fontSize(id)` reads a size.
   A canvas pane that draws at another size than its CSS before any A−/A+

@@ -19,12 +19,17 @@
  *     zoom: { map: function (size, d) {} },           // windows that redraw/scale on A− / A+
  *     size: { side: function () { return px; } },     // optional: a window's drawn size before
  *                                                     // any A−/A+ (canvas panes not at CSS size)
- *     noFont: 'map'                                   // a window without A− / A+
+ *     noFont: 'map',                                  // a window without A− / A+
+ *     fontMax: { map: 40 }                            // optional: a window's A+ limit (default 28)
  *   });
  *   wm.apply()  after a resize;  wm.shown(id);  wm.reset();  wm.rects
- * A− / A+ on a title bar: the WM keeps one size per window (state.fs[id], 8..28 px,
- * default: size[id]() if given, else the body's CSS font-size), sets it as the window body's font-size (also
- * on load) and calls zoom[id](size, d) if given. RvipWM.fontSize(id) reads it.
+ * A− / A+ on a title bar: the WM keeps one size per window and per mode (multi:
+ * state.fs[id], one window: state.fs1[id]; 8..28 px; default: size[id]() if
+ * given, else the body's CSS font-size), sets it as the window body's font-size
+ * (also on load and on a mode switch) and calls zoom[id](size, d) if given.
+ * RvipWM.fontSize(id) reads it; wm.zoomed(id) is the size A−/A+ set in this
+ * mode, 0 if none (a game can fit the window then). A mode switch runs
+ * layout(rects): read the sizes there.
  */
 (function () {
 	'use strict';
@@ -82,15 +87,20 @@
 		drop.hidden = true; area.appendChild(drop);
 
 		function valid(t) { var l = leaves(t); return l.length && l.every(function (id) { return ids.indexOf(id) >= 0; }) && new Set(l).size === l.length; }
-		function fresh() { return { v: 2, mode: 'multi', multi: clone(o.multi), single: clone(o.single), titles: {}, fs: {} }; }
+		function fresh() { return { v: 2, mode: 'multi', multi: clone(o.multi), single: clone(o.single), titles: {}, fs: {}, fs1: {} }; }
 		S = fresh();
 		if (o.state && o.state.v === 2) {
 			if (o.state.mode === 'single') S.mode = 'single';
 			if (valid(o.state.multi)) S.multi = o.state.multi;
 			if (o.state.titles) ids.forEach(function (id) { if (typeof o.state.titles[id] === 'string') S.titles[id] = o.state.titles[id].slice(0, 40); });
-			if (o.state.fs) ids.forEach(function (id) { var v = +o.state.fs[id]; if (v >= 8 && v <= 28) S.fs[id] = v; });
+			['fs', 'fs1'].forEach(function (k) {
+				if (o.state[k]) ids.forEach(function (id) { var v = +o.state[k][id]; if (v >= 8 && v <= fmax(id)) S[k][id] = v; });
+			});
 		}
-		cur = { S: S, body: body, size: o.size };
+		cur = { S: S, body: body, size: o.size, fs: fs };
+		function fmax(id) { return (o.fontMax && o.fontMax[id]) || 28; }
+		/* the sizes of the mode shown */
+		function fs() { return S.mode === 'single' ? S.fs1 : S.fs; }
 		function tree() { return S.mode === 'single' ? S.single : S.multi; }
 		function save() { clearTimeout(saveT); saveT = setTimeout(function () { o.save(clone(S)); }, 300); }
 		function win(id) { return document.getElementById('t-' + id); }
@@ -108,8 +118,10 @@
 			if (gut) bars.push({ n: n, r: v ? [r[0], r[1] + sa, r[2], g] : [r[0] + sa, r[1], g, r[3]], box: r });
 			walk(n.a, ra, gut, out); walk(n.b, rb, gut, out);
 		}
+		var lastMode = S.mode;
 		wm.apply = function () {
 			var single = S.mode === 'single', t = tree(), shown = leaves(t), rects = {};
+			if (S.mode !== lastMode) { lastMode = S.mode; ids.forEach(fontSet); }
 			area.classList.toggle('wm-single', single);
 			bars = [];
 			walk(t, [0, 0, area.clientWidth, area.clientHeight], !single, rects);
@@ -161,7 +173,7 @@
 			}
 			wm.apply(); save();
 		}
-		wm.reset = function () { var t = S.titles; S = fresh(); cur.S = S; ids.forEach(function (id) { titleEl(id); fontSet(id); }); wm.apply(); save(); };
+		wm.reset = function () { var t = S.titles; S = fresh(); cur.S = S; lastMode = S.mode; ids.forEach(function (id) { titleEl(id); fontSet(id); }); wm.apply(); save(); };
 
 		/* ---- title bars: hover buttons, rename, drag to rearrange ---- */
 		function titleEl(id) { var w = win(id), n = w && w.querySelector('.t .name'); if (n) n.textContent = title(id); }
@@ -188,11 +200,13 @@
 			nm.addEventListener('dblclick', function () { rename(id, nm); });
 			t.addEventListener('pointerdown', function (e) { if (e.button === 0 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') drag(id, e); });
 		});
-		function fontSet(id) { var b = body(id); if (b) b.style.fontSize = S.fs[id] ? S.fs[id] + 'px' : ''; }
+		function fontSet(id) { var b = body(id), f = fs(); if (b) b.style.fontSize = f[id] ? f[id] + 'px' : ''; }
 		function fontBy(id, d) {
-			S.fs[id] = Math.max(8, Math.min(28, Math.round(window.RvipWM.fontSize(id)) + d));
-			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](S.fs[id], d); save();
+			var f = fs();
+			f[id] = Math.max(8, Math.min(fmax(id), Math.round(window.RvipWM.fontSize(id)) + d));
+			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](f[id], d); save();
 		}
+		wm.zoomed = function (id) { return fs()[id] || 0; };
 		function drag(id, e0) {
 			var g = area.getBoundingClientRect(), target = null, side = null, moved = false;
 			function hit(m) {
@@ -258,7 +272,7 @@
 	/* the size A− / A+ gave window id (px), else the game's size[id](), else its body's CSS font-size */
 	window.RvipWM.fontSize = function (id) {
 		var b = cur && cur.body(id), z = cur && cur.size && cur.size[id];
-		return (cur && cur.S.fs[id]) || (z && +z()) || (b && parseFloat(getComputedStyle(b).fontSize)) || 13;
+		return (cur && cur.fs()[id]) || (z && +z()) || (b && parseFloat(getComputedStyle(b).fontSize)) || 13;
 	};
 
 	window.RvipWM.dropdown = function (b, menu) {
