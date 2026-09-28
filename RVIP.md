@@ -2231,6 +2231,8 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   state, save, layout(rects), zoom, noFont, onReset})`, windows are `#t-<id>`
   with a `.t .name` title bar and a `.body`. It gives the tiling layout,
   gutters, Windows drop-down, rename/A−/A+ on hover, one/multi-window toggle.
+  `wm.mode()` reads it ('multi'/'single'), `wm.mode(m)` sets it (Rogue PC:
+  One window = the PC text screen, F12 toggles).
 - **Font sizes are the WM's.** A−/A+ sets `state.fs[id]` (8..28 px, saved
   with the layout) as that window's `.body` font-size, also on load.
   `zoom: {id: fn(size, d)}` only for windows that redraw or scale (canvas

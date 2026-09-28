@@ -248,6 +248,8 @@
 			menu = el('div'); buildMenu(); window.RvipWM.dropdown(b, menu);
 		}
 		wm.state = function () { return clone(S); };
+		/* 'multi' or 'single'; with m, switch to it */
+		wm.mode = function (m) { if (m && m !== S.mode) { S.mode = m; wm.apply(); save(); } return S.mode; };
 		return wm;
 	};
 	/* ---- top-bar drop-down: button b opens element menu below it; one open
