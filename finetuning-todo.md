@@ -41,11 +41,11 @@ In the ports that took faangband's font code, map cells in text mode follow the 
 
 The DawnLike items (floor autotiles, animation) are not done in umoria, which has only Shockbolt tiles and would need a full `mkdawn.py` slot map. All other ports that use DawnLike have them.
 
-## 7. Per-game notes — done: decker, mag, slashem, arogue7.7; open: dynahack </> note, nethack50 sound default (user)
+## 7. Per-game notes — done: all
 
 - **decker:** headers are included with the wrong case (`stdafx.h` vs `StdAfx.h`), so the build fails on Linux.
-- **dynahack:** the `<`/`>` change is in the game library, so replays of old saves may differ.
-- **nethack50:** Sound effects start switched on (rogue3.6 starts them off); decide which default you want.
+- **dynahack:** the `<`/`>` change is in the game library, so replays of old saves may differ. Done in b8ffd4cb (`stairwalk` command; old logs with `move` replay unchanged).
+- **nethack50:** Sound effects start switched on (rogue3.6 starts them off); decide which default you want. Done: off by default, a saved `sound: true` keeps it on.
 - **mag:** `web/tests/stage2` probably fails, since it expects walking to the stairs to descend. `HANDOVER.md` still describes the old stairs.
 - **arogue7.7:** the text panes are still scaled rather than trimmed (no `be_extent`), so the newest-message scroll has no visible effect.
 - **slashem:** the native build needs `CC=clang` and `-DLINUX` on Linux; `HANDOVER.md` doesn't say so.

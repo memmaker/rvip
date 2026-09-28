@@ -2238,6 +2238,13 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 - **App code is `rvip-app.js`** (`RvipApp({name, save, clear, put, ...})`):
   IDBFS sync, Export/Import save, New game, crash status, Help panel. No game
   keeps its own `syncFiles`/`exportSave`/`importSave`/`newGame`/`crashed`/`toggleHelp`.
+  Saves outside `Module.FS` (own IndexedDB store, WASI memory FS) use the
+  hooks `read(path)` and `sync(cb)`; `save`/`read`/`clear`/`put` may be
+  async. Several files: `save` returns an array of paths, exported as one
+  JSON bundle `{key: base64}` (`<name>-save.json`, keys minus `root`, else
+  basenames); import unpacks it and calls `put({name: key}, bytes)` per file.
+  `noSave` = the game's own "no save yet" text; `newGame` replaces New game
+  (Decker: restart only). No fake bundles in /tmp, no `window.Module` shims.
 - Message history: repeats fold to `message (xN)` in the game code (its
   message routine / history, e.g. `hist()` in `port/wcurses.c`), which tells
   the page to replace its last line. A div-list log uses
