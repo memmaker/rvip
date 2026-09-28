@@ -23,7 +23,6 @@
  * A− / A+ on a title bar: the WM keeps one size per window (state.fs[id], 8..28 px,
  * default: the body's CSS font-size), sets it as the window body's font-size (also
  * on load) and calls zoom[id](size, d) if given. RvipWM.fontSize(id) reads it.
- * Legacy: with font: function (id, d) {} the game keeps sizes itself (WM stores none).
  */
 (function () {
 	'use strict';
@@ -187,9 +186,8 @@
 			nm.addEventListener('dblclick', function () { rename(id, nm); });
 			t.addEventListener('pointerdown', function (e) { if (e.button === 0 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') drag(id, e); });
 		});
-		function fontSet(id) { var b = !o.font && body(id); if (b) b.style.fontSize = S.fs[id] ? S.fs[id] + 'px' : ''; }
+		function fontSet(id) { var b = body(id); if (b) b.style.fontSize = S.fs[id] ? S.fs[id] + 'px' : ''; }
 		function fontBy(id, d) {
-			if (o.font) { o.font(id, d); return; }
 			S.fs[id] = Math.max(8, Math.min(28, window.RvipWM.fontSize(id) + d));
 			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](S.fs[id], d); save();
 		}

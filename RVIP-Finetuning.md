@@ -133,7 +133,7 @@ through `port/`). The JS layer only draws it.
   `L.font`, `zoomText`, `zoomList` go) and passes `zoom: {id: fn(size, d)}`
   only for windows that redraw or scale (canvas map, z-term/curses canvas
   panes); `RvipWM.fontSize(id)` reads a size (e.g. pop-up = `fontSize('msg')`).
-  No new `font(id, d)` callbacks (legacy, still works). Never one shared `L.font` for all text windows (Hack,
+  There is no `font(id, d)` callback any more. Never one shared `L.font` for all text windows (Hack,
   NetHack 1.3d/5.0, SLASH'EM, DynaHack, Omega and Prospector did: A+ on
   Inventory grew Messages and Status too). Pop-up text follows Messages.
   Old layout files: seed `L.wm.fs` from the old `L.fs` / `font` values once.

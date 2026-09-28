@@ -2235,7 +2235,6 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   with the layout) as that window's `.body` font-size, also on load.
   `zoom: {id: fn(size, d)}` only for windows that redraw or scale (canvas
   map, z-term/curses canvas panes); `RvipWM.fontSize(id)` reads a size.
-  The old `font(id, d)` callback (game keeps sizes) still works; don't add new ones.
 - **App code is `rvip-app.js`** (`RvipApp({name, save, clear, put, ...})`):
   IDBFS sync, Export/Import save, New game, crash status, Help panel. No game
   keeps its own `syncFiles`/`exportSave`/`importSave`/`newGame`/`crashed`/`toggleHelp`.
