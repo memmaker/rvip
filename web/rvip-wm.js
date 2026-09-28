@@ -17,11 +17,13 @@
  *     save: function (state) {},                      // store state (debounce is ours)
  *     layout: function (rects) {},                    // rects[id] = [x, y, w, h] of shown windows
  *     zoom: { map: function (size, d) {} },           // windows that redraw/scale on A− / A+
+ *     size: { side: function () { return px; } },     // optional: a window's drawn size before
+ *                                                     // any A−/A+ (canvas panes not at CSS size)
  *     noFont: 'map'                                   // a window without A− / A+
  *   });
  *   wm.apply()  after a resize;  wm.shown(id);  wm.reset();  wm.rects
  * A− / A+ on a title bar: the WM keeps one size per window (state.fs[id], 8..28 px,
- * default: the body's CSS font-size), sets it as the window body's font-size (also
+ * default: size[id]() if given, else the body's CSS font-size), sets it as the window body's font-size (also
  * on load) and calls zoom[id](size, d) if given. RvipWM.fontSize(id) reads it.
  */
 (function () {
@@ -88,7 +90,7 @@
 			if (o.state.titles) ids.forEach(function (id) { if (typeof o.state.titles[id] === 'string') S.titles[id] = o.state.titles[id].slice(0, 40); });
 			if (o.state.fs) ids.forEach(function (id) { var v = +o.state.fs[id]; if (v >= 8 && v <= 28) S.fs[id] = v; });
 		}
-		cur = { S: S, body: body };
+		cur = { S: S, body: body, size: o.size };
 		function tree() { return S.mode === 'single' ? S.single : S.multi; }
 		function save() { clearTimeout(saveT); saveT = setTimeout(function () { o.save(clone(S)); }, 300); }
 		function win(id) { return document.getElementById('t-' + id); }
@@ -188,7 +190,7 @@
 		});
 		function fontSet(id) { var b = body(id); if (b) b.style.fontSize = S.fs[id] ? S.fs[id] + 'px' : ''; }
 		function fontBy(id, d) {
-			S.fs[id] = Math.max(8, Math.min(28, window.RvipWM.fontSize(id) + d));
+			S.fs[id] = Math.max(8, Math.min(28, Math.round(window.RvipWM.fontSize(id)) + d));
 			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](S.fs[id], d); save();
 		}
 		function drag(id, e0) {
@@ -251,10 +253,10 @@
 	/* ---- top-bar drop-down: button b opens element menu below it; one open
 	 * at a time; a click outside, Esc or a button in it closes it ---- */
 	var drops = [], cur = null;
-	/* the size A− / A+ gave window id (px), else its body's CSS font-size */
+	/* the size A− / A+ gave window id (px), else the game's size[id](), else its body's CSS font-size */
 	window.RvipWM.fontSize = function (id) {
-		var b = cur && cur.body(id);
-		return (cur && cur.S.fs[id]) || (b && parseFloat(getComputedStyle(b).fontSize)) || 13;
+		var b = cur && cur.body(id), z = cur && cur.size && cur.size[id];
+		return (cur && cur.S.fs[id]) || (z && +z()) || (b && parseFloat(getComputedStyle(b).fontSize)) || 13;
 	};
 
 	window.RvipWM.dropdown = function (b, menu) {
