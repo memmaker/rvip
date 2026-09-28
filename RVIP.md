@@ -1336,6 +1336,16 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   and write the archive URL into `cache/ports/zlib/.emscripten_url` (EMCC_LOCAL_PORTS
   does not work for zlib: no `.SUBDIR`).
 - Text-shadow tests: anchor regexes (`/ T \d+/` for the turn; `/T \d+/` matched "INT 12").
+- Stage 2 (explore `X`, `src/explore.c`): the known grid is `player_memory_of(p,pos)`
+  (`type != LT_NONE`); the game's `path_find()` wants one goal and only penalises
+  traps, so explore has its own search. **Break path ties away from features**
+  (stairs, fountains): stepping on one logs "You see ... here", and an unweighted
+  BFS happily routed over the stairs just arrived on, stopping the explorer there.
+  **Log text still pending from the previous command** (NLarn assembles a turn's
+  messages in `log->buffer` and flushes on the next turn) is not a new message.
+  `>` in town walks to the caverns entrance `O`, never to the volcanic shaft `I`.
+  NLarn has no `--more--` (3d: nothing to do). Test deep levels natively with wizard
+  mode (`^W` `y`, `-` = one level down) through a pty.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
