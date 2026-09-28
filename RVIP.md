@@ -1158,6 +1158,19 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   via Chris Petit's Bangband, per `docs/manual.txt` history); `s-readme.txt`
   says "based on Angband and also on Oangband" (Marrick's 1.0 code), so not
   under Oangband. RogueBasin/tangaria are blocked from the cloud proxy.
+- Stage 8 shrine. The cloud proxy blocked every history site this time
+  (RogueBasin, web.archive.org, narkive, angband.live, wikipedia; WebFetch too):
+  don't retry, take trivia from the Google Code archive JSON, which stays
+  reachable (`storage.googleapis.com/google-code-archive/v2/code.google.com/<p>/`
+  `project.json`, `issues-page-N.json`, `issues/issue-N.json`; `wikis.json` 403)
+  and from the shipped change logs/manual (HTML comments count). Sangband ships a
+  finished `docs/manual.html`: copy it unchanged, plus `web/mkmanual.py` for
+  `lib/help` (NPP's script), the command card PDF and `docs/changes-*.txt`
+  (some CR-only, cp1252). Count races from the birth menu loop (`MAX_RACES`),
+  not the help text: stage 6's guide said twelve, the game offers fourteen.
+  Wizard mode's `Ctrl+W` closes the browser tab: the z-term `^` prefix
+  ("Control:") then `w` works; say so in Cheats. The game page's title link was
+  already in the page copied from NPP (check before editing).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
