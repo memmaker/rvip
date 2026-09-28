@@ -394,24 +394,44 @@
 	window.RvipWM.log = function (l, m, replace) { logEnd(l, function () { if (replace && l.lastChild) l.removeChild(l.lastChild); logAdd(l, m); }); };
 	window.RvipWM.setLog = function (l, ms) { logEnd(l, function () { l.textContent = ''; ms.forEach(function (m) { logAdd(l, m); }); }); };
 	/* Run report (roguelikes-index/server/CONTRACT.md). q = "g=..&ev=..&..." without id/at.
-	   Stamps a unique run id + end time, keeps it in a localStorage outbox and resends
-	   (on every page load and when back online) until the server answers 2xx: a win is never lost. */
-	var OUTBOX = 'rvip-outbox';
-	function box(v) {
-		try { if (v) localStorage.setItem(OUTBOX, JSON.stringify(v)); else return JSON.parse(localStorage.getItem(OUTBOX) || '[]'); }
-		catch (e) { return v ? undefined : []; }
+	   Stamps a unique run id + end time, keeps it in an IndexedDB outbox ('rvip-outbox';
+	   never localStorage) and resends (on every page load and when back online) until the
+	   server answers 2xx: a win is never lost. */
+	var outDB = null;
+	function outbox(op, url, done) {                /* op: 'put' | 'del' | 'all' */
+		function fail() { if (done) done([]); }
+		function run(d) {
+			try {
+				var st = d.transaction('urls', op === 'all' ? 'readonly' : 'readwrite').objectStore('urls');
+				var q = op === 'put' ? st.put(url, url) : op === 'del' ? st.delete(url) : st.getAll();
+				q.onsuccess = function () { if (done) done(q.result || []); };
+				q.onerror = fail;
+			} catch (e) { fail(); }
+		}
+		if (outDB) return run(outDB);
+		try {
+			var r = indexedDB.open('rvip-outbox', 1);
+			r.onupgradeneeded = function () { r.result.createObjectStore('urls'); };
+			r.onsuccess = function () { outDB = r.result; run(outDB); };
+			r.onerror = fail;
+		} catch (e) { fail(); }
 	}
 	function send(url) {
 		return fetch(url, { keepalive: true, cache: 'no-store' }).then(function (r) {
-			if (r.ok) box(box().filter(function (u) { return u !== url; }));
+			if (r.ok) outbox('del', url);
 		}).catch(function () { /* offline: stays in the outbox */ });
 	}
-	window.RvipWM.flush = function () { box().forEach(send); };
+	window.RvipWM.flush = function () { outbox('all', null, function (l) { l.forEach(send); }); };
 	window.RvipWM.report = function (q) {
 		var url = '/roguelikes/beacon?' + q + '&id=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) + '&at=' + Date.now();
-		var b = box(); b.push(url); box(b);
-		send(url);
+		outbox('put', url, function () { send(url); });
 	};
+	/* reports a page before 2026-09-28 left in the old localStorage outbox: moved over once */
+	try {
+		var old = JSON.parse(window.localStorage.getItem('rvip-outbox') || '[]');
+		window.localStorage.removeItem('rvip-outbox');
+		old.forEach(function (u) { outbox('put', u); });
+	} catch (e) { /* none */ }
 	window.addEventListener('online', window.RvipWM.flush);
 	setTimeout(window.RvipWM.flush, 3000);
 })();

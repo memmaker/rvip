@@ -181,6 +181,15 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   whole screen, never leave gaps.
 - The user can **resize and rearrange** windows; the layout is saved in
   IndexedDB with the other game data.
+- **No localStorage, only IndexedDB** (user rule, 2026-09-28). Every setting
+  the page keeps (layout, fonts, tile set, player name, sound, the run-report
+  outbox) lives in the game's own IndexedDB: the layout file
+  (`web-layout.json`) or a small file (`web-name`, `web-tiles`) in its IDBFS
+  folder (`RvipApp.dir`). All games share one origin, so localStorage keys
+  collided (ten games shared `tileset`, each with its own index meaning).
+  Settings the game needs before `main()` (name, tile set) are read in the
+  IDBFS `syncfs(true)` callback, before `removeRunDependency('idbfs')`; the
+  first tile sheet loads only then (no default-sheet flash).
 - A **Windows drop-down** in the top bar toggles each sub-window on/off.
 - Each sub-window's **title bar**, on hover only, shows buttons to rename
   the window and to make its font larger/smaller.
@@ -306,7 +315,7 @@ finished run to `/roguelikes/beacon`; the server turns the nginx log into
   `if (window.RvipWM && RvipWM.report) RvipWM.report(q); else fetch('/roguelikes/beacon?' + q, { keepalive: true, mode: 'no-cors' }).catch(function () {});`
   `RvipWM.report` (in the shared `rvip-wm.js`, which the page must load)
   adds a unique run `id` and end time `at`, keeps the URL in the
-  localStorage outbox `rvip-outbox` and resends the identical URL on every
+  IndexedDB outbox (database `rvip-outbox`, store `urls`) and resends the identical URL on every
   page load and when back online until the server answers 2xx. The server
   collapses only resends with the same `id`. Test: block
   `/roguelikes/beacon` (503), end a run → one URL with `&id=…&at=…` in the
@@ -316,9 +325,9 @@ finished run to `/roguelikes/beacon`; the server turns the nginx log into
   `score` (the game's canonical score, what its high-score list uses),
   `turns`, `lvl`. Omit what the game doesn't know.
 - **Real player name**: Emscripten's `getpwuid()` gives `web_user`. If the
-  game never asks, prompt once in the page JS, keep it in localStorage key
-  `<g>-name` (all games share one origin), pass it by env/option
-  (`web/rogue54.js`: `ROGUEOPTS=name=`).
+  game never asks, prompt once in the page JS, keep it in IndexedDB (the
+  layout file's `name`, or `web-name` in the IDBFS folder; never
+  localStorage), pass it by env/option (`web/rogue54.js`: `ROGUEOPTS=name=`).
 - **Killer** = the monster name as the game stores it, articles ("a ",
   "an ", "the ") stripped, so it matches the art slug.
 - **Killer art**: add the game to `roguelikes-index/killers/make.py`, which
@@ -1734,7 +1743,9 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     Rogue PC (v4) offer DawnHack next to their default. Pattern: `port/mkdawn.py`
     writes `tiles-dawn.png/.rgba` with the *same slot layout* as the default
     sheet, so the game code is untouched.
-    Web: a *Tiles* / *Tile set* button, choice kept in `localStorage`;
+    Web: a *Tiles* / *Tile set* button, choice kept by name in IndexedDB
+    (layout file `tiles`; never localStorage); since 2026-09-28 DawnLike (the full set DawnHack
+    was cut from, by name, floors autotiled, *DawnLike|a*) replaced DawnHack in all three;
     X11: `TILESET=dawn ./play.sh` or `save/tileset`; Rogue PC SDL: button +
     `tileset=` in `roguepc.cfg`. Credit in `port/dawnhack/CREDITS.txt`, the
     Help page and the README. **Never mix tile sets** (user rule,
