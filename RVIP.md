@@ -159,8 +159,16 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
   NetHack tiles for ZAPM (sci-fi) and wants text only there. A **NotEye
   release** of a game means a tile sheet in its repo (`gfx/`, loaded by
   `lua/<game>.lua`): show it to the user first (crops at 2×) and let them
-  decide tiles vs text. For PRIME they chose its tiles, with RLTiles only
-  for gaps that don't need to look futuristic.
+  decide tiles vs text. For PRIME they chose its tiles (its RLTiles gap
+  fill predates the one-set rule below).
+- **One coherent tile set, never mixed** (user rule, 2026-09-28): pick the
+  set with the most coverage, preferably one that ships with the original
+  project (source tree, binary/Windows release: check `lib/xtra/graf` for
+  sheets with `file`, not just the prefs). No gap filling from another set
+  (no Shockbolt stand-ins over an Adam Bolt/Gervais sheet or vice versa):
+  a grid the set lacks gets that set's own closest/generic tile, or text.
+  Measure and report the coverage of every candidate set (monsters,
+  objects, flavours, features) and why the chosen one won.
 - **Text next to square tiles looks bad.** Only the map is tiled; messages,
   status, lists and help go to text windows with a normal font.
 - **Period fonts** (original text mode, CP437 box drawing, IBM/Amstrad/
@@ -1056,6 +1064,31 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `get_item()`, cursor keys before the switch (digit @-tags win).
   Sources are CRLF, some mixed: Python text-mode rewrites silently convert
   whole files to LF (a 10k-line diff) — patch bytes or restore per line.
+- Stage 4 tiles: the source *does* ship sheets (`lib/xtra/graf/32x32.bmp`
+  Gervais + `16x16.bmp` Adam Bolt, 8-bit + 1-bit masks, mask 1 = clear;
+  stage 1 looked only at the prefs). Windows release: byte-identical. Mode
+  `GRAPHICS_DAVID_GERVAIS2` = `$GRAF 32x32-g` → `tiles.prf` →
+  `graf32-g.prf` (`+N` = N|0x80; sheet 128×30). Coverage 99.4% as shipped,
+  100% after fixing its typos with same-sheet tiles (`+3:/+18` shifts the
+  `B:` player lines, `+4/71` = text 'G', `R:2:1:+9`, `K:785:+2:+`, a
+  duplicate `K:192`, `R:367` under Shrieker 49); 16x16-g 91.0%. `R:0:0:0`
+  = player from the race × specialty `B:` lines. Lurkers use an empty
+  sprite on purpose (they look like floor). `web/mkgraf.py` (bmp+mask →
+  RGBA PNG), `web/tile-coverage.py [prf]`.
+- No big-tile mode and the map term is the main term: Easyband's
+  `MAP_STEP/MAP_VSTEP` fits, and Sangband already sizes the view by
+  `map_rows/map_cols` (`calc_map_size()` gets grids, not cells). Pads
+  `255/255` after the first cell (`map_pad()`). The front end decides per
+  cell in C from `Term->scr`: a tile with a pad to its right = big tile; a
+  tile followed by a blank = list icon over two cells (Visible list,
+  inventory `a) X name`); else one cell. A pad redrawn alone repaints its
+  anchor (once per flush); text after an icon repaints the icon; text over
+  an anchor blanks only *its* pads (a sidebar row ending at `COL_MAP` must
+  not wipe the tile row below it: zoom 2 showed notches). Mouse → grid
+  needs `(x - COL_MAP) / MAP_STEP` (the original look double-click forgot
+  `COL_MAP` too). `object_attr()` returns the stored shimmer colour for
+  egos/artifacts: guard it when the char is a tile. Equippy chars → the
+  edit-file glyph (sidebar stays text).
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
@@ -1519,7 +1552,8 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
     original sheets → `tilesets/dawnlike_names.tsv` (name, frame, sheet,
     col, row; 5,239 matched, 111 atlas-only extras skipped). **Map by name**:
     look up each monster/item of the variant in the TSV (grep), write the
-    table in `mkdawn.py`, fall back to NetHack tiles for gaps. Names are the
+    table in `mkdawn.py`, gaps → DawnLike's own closest sprite (never
+    another set: Part 1 step 4). Names are the
     atlas author's reading of the art, so check odd matches in the preview.
   - Licence **CC BY 4.0**. Credit DragonDePlatino *and* DawnBringer (palette)
     on the Help page and README. The author also asks that the Platino
