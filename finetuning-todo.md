@@ -4,7 +4,7 @@ State on 2026-09-27, after the first pass of `RVIP-Finetuning.md` over every hos
 
 Every hosted game except Rogue 3.6 and Super-Rogue has a branch `claude/rvip-finetuning` in `memmaker/<repo>`. Super-Rogue already had every item and needed no branch. Nothing is merged and nothing is deployed. Repo names differ from web names in four cases: `arogue58` → `arogue5.8`, `arogue77` → `arogue7.7`, `boss` → `boss-beyond-moria`, `rogue54` → `rogue5.4`.
 
-## 1. Re-run the crash check with the new warning text
+## 1. Re-run the crash check with the new warning text — done (clean in all ports; arogue7.7 fixed 3d8acc9)
 
 emcc 6.x reports a wrong-argument-count call as "prototype-less function used with conflicting signatures", not "signature mismatch". Build without `-w` and grep for both strings. The check found and fixed real bugs in arogue5.8 (`quaff`/`spec_item` called with NULL), xrogue (`death(zapper)` passed a pointer), nethack13d and dynahack.
 
@@ -12,7 +12,7 @@ Branches that ran before this was known and may have grepped only the old string
 
 Not applicable: forays (C#), boss-beyond-moria and lambdarogue (Pascal).
 
-## 2. The two items added in 139fdcb
+## 2. The two items added in 139fdcb — done (RvipWM.popup; WM-owned per-window sizes)
 
 - **Pop-ups through `RvipWM.popup`**, inside the map body.
 - **A−/A+ sizes one window only**, with one size per window id.
@@ -33,7 +33,7 @@ These ports always draw tiles: quickband, tinyangband, tactical-angband. Port FA
 
 nppangband, quickband, easyband, frogcomposband, sil-q, zangband, tome2, tactical-angband and tinyangband have none. faangband commit `8d6169d` shows how to add them to a z-term port.
 
-## 5a. Map font vs. cell size (z-term ports)
+## 5a. Map font vs. cell size (z-term ports) — done (frog, sil-q, zangband, tome2, hengband, angband variants; zapm already)
 
 In the ports that took faangband's font code, map cells in text mode follow the tile zoom, not the chosen font. The map font changes the glyphs, not the grid. A wide bitmap font (Rainbow100) overlaps itself on the map, and nppangband's panes look widely letter-spaced with IBM EGA 9x8. Either scale the glyphs to the cell, or size the map cells from the font in text mode. Affected: faangband and the nine ports in §5.
 
@@ -41,7 +41,7 @@ In the ports that took faangband's font code, map cells in text mode follow the 
 
 The DawnLike items (floor autotiles, animation) are not done in umoria, which has only Shockbolt tiles and would need a full `mkdawn.py` slot map. All other ports that use DawnLike have them.
 
-## 7. Per-game notes
+## 7. Per-game notes — done: decker, mag, slashem, arogue7.7; open: dynahack </> note, nethack50 sound default (user)
 
 - **decker:** headers are included with the wrong case (`stdafx.h` vs `StdAfx.h`), so the build fails on Linux.
 - **dynahack:** the `<`/`>` change is in the game library, so replays of old saves may differ.
