@@ -1390,6 +1390,17 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   column on its right (the game's own screen shape). `main()` returning (save-and-exit,
   menu quit): sync, then `location.reload()` after ~1 s instead of a "Play again" card.
   The git proxy refuses deleting remote branches (403): leave parking branches for the user.
+- Stage 6 (sound, no Dubtrain folder): vendor the used upstream-Angband Dubtrain mp3s
+  (`lib/customize/sound.prf` + `lib/sounds`, sparse clone; `web/sounds.py` does
+  `git sparse-checkout add` for exactly the files it copies) into `web/sound/` (~650 KB,
+  with a CC BY README), so the Mac build needs no Angband clone. `rvip-sound.js` plays a
+  name with an extension as is (`'hit.mp3'`). `SOUND()` in a header every game file
+  includes (NLarn: `inc/display.h`); `sounds.py` asserts a sample per `SOUND("x")` in
+  `src/*.c`. Fetch `sounds.json` only when Sound effects goes on. Music (siblings'
+  `new_town.ogg`, Mac-only file): copy it in `build.sh` if present; the page greys the
+  checkbox out on the Audio `error`. Credits: take co-maintainers from `git shortlog -sn`
+  when the files name only one author. Playwright `ctx.close()` hung after audio had
+  played: end test scripts with `process.exit(0)`.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
