@@ -618,7 +618,8 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   CC0): fill its gaps from its *own* samples (`FILL` map in
   `~/Games/hengband/web/sounds.py`), one source, one licence; copy only
   cfg-referenced wavs (unreferenced ones may come from elsewhere).
-- Music: the variant's own if its readme allows redistribution (Hengband
+- Music: the variant's own if its readme allows redistribution (Sangband:
+  `.it`/`.mid` rendered to ogg, `jukebox()` in the page, A-Sangband; Hengband
   `lib/xtra/music`: CC0/CC BY, credit the readme, ship it in
   `dist/music`), picked per depth group as its `music.cfg`
   (`hengband.js` `updateMusic()`), else loop
@@ -1115,6 +1116,25 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `quit_aux`: record it right after `play_game()` (`web_game_end()`) and
   pass -1/0/1 (never played / saved / died) to the page's overlay text.
   Tests: `web/test/stage5.mjs` (W10 checklist, 52 checks), `resize.mjs`.
+- Stage 6 docs + sound. The game's own `lib/help/cmdlist.txt` can be stale:
+  check each row against `pref.prf` keymaps (`A:` action / `C:1:` key) and
+  `process_command()` before parsing it into the Help (Sangband's roguelike
+  `a`/`z` were swapped, `p` and `G` described removed commands). Two-column
+  lists split at a fixed column (40); roguelike rows that equal the original
+  up to plural/punctuation are noise, drop them. Sound: 3.0-era `sound.cfg`
+  names files with the wrong case (`yes.wav` for `Yes.wav`), with stray commas
+  and files never shipped: match case-insensitively, drop the missing, fill
+  empty events from Dubtrain (`web/dubtrain`, used mp3s only). `use_sound` is
+  0 and nothing sets it without `intrface.c`: set `SOUND_AND_MUSIC` in the web
+  init or no TERM_XTRA_SOUND ever arrives. Sangband (and Oangband-family 3.0
+  games) ship **their own music** (`lib/xtra/music`, `.it`/`.mid` +
+  `jukebox.cfg`, danger themes from `danger_music_level()`): render to ogg
+  once (`web/music.sh`: openmpt123, timidity + FluidR3 GM, ffmpeg vorbis q0;
+  cloud: `apt-get update` first) and port `intrface.c`'s `jukebox()` to the
+  page; ship the jukebox.cfg credit text next to the oggs (Reenen Laurie's
+  terms require it). Verify audio with `page.on('request')` after a real
+  `page.click()` on the checkbox (a user gesture), and check decoding with
+  `new Audio(u).onloadedmetadata`.
 
 ### A-4.2 (Angband 4.2 variants; worked example Tactical Angband)
 - Frontend: keep the **Cocoa app** (`make -f Makefile.osx ARCHS=arm64`):
