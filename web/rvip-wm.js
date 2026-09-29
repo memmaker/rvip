@@ -402,7 +402,7 @@
 		var r = body.getBoundingClientRect(), g = par.getBoundingClientRect();
 		/* the prompt line, while shown, keeps its row: the pop-up starts below it */
 		var tp = body.querySelector('.wm-topl:not([hidden])'), t = tp ? tp.offsetHeight : 0;
-		return { x: r.left - g.left, y: r.top - g.top + t, bw: r.width, bh: r.height - t, w: g.right - r.left, h: g.bottom - r.top - t };
+		return { x: r.left - g.left, y: r.top - g.top + t, bw: r.width, bh: r.height - t, w: g.right - r.left, h: g.bottom - r.top - t - 8 };   /* 8 px margin: the box border stays visible */
 	}
 	window.RvipWM.popupBox = function () { var r = popRect(); return r ? { w: r.w, h: r.h } : { w: 0, h: 0 }; };
 	window.RvipWM.popup = function (pop, o) {
