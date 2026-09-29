@@ -898,6 +898,7 @@ game-side "main screen on screen" flag cleared by clear-screen/menus/boxes over
 the map. Zoom whole multiples only (a 0.98 `pixelated` downscale mangles bitmap fonts).
 
 **Own SDL2 GUI games** (Infra Arcana): keep the SDL canvas as the Map window and let the game resize it to the window body (`_web_resize` -> `SDL_SetWindowSize` + the game's own resize path at the next key poll, clamped to the GUI minimum its full-screen menus need); give the map panel the whole canvas and capture the status/log panels' `draw_text`/`cover_panel` calls as text for HTML windows (overlapping panels, so the screen never grows). Map A−/A+ = the game's integer video scale.
+- Rule 6 for a state-stack SDL game: in the stack's draw loop always draw from the game state (map stays on the canvas) and wrap every other state's `draw()` in a capture flag: text calls fill one screen-cell grid, `cover_area` blanks cells (later states get a box background), rectangles/tiles skipped; send the grid's bounding box as one `<pre>` pop-up. One hook covers every menu, pop-up and full screen (Infra Arcana).
 - List icons from grey tiles the game tints: ship the tile PNGs and draw them as a CSS `mask` (`mask-mode: luminance`) over `currentColor` = the game's colour, no pre-tinting (Infra Arcana).
 
 **Console C# games:** the game's own cell buffer + a JSON per present (panes,
