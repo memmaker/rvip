@@ -368,7 +368,7 @@
 	window.RvipWM.FONTS = {
 		modern: ['JetBrains_Mono', 'IBM_Plex_Mono', 'Source_Code_Pro', 'Fira_Mono',            /* monospace */
 			'Inter', 'Atkinson_Hyperlegible', 'Source_Sans_3', 'Noto_Sans'],                   /* proportional */
-		oldSchool: ['Web437_IBM_CGA', 'WebPlus_AST_PremiumExec', 'WebPlus_Amstrad_PC', 'WebPlus_Amstrad_PC-2y',
+		oldSchool: ['Web437_IBM_CGA', 'Web437_IBM_VGA_8x16', 'WebPlus_AST_PremiumExec', 'WebPlus_Amstrad_PC', 'WebPlus_Amstrad_PC-2y',
 			'WebPlus_Cordata_PPC-21', 'WebPlus_Cordata_PPC-400', 'WebPlus_HP_100LX_10x11',
 			'WebPlus_HP_100LX_16x12', 'WebPlus_HP_100LX_6x8', 'WebPlus_HP_100LX_6x8-2x',
 			'WebPlus_HP_100LX_8x8', 'WebPlus_HP_100LX_8x8-2x', 'WebPlus_HP_150_re', 'WebPlus_IBM_BIOS',
@@ -384,7 +384,10 @@
 			'WebPlus_Tandy1K-II_200L-2x', 'WebPlus_Tandy1K-II_200L-2y', 'WebPlus_Tandy1K-II_225L',
 			'WebPlus_Tandy1K-II_225L-2y', 'WebPlus_ToshibaSat_8x14', 'WebPlus_ToshibaSat_8x16',
 			'WebPlus_ToshibaSat_8x8', 'WebPlus_ToshibaSat_9x14', 'WebPlus_ToshibaSat_9x16',
-			'WebPlus_ToshibaSat_9x8', 'WebPlus_ToshibaTxL1_8x16', 'WebPlus_ToshibaTxL2_8x16']
+			'WebPlus_ToshibaSat_9x8', 'WebPlus_ToshibaTxL1_8x16', 'WebPlus_ToshibaTxL2_8x16',
+			/* Angband's X11 bitmap fonts (lib/xtra/font/*.fon, from easyband's web/mkfon.py) */
+			'Easyband_5x8', 'Easyband_6x9', 'Easyband_6x10', 'Easyband_6x12', 'Easyband_6x13', 'Easyband_6x13b', 'Easyband_7x13',
+			'Easyband_7x13b', 'Easyband_8x13', 'Easyband_8x13b', 'Easyband_9x15', 'Easyband_9x15b', 'Easyband_10x20', 'Easyband_12x24']
 	};
 	window.RvipWM.fonts = Promise.resolve(window.RvipWM.FONTS.modern.concat(window.RvipWM.FONTS.oldSchool));
 	window.RvipWM.fontOptions = function (sel) {
@@ -392,7 +395,7 @@
 		[['Modern', F.modern], ['Old-school', F.oldSchool]].forEach(function (g, i) {
 			if (i) sel.appendChild(document.createElement('hr'));   /* the divider (ignored where unsupported) */
 			var og = document.createElement('optgroup'); og.label = g[0];
-			g[1].forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); og.appendChild(o); });
+			g[1].forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/^Easyband_/, 'Angband ').replace(/_/g, ' '); og.appendChild(o); });
 			sel.appendChild(og);
 		});
 	};

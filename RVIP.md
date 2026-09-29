@@ -318,8 +318,11 @@ part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
   `<kbd>` on one line (ellipsis when narrow): explore, inventory, Enter menu,
   help. Buttons never take focus (`mousedown → preventDefault()`); inputs stop
   propagation and `onKey` ignores `input/textarea`.
-- **Fonts:** both choosers list the index page's `fonts/*.woff` (`build.sh`
-  writes `fonts.json`), loaded with `FontFace` from `../fonts/`, stored in the
+- **Fonts:** both choosers are filled only by `RvipWM.fontOptions(sel)` (list:
+  `RvipWM.FONTS` in rvip-wm.js, Modern | divider | Old-school; `RvipWM.fonts` is
+  the name promise). No game keeps its own list, `fonts.json` or font files: a
+  game's own font goes to `roguelikes-index/fonts/` and into that list, for every
+  game. Files `../fonts/<name>.woff`, loaded with `FontFace`, stored in the
   layout file. Top-bar select (`L.face`) = every window but the map; the map has
   its own select on its title bar (hover, text mode only). Bitmap font on the map:
   not bold. Local test: link `dist/fonts` to `roguelikes-index/fonts`, remove after.
