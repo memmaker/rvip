@@ -1324,6 +1324,7 @@ the hero cell so the frontend hides the cursor there.
   on `ZSND` lines, and count plays by wrapping `RVIPSound.play` plus
   `AudioBufferSourceNode.start`. Sample names with spaces become underscores at
   build time (C names, URLs without escaping).
+- **Own SDL_mixer audio (case O):** gate the game's `play()`/`play_music()` under `__EMSCRIPTEN__` with flags set by an exported `web_set_audio(sfx, music)`; remember a blocked music request so switching Music on starts it. Exclude the music file from `--preload-file` (`--exclude-file`), ship it in `dist/`, and have the page fetch it into the FS on first Music on (Infra Arcana).
 - NetHack 3.6 without sndprocs: one `WEB_SOUND("name")` macro in hack.h (no-op off the web) at the action functions (`known_hitum`, `hitmsg`, `missmu`, `xkilled`, `goto_level`, `pluslvl`, `dopray`, …), skipped while `program_state.restoring`; build fails if a name has no wav (EvilHack).
 
 ## 5.12 Docs and help
