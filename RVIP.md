@@ -378,6 +378,7 @@ Then commit, push, `web/deploy.sh`, test the live URL.
 - Docs: `~/Desktop/Games/Roguelikes/Docs/` — a `GAMES` entry in `build-docs.py`
   (essentials, complete key list parsed from the game's help, "In the browser"
   notes) plus guide, Tips and "Saving" in `guides.py`; `python3 build-docs.py`.
+  The Docs folder is local only (no git, not deployed): edit and rebuild in place.
   `web/make-help.py` imports both and writes `dist/help.html`; after a Docs fix
   rebuild. Mention explore, stair walking, the Enter menu. Outside sources
   (guides, wikis) allowed, in your own words. Credits: maintainers from the
@@ -1400,6 +1401,7 @@ the hero cell so the frontend hides the cursor there.
 - card image without a browser: sample 60 monster tiles evenly from the build's own tile sheet (skip <70 lit px / mean luma <28), 16 px at 2× nearest-neighbour, 12×5 → 384×160 (EvilHack).
 - new card: add the slug to roguelikes `years.json` or `order.py` fails ("no entry for card"); ship the index change as a unified patch (`index.html` + `years.json`) for the Mac (EvilHack).
 - shrine from the cloud: nethackwiki.com and allthetropes.org are blocked; GitHub repo/releases/profile pages via WebFetch give sourced trivia; build the page in the game repo (`web/publish/shrine/`) and test it in a scratch copy of roguelikes-index with Playwright (EvilHack).
+- card image from white-on-black mask tiles: tint each monster tile with its colour from the game's data (monsters.xml `<tile>`/`<color>`, colors.xml), pasted through the mask (Infra Arcana).
 - tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
 
 ## 5.14 Beacon (stage 9)
