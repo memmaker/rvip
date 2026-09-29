@@ -1409,6 +1409,14 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   "(C) <author>", GPL) is `<li class="insp">`. Year source when the project site is
   unreachable: the upstream change log at the base commit (first public release entry).
   Cloud: RogueBasin, Wikipedia, larn.org and github.io pages are blocked (use search snippets).
+- Stage 8 (shrine, cloud): a blocked `<project>.github.io` site is usually a GitHub repo:
+  `git clone https://github.com/<org>/<org>.github.io` (and `<repo>.wiki.git`) gives the
+  exact page text to verify trivia; link the live URLs (from the posts' `path`/permalink).
+  web.archive.org is blocked too. Help files with inline markers (`` `KEY`x`end` ``): escape
+  once, markers -> `<b>`/`<em>`, one `pre-wrap` block. Check wizard keys in code, not the help
+  text (NLarn's help swaps `+`/`-`). Ctrl+key cheats (`^W`) close the tab in a browser: offer
+  them through the Enter menu. Node test scripts piped to `tail` lose all output when killed
+  by `timeout`: write to a file and end with `process.exit(0)`.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
