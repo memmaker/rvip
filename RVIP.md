@@ -378,8 +378,9 @@ Then commit, push, `web/deploy.sh`, test the live URL.
 - **Sound effects and music** with Audio ▾ toggles, **off by default**. Hooks at
   game actions (never message text). Sources: **Angband family** = the DASP
   pack (Dubtrain Angband Sound Pack; fill gaps from the variant's own). **Every
-  other game** = only what its upstream supplies (no synthesized or borrowed
-  samples, no shared town loop); no upstream audio → no Audio ▾. Always web-search
+  other game** = what its upstream supplies, or sounds made for this game
+  (e.g. synthesized at build time, `web/mksounds.py`); never samples borrowed
+  from other games or packs (no Dubtrain, no shared town loop). Always web-search
   first for sound effects and music released for the game (official site,
   ports, fan packs) and note the result in HANDOVER.md; use a find only if it is
   upstream's or clearly licensed for redistribution. Details and the melee/bow
@@ -1187,9 +1188,9 @@ the hero cell so the frontend hides the cursor there.
 - **Games without sound events** (Rogue, DOS, MAG): add `be_sound("<event>")` /
   `SOUND(e)` (in a header every file includes) at game actions: hit/miss, kill,
   gold, level up, hunger, eat, quaff, drop, wield, teleport, stairs, buy, death;
-  one call in the item dispatcher keyed by its verb table (only when upstream
-  supplies samples to play; see Stage 6). Synthesized wavs (`web/mksounds.py`)
-  are no longer allowed.
+  one call in the item dispatcher keyed by its verb table. Games with no samples
+  at all may synthesize their own at build time (`web/mksounds.py`); never
+  borrow another game's or a pack's samples (Stage 6).
 - z-term: `sound_hook`/`TERM_XTRA_SOUND` → `js_sound`; force `use_sound` on (the
   page button is the switch; Sangband needed `SOUND_AND_MUSIC` set explicitly).
   Missing actions get new `SOUND_*` ids. Inline `#ifdef` sound blocks (FB): add a
