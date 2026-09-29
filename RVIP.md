@@ -217,8 +217,9 @@ Checklist: pristine commit · builds from a fresh clone · plays in the pane · 
 ## Stage 2 — Explore + stairs + no `--More--`
 
 - **Auto-explore** on a free key: BFS over what the player knows, one step per
-  turn; stops on a visible monster (name it: "In view: the Frail yeek."), any
-  new message, any key, and when a step did not move the player. Avoids known
+  turn; stops on a visible monster (name it: "In view: the Frail yeek."), an
+  item (or gold) coming into view that was not seen before (items in view at
+  the key press don't stop it; per level), any new message, any key, and when a step did not move the player. Avoids known
   traps and harmful terrain; opens closed doors, never picks locks (locked:
   stop, mark, skip next time). When known traps/locked doors cut the only way,
   say so instead of "Nothing left to explore". In the in-game help.
@@ -234,7 +235,7 @@ Checklist: pristine commit · builds from a fresh clone · plays in the pane · 
   defaults" take it; savefiles keep the player's choice. z-term: also
   `center_player` on (5.9 camera).
 
-Checklist: explore runs a level with stops as above · `<`/`>` from off-stairs, arrival stops, second press takes · a new character has no `-more-` during birth · the key is free in every keyset/keymap.
+Checklist: explore runs a level with stops as above (incl. a new item in view) · `<`/`>` from off-stairs, arrival stops, second press takes · a new character has no `-more-` during birth · the key is free in every keyset/keymap.
 Lessons: 5.6.
 
 ## Stage 3 — Enter menu + inventory
