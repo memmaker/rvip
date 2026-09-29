@@ -1,6 +1,6 @@
 # Finetuning: open items
 
-State on 2026-09-27, after the first pass of `RVIP-Finetuning.md` over every hosted game.
+State on 2026-09-27, after the first pass of the finetuning items (then `RVIP-Finetuning.md`, now folded into the stage checklists of `RVIP.md`) over every hosted game.
 
 Every hosted game except Rogue 3.6 and Super-Rogue has a branch `claude/rvip-finetuning` in `memmaker/<repo>`. Super-Rogue already had every item and needed no branch. Nothing is merged and nothing is deployed. Grog (added later): branch `claude/rvip-finetuning` @ `2a52d8b`, not merged, not deployed (text-only C#; items in its HANDOVER.md). Repo names differ from web names in four cases: `arogue58` → `arogue5.8`, `arogue77` → `arogue7.7`, `boss` → `boss-beyond-moria`, `rogue54` → `rogue5.4`.
 

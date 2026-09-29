@@ -1,7 +1,7 @@
 # Handover: RVIP ports — next steps (2026-09-29, evening)
 
-Authoritative files: `RVIP.md` (procedure, W0 hard rules), `RVIP-Finetuning.md`
-(checklist), `finetuning-todo.md` (open finetuning items, kept by the overnight
+Authoritative files: `RVIP.md` (procedure, stage checklists incl. the former
+finetuning items, W0 hard rules in part 2), `finetuning-todo.md` (open finetuning items, kept by the overnight
 session), `~/Games/RVIP-todo.md` (import list). Rules that apply everywhere:
 one topic per commit, push then deploy, one deploy per game at the end, never
 force-push, never touch another session's uncommitted work without taking the
