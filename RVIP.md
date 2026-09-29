@@ -1454,6 +1454,8 @@ the hero cell so the frontend hides the cursor there.
 - check the beacon score against the game's own `xlogfile` `points=` via `Module.FS.readFile` after the run (EvilHack).
 - test the outbox at the first "possessions identified?" prompt: the report must already be there (tab closed at disclosure) (EvilHack).
 - NetHack 3.6 killer art: `glyph2tile[PM]` + the name at that tile in `monsters.txt`; weres share one name (563 PM → 559 PNGs) (EvilHack).
+- Games that keep no killer: record the attacker's name in the damage function when the target is the player (a hit with no monster attacker clears it), send it only for deaths (Infra Arcana `actor::hit`).
+- White-on-black tile sets tinted at run time: killer art = tile multiplied by the monster's data colour, black made transparent (Infra Arcana).
 
 ## 5.15 Git, deploy, server
 
