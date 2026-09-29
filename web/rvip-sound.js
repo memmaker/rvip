@@ -1,6 +1,7 @@
 /* rvip-sound.js  shared RVIP web sound: the game (WASM) names the sounds,
  * this only plays them.  RVIPSound.play(['sound_Bell', ...], vol 0..1)
- * plays the files <base><name>.wav one after another.  Browsers start
+ * plays the files <base><name>.wav one after another (a name with its own
+ * extension, 'hit.mp3', is used as is).  Browsers start
  * audio only after a user gesture, so the context resumes on first input. */
 var RVIPSound = (function () {
 	var ctx, base = 'sound/', cache = {}, end = 0;
@@ -14,7 +15,7 @@ var RVIPSound = (function () {
 		addEventListener(e, audio, { capture: true, once: true });
 	});
 	function load(name) {
-		return cache[name] || (cache[name] = fetch(base + name + '.wav')
+		return cache[name] || (cache[name] = fetch(base + name + (/\.\w+$/.test(name) ? '' : '.wav'))
 			.then(function (r) { if (!r.ok) throw r.status; return r.arrayBuffer(); })
 			.then(function (b) { return audio().decodeAudioData(b); })
 			.catch(function () { return null; }));
