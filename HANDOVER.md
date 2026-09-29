@@ -38,7 +38,9 @@ game over explicitly, **no localStorage, only IndexedDB**.
   pushed, deployed, live md5 == dist.
 - **rvip-wm.js** 9b06337 (other session): walk() small-region fix (minimum per
   subtree, ratio alone when minimums don't fit) + ResizeObserver etc. Live.
-- **NLarn:** stages 6-8 live (cloud did 7 publish, 8 shrine); old stash dropped.
+- **NLarn:** stage 6 live; stages 7 (index card) and 8 (shrine) merged into
+  roguelikes-index/rvip-tools main 2026-09-29 but NOT deployed (card and
+  /shrine/nlarn/ not live yet); old stash dropped.
 
 ## Next steps
 
