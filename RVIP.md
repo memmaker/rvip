@@ -1401,6 +1401,14 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   checkbox out on the Audio `error`. Credits: take co-maintainers from `git shortlog -sn`
   when the files name only one author. Playwright `ctx.close()` hung after audio had
   played: end test scripts with `process.exit(0)`.
+- Stage 7 (publish): `order.py --fix` sorts cards by year, so a late variant's card lands
+  among its year's cards, not next to its family (NLarn 2009 sits by ToME 2/TinyAngband);
+  the family link is the tree. A card before its shrine exists gets no Info button. The
+  hand-written `<!--og-->` block brings its own `description`: drop the page's old one.
+  A from-scratch rewrite under the original's own licence-free lineage (all files
+  "(C) <author>", GPL) is `<li class="insp">`. Year source when the project site is
+  unreachable: the upstream change log at the base commit (first public release entry).
+  Cloud: RogueBasin, Wikipedia, larn.org and github.io pages are blocked (use search snippets).
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
@@ -2236,6 +2244,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | SLASH'EM | `~/Games/slashem` (remote `memmaker`, branch `main`) | memmaker/slashem |
 | DynaHack | `~/Games/dynahack` (remote `memmaker`, branch `unnethack`) | memmaker/dynahack |
 | uLarn | `~/Games/ularn` (remote `memmaker`, branch `master`; upstream ularn/ularn @ `ef42184`) | memmaker/ularn |
+| NLarn | `~/Games/nlarn` (remote `origin`, branch `master`; upstream nlarn/nlarn `master` @ `8851b1f`) | memmaker/nlarn |
 | Zangband | `~/Games/zangband` (remote `memmaker`, branch `master`; upstream jjnoo/Zangband `dev` @ `e177ff5`) | memmaker/zangband |
 | FrogComposband | `~/Games/frogcomposband` (remote `memmaker`, branch `master`; upstream sulkasormi/frogcomposband `master` @ `3d28f6b1`) | memmaker/frogcomposband |
 | Forays into Norrendrin | `~/Games/forays` (remote `memmaker`, branch `master`; upstream Forays/ForaysIntoNorrendrin @ `3ed1559`) | memmaker/forays |
