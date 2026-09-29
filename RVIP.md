@@ -993,6 +993,8 @@ the hero cell so the frontend hides the cursor there.
 - 3.6 web window port: no `--More--` exists if `display_nhwindow(WIN_MESSAGE, TRUE)` only redraws; nothing to add for auto_more (EvilHack).
 - Own-SDL game (case O): hook explore in the player-act function next to the game's auto-move, paint with the game's draw + present + `SDL_Delay(40)` (a `SDL_GetTicks` busy-wait never yields under Asyncify), key stop via `SDL_PumpEvents` + `SDL_HasEvent(SDL_KEYDOWN)`; stairs that trigger on bump (player never stands on them) count as "on the stairs" when adjacent (Infra Arcana).
 - A stuck door's bump message may stop explore before its after-step code runs: mark skipped doors even when the walk is already off, or the next run kicks/bashes it (Infra Arcana).
+- Own terminal-class game (case O, Avanor): the explore step returns a direction key in place of the key read in the hero's move loop; `vRefresh()` + `vDelay(40)` before returning paints it; add `vRefresh()` after a stop message or it shows only after the next key. Shop wares (cells with a shop `place`) are not item targets (Avanor).
+- Explore's message stop: count only messages that matter. Give the message class an ambient counter (`AddAmbient()` for smells, decay) and compare `count - ambient`; never match message text (Avanor).
 
 ## 5.7 Enter menu and item menus
 
@@ -1056,6 +1058,7 @@ the hero cell so the frontend hides the cursor there.
 - Enter in NetHack 3.6: 13 (`^M`) is free in both keysets and getpos; open the menu only while `iflags.in_parse` (getpos also reads through `nh_poskey`) (EvilHack).
 - Own-GUI C++ games with a state stack and a `to_cmd(input)` function: the menu is a small overlay State (box sized to content), keys by calling `to_cmd()` on every candidate key; item actions via the game's own select states plus an item-pointer preselect that auto-selects on the first update (Infra Arcana).
 - SDL text-input games: numpad +/- also send a text event (IA resized the window on it): skip the text event after the keydown; Ctrl+letter has no text event, finish on keydown and take Ctrl from `keysym.mod`, not `SDL_GetModState()` (stale when events queue) (Infra Arcana).
+- One item-prompt function for the whole game (Avanor `XHero::Inventory()` over `XGuiList::Run()`): put the cursor in the list widget (a `>` marker, 8/2 move, 5/Enter/+/-/* pick with the key readable afterwards, Ctrl+letter picks, 0/. close) and every prompt gets it; item actions = the `i` menu returns the command key to the move loop plus a one-shot preselect that `Inventory()` takes without drawing (a list that doesn't hold it returns nothing, so pack-vs-floor commands fall through; later prompts of a drop/sacrifice loop return nothing). Case-insensitive page letters: lowercase = main action, uppercase = drop (Avanor).
 
 ## 5.8 Tiles
 
