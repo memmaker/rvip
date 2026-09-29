@@ -36,7 +36,9 @@ file to read (Part 1 steps of the stage, the case part's matching sections,
 Part W for stage 5, Part 2); `HANDOVER.md` progress section; the standing
 rules (kill only own PIDs, no System Events, no full-screen screenshots, one
 tile set, delete only the game's own IDBFS database, deploy only from pushed
-commits, never touch other sessions' uncommitted work, commit
+commits, never touch other sessions' uncommitted work, the W0 hard rules
+(sub-windows only through rvip-wm, text size only by A−/A+ per window, never
+scaled to the window, game-trimmed output, no canvas except the map), commit
 trailer `Co-Authored-By: Claude Fable 5.1
 <noreply@anthropic.com>`); what to report back (the handover facts, commit
 hash, open problems, lessons for this file). Sibling worked examples to copy
@@ -218,7 +220,7 @@ case A → Shockbolt, case R → NetHack (see the case parts). **Ask before
 tags. Don't write them by hand: after the index card exists (step 10), run
 `python3 ~/Games/roguelikes-index/og.py`. It writes a `<!--og-->` block
 after `<title>` in the game's `web/index.html` (title and text from the
-card, image = the card image `roguelikes/<web-name>.png`) and in its shrine
+card, image = the card image `roguelikes/img/<web-name>.png`) and in its shrine
 page. Deploys ship `web/dist`: rebuild (or copy `web/index.html` into
 `dist`) before `deploy.sh`, then check with
 `curl -s https://ruzzoli.de/roguelikes/<web-name>/ | grep og:image`.
@@ -1291,6 +1293,14 @@ on the web: https://ruzzoli.de/roguelikes/quickband/ (step 7).
   `__EMSCRIPTEN__`, skip `setuid()`. `saveChar()` ends the game and refuses a
   new character's file: autosave to a temp file, restore state, rename.
   `chdir('/umoria')`, save `save/game.sav`, `scores.dat` symlinked into IDBFS.
+- Text windows (W0 rule 6): the shim keeps its grid panes but `pflush()` sends
+  each changed row as a line, `be_line(pane, y, text, css, tile)` (trimmed,
+  standout between `\x01`/`\x02`), plus `be_rows(pane, n)` (last non-blank row
+  or cursor row); row colour/icon go through `wc_rowattr()` which dirties the
+  row. The page keeps `lines[]` and renders `<pre>` rows / `.wm-list` rows;
+  the cursor is a span re-rendered on `um.cursor`. Pitfall: when patching JS
+  with index-based slices, an anchor like `"\t\tflush: function"` also matches
+  an earlier object (RvipApp's `flush:`); anchor on the full signature.
 
 ### A-BOSS (BOSS: Beyond Moria, Free Pascal, `crt` unit)
 - Pascal, not C: the game uses only `gotoxy`/`clreol`/`clrscr`/`readkey`/
@@ -2334,16 +2344,6 @@ was different.
 - **Stage 8:** no manual file? The in-game help menu is the manual: render its text files (`data/story/help_*.txt`) plus the key screen into `shrine/<g>/manual.html` (`<pre>` per topic); leave out a private postal address. Google Code dates without a browser: `storage.googleapis.com/google-code-archive/v2/code.google.com/<p>/downloads-page-N.json` (`releaseDate`). itch.io / ModDB / SourceForge answer bots with 403: use RogueBasin, the change log and the archive JSON. `deploy.sh` refused because another session left untracked files: run it from a fresh `git clone --depth 1` of the pushed repo instead.
 - **Stage 9:** hook the game's own end procedures, not the loop end: `GameOver` (real-death branch only; a life-insurance "knocked out" is not a finished run) and the top of `WinGame` (before the ending's key waits; add the bonus it grants later). Query built and URL-encoded in Pascal (`web_beacon` in `port/webbe.pas` → import `be_beacon`), page only calls `RvipWM.report`. Killer = text after the last " by " of the death reason, articles stripped. No give-up command → no `ev=quit` (save & quit sends nothing). Cheap live death: random `z > 1-9` keys dispatched on `document` die on DLV 2–3 in ~2 min. Killer art: `Letter` → sheet cell `ord − 32`, 20x40 centred on a square.
 
-# Part W — Web port (WASM, step 7)
-
-How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
-with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
-(2026-09-24). Per-game specifics sit in the case parts (A-…, R-…, O-…).
-
-**Templates:**
-- z-term games (case A): `~/Games/quickband/web/` (`index.html`,
-  `quickband.js`, `build.sh`, `deploy.sh`, `make-help.py`) + `src/main-web.c`.
-- curses games (case R, curses Moria): `~/Games/rogue3.6/web/` or
 ### O-Grog (Grog 1.0.2 by Thomas Biskup, 2018, C#; `~/Games/grog`, decompiled)
 
 - **Binary-only .NET game:** `dotnet tool install -g ilspycmd`, `ilspycmd -p -o src game.exe`; commit 1 = untouched output, message names ilspycmd version + exe sha256; exe in `.gitignore`. Retarget the csproj `net48` → `net10.0` (drop the HintPath references): Grog built with no decompiler fixes.
@@ -2358,6 +2358,16 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
 - **Stage 6:** the game's own crash-autosave slot (`Game.Save(42)`, deleted at the main loop's end, offered at start) is the web autosave: save it at the command prompt when no key and no automatic action is pending and the move counter changed (else auto-explore saves every step); reword the "your last game crashed" start text for the browser. Sound hooks in `SufferDamage` (hurt/hit by `this is Player` / `attacker is Player`), not message text (messages are "Name hits X"). Inside `namespace Grog.*` a class property named `Grog` shadows the namespace: write `global::Grog.Kernel...`. `build-docs.py` asserts > 30 rows in `all`: a short game help needs extra rows. Licence of a binary-only freeware game: read the title screen (Grog: "All rights reserved").
 - **Stage 7:** card image of a console game with no font sheet: the headless harness writes the raw cell buffer (`CELLS=file`: char, fg, bg), PIL draws it in the web page's monospace font with the game's palette. `og.py` rewrites every game's `web/index.html`: revert the other repos' changes (not your work) and report them. Card year = release of the played version (1.0.2, 2023), not the © start (2018).
 
+# Part W — Web port (WASM, step 7)
+
+How a game becomes a browser game under `https://ruzzoli.de/roguelikes/<name>/`
+with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
+(2026-09-24). Per-game specifics sit in the case parts (A-…, R-…, O-…).
+
+**Templates:**
+- z-term games (case A): `~/Games/quickband/web/` (`index.html`,
+  `quickband.js`, `build.sh`, `deploy.sh`, `make-help.py`) + `src/main-web.c`.
+- curses games (case R, curses Moria): `~/Games/rogue3.6/web/` or
   `~/Games/xrogue/web/` + `port/be_web.c` (curses shim, fixed-size panes,
   no z-term). Rogue 3.6 is the reference for windows and map scrolling.
 - Window manager for every game: `~/Games/rvip-tools/web/rvip-wm.js`, the
@@ -2366,6 +2376,33 @@ with tiles, all sub-windows and saves in IndexedDB. First done for Quickband
   into a game (not `web/`, not `dist`).
 
 ### W0. Presentation lives in the game (rule)
+
+**Hard rules: sub-windows and text size.** No exceptions; a port that breaks one is not done.
+1. **Every sub-window is an rvip-wm window** (`../rvip-wm.js`, `RvipWM({...})`):
+   map, status, messages, inventory, visible and other lists. No own layout,
+   drag bars, title bars or resize code in the game. Pop-ups go through `RvipWM.popup`.
+   (Only exception: a game whose whole GUI is one canvas with no sub-windows, Decker.)
+2. **Text size is set only by A−/A+, per window, and the WM keeps it**
+   (`state.fs[id]`, `RvipWM.fontSize(id)`). No shared size for all windows, no size kept by the game.
+3. **A window's size never changes its text size.** Dragging a divider or resizing the
+   browser only changes how much is visible: a window that is too small scrolls
+   (rvip-wm.js CSS, every window but `t-map`/`t-main`) and a canvas pane keeps its size
+   (`sc = 1`). The map scrolls with the hero. Only a pop-up may be scaled down to fit the map.
+4. **Resizing works at any size.** The WM re-lays out by itself when its area changes
+   (ResizeObserver in rvip-wm.js); windows never overlap and never get negative sizes.
+   The game's `layout(rects)` only places content and must not assume a minimum size.
+5. **The game trims what it sends to a sub-window**: no trailing spaces on a line,
+   no empty lines at the bottom (details below). The page never trims, scans or scales.
+6. **No hidden canvas anywhere; the game is multi-window natively.** Every text window
+   (messages, status, character, inventory, equipment, visible, recall, pop-ups) is
+   HTML text (`<pre>` with coloured spans, or `.wm-list` lines) that the WM sizes
+   through its body's font-size, never a canvas, never an off-screen canvas copied or
+   scaled into a window, never a composited screen cut up in JS. The game is changed
+   (shim / frontend / window hooks) so each window's text comes from its own source
+   as lines. The only canvas is the map (tiles). Exception: a full-screen game screen
+   (character sheet, store, death screen) may stay a fixed cols×rows grid in a pop-up,
+   as HTML text in a monospaced font (still no canvas). Worked example: Hack family
+   (`hack`, `nethack13d`, `nethack50`, `slashem`, `dynahack`: `<pre class="txt">`).
 - **Presentation changes originate in the game's native/WASM code.** The JS
   layer stays static and dumb: it blits what C hands it and forwards input.
 - C decides which tile each cell gets and hands JS a finished cell array
@@ -2451,6 +2488,7 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
 | NPPAngband | `~/Games/nppangband` (remote `memmaker`, branch `main`; upstream nppangband/NPPAngband tag `v0.5.1` @ `b1d1d85`) | memmaker/nppangband |
 | Prospector | `~/Games/prospector` (remote `memmaker`, branch `main`; upstream = Google Code rlprospector svn r197 snapshot @ `7aba66b` + `R197prospector_l.zip` data @ `1b928c0`) | memmaker/prospector |
 | Sangband | `~/Games/sangband` (remote `origin`, branch `main`; upstream = Google Code skills-angband svn trunk r313 `source-archive.zip` @ `230e028`) | memmaker/sangband |
+| Grog | `~/Games/grog` (remote `memmaker`, branch `main`; upstream = grog.exe 1.0.2 decompiled by ilspycmd @ `1a0362c`) | memmaker/grog |
 
 - Commit the game changes **and** the harness (`web/` files, `src/main-web.c`
   / `port/be_web.c[pp]`). `web/dist/` is build output, in `.gitignore`.
@@ -2488,7 +2526,6 @@ Everything on ruzzoli.de/roguelikes is on GitHub (account `memmaker`) first.
   `255/255` right-half placeholder; no high bit = text. `32x32.png` already
   carries `mask32.bmp` as alpha. (TinyAngband: 16x16.bmp keyed to alpha by
   `web/bmp2png.py`, bigtile placeholder `a&0xF0==0xF0, c==0xFF`.)
-| Grog | `~/Games/grog` (remote `memmaker`, branch `main`; upstream = grog.exe 1.0.2 decompiled by ilspycmd @ `1a0362c`) | memmaker/grog |
 - **Sub-windows** are six terms (0 main, 1 inventory, 2 messages, 3 monsters,
   4 recall, 5 items). JS computes each term's cols/rows from its window
   before `main()` (`onRuntimeInitialized`); C asks via `js_term_cols/rows`.
