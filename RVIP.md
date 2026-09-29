@@ -114,6 +114,10 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   fine), else the fallback set alone or text. Ask before using a fallback set
   for a game with a different theme (sci-fi ZAPM: text only).
 - Nearest-neighbour scaling only, never smooth/bilinear.
+- **Tiles are only ever scaled at run time, never beforehand.** Ship a tile set at
+  its original size (BMP → lossless PNG if the size is the issue, the page must
+  accept it); the page scales it (cell steps, A−/A+, `drawImage` nearest-neighbour).
+  Never downscale/upscale a sheet in a build script or commit a pre-scaled copy.
 - **A win is never lost.** Every game sends `ev=win` from the code path that
   ends a won run (test that it is reached). Never write code or run commands
   that overwrite, move or delete the server's win files
@@ -168,6 +172,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | Hack 1.0.3, NetHack 1.3d | hack, nethack13d | O, termcap via VT100 interpreter |
 | NetHack 5.0, SLASH'EM, DynaHack | nethack50 (branch `NetHack-5.0`), slashem, dynahack (branch `unnethack`) | O, window port / NitroHack client |
 | ZeldHack (NetHack 3.6.7 + LSpixel tiles) | zeldhack | O, own window port `win/web/winweb.c` derived from nethack50's |
+| EvilHack 0.9.3 (NetHack 3.6 variant) | evilhack | O, NetHack 3.6 window port (`win/web/winweb.c` from slashem's); 64 px community tile set + sound pack hooked in the code |
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
 | Forays, Grog | forays, grog | O, C# → .NET browser-wasm; Grog decompiled |
@@ -568,6 +573,8 @@ Lessons: 5.14.
   `-sEXIT_RUNTIME=1` + an `EM_ASYNC_JS` exit hook awaiting the sync (Hack).
 - `-Wno-error=return-mismatch`/`incompatible-pointer-types` for clang's newer
   default errors, then fix the real ones.
+- Own-SDL2 C++ games (Infra Arcana): Emscripten's `-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=[png] -sUSE_SDL_MIXER=2 -sSDL2_MIXER_FORMATS=[ogg]` + `-sASYNCIFY` compile the game unchanged; fullscreen-by-default configs make the canvas bigger than the page (default to windowed under `__EMSCRIPTEN__`); `-DNDEBUG` if the game has a debug banner/trace spam.
+- Emscripten `-fsanitize=address` + Asyncify crashes the renderer ("Target crashed") at the first heavy allocation (Infra Arcana): ASan natively instead, with a stub `SDL_mixer.h` (brew has no sdl2_mixer), `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DYLD_LIBRARY_PATH=/opt/homebrew/opt/sdl3/lib` (else an NSAlert blocks); a game's own `--stress-test`/bot flag is the ASan driver; `--bot` alone idles in the menu.
 
 **K&R / 64-bit native traps:**
 - Variadic or pointer-returning functions without prototypes get garbage
@@ -619,6 +626,12 @@ Lessons: 5.14.
 - **macOS shell scripts:** BSD `cp` has no `--parents`/`-t` (use `rsync -R
   --files-from`), BSD `sed` no `-i` without suffix or `\n` in replacements (use
   `perl -pi -e`).
+- NetHack 3.6 data headers are checked against `date.h` (`VERSION_SANITY1-3` hold native `sizeof(long)`/pointer sizes, `VERSION_FEATURES` the compile options): run the emcc-built `makedefs -v` under node into a separate include dir first on the game's include path, with the game's own `-D` flags, else "Configuration incompatibility for file dungeon" (EvilHack).
+- A new window port must also be listed in `util/makedefs.c` `window_opts[]`, or `makedefs -v` stops with "no windowing systems enabled" (EvilHack).
+- 3.6-family pregenerated `sys/share/*_lex.c`/`*_yacc.c` can be stale for variants: build with real `bison -y`/`flex` (`apt-get install flex` in the cloud); serial `make`, parallel races on `pm.h` (EvilHack).
+- wasm signature traps hide in data tools too: `util/dlb_main.c` declares `fopen_datafile` with 2 args while `dlb.c` calls it with 3 (EvilHack, NetHack 3.6).
+- EvilHack-style SYSCF builds need a `sysconf` in HACKDIR; the upstream server one carries options a plain build rejects: ship a minimal web `sysconf` (EvilHack).
+- NetHack 3.6 web builds with `-DNOMAIL` need their own `pm.h`/`onames.h` (`makedefs -o -p` with the web DEFS) and a full copy of `include/` first on the path: quoted includes find the native (MAIL) `pm.h` next to `hack.h`, and every monster/object after the mail daemon/scroll of mail is one off (gold shows as `*`) (EvilHack).
 
 ## 5.3 Build: other languages and platforms
 
@@ -684,6 +697,17 @@ fails under dash and doesn't persist: `build.sh` puts
 `${EMSDK:-/home/user/emsdk}/upstream/emscripten` on `PATH`. `apt-get install
 webp binaryen`. `-sUSE_ZLIB` 403: seed `cache/ports/zlib/zlib-<ver>/` from git
 and write `.emscripten_url`.
+
+**Closed native Win32 console exe (TGGW, emulated in v86, case O):**
+- List PE imports first; if the only UI import is pdcurses.dll (~40 functions), emulate the exe and reimplement curses host-side instead of decompiling.
+- Emulating the MSVC static CRT: CPINFO is 20 bytes (a 24-byte write trips the stack cookie); GetStringTypeW/LCMapStringW must really convert; GetProcAddress must return SRW/condvar stubs for the MSVC mutex init.
+- A JS `rd32` returns unsigned, so `cb === -1` never matches: `| 0` every length argument, or MultiByteToWideChar/WideCharToMultiByte/GetStringTypeW silently fail and the CRT never opens a file.
+- Keep a call ring buffer and a call count per API: "no CreateFileW ever called" found the bug faster than reading disassembly.
+- v86 as a bare-metal x86 runner: stubs = `mov eax,id; out 0xE0,al; cmp eax,BLOCK; jne; hlt; jmp start; ret n`; blocking calls return BLOCK and JS resumes with `cpu.in_hlt[0]=0; v86.next_tick(0)`; switch green threads only while halted (state = 8 regs + eip + fs:[0]).
+- v86: int3/int 0x29/far jumps after ExitProcess panic the wasm CPU: park the guest in the hlt loop.
+- macOS has no `as --32`: commit the assembled boot ROM and let `build.sh` fall back to it.
+- `og.py` rewrites every game's `web/index.html` and every shrine (it once flipped 18 repos' og:image path): for one game exec it with the static `pages` dict emptied, then `git checkout` whatever else changed.
+- A font select needs the FontFace loaded (`new FontFace(n,'url(../fonts/n.woff)')`) and a CSS var on the text windows; setting only a variable does nothing.
 
 ## 5.4 z-term frontend and Angband ports (case A)
 
@@ -876,6 +900,8 @@ the map. Zoom whole multiples only (a 0.98 `pixelated` downscale mangles bitmap 
 whole-screen flag, prompt, log delta, lists); `!main` = whole screen as `<pre>`
 pop-up. Games whose curses layer doesn't know the hero: the level render stores
 the hero cell so the frontend hides the cursor there.
+- NetHack 3.6 window port: start from slashem's `win/web/winweb.c` and change only the 3.6 struct differences (`has_color[]`, `putmixed`, 5-arg `print_glyph`, `mapglyph` 7 args, `iflags.perm_invent`, `program_state.restoring`, `nh_terminate`, `genl_status_*`, `genl_getmsghistory`, `genl_can_suspend_no`); declare procs with `CHAR_P`/`BOOLEAN_P`/`XCHAR_P` so the initializer types match (EvilHack).
+- a menu with group accelerators (gch, class symbols in pick-up menus) still needs item letters; don't derive "no letters" from gch (EvilHack).
 
 ## 5.6 Explore and stairs
 
@@ -939,6 +965,12 @@ the hero cell so the frontend hides the cursor there.
   lets paths through boulders and closed doors: skip remembered boulder glyphs,
   let autoopen handle doors, mark locked ones. Stop only on hostiles in view;
   peacefuls (shopkeepers) would block it forever.
+- NetHack 3.6 explore: count messages in `vpline()` right before `putmesg()` (port-independent, works in tty for pty tests) instead of comparing `toplines` (EvilHack).
+- NetHack remembered stairs can be hidden under a remembered object glyph (pet drops a corpse on `>`): also accept `lastseentyp[x][y] == STAIRS/LADDER` for the stair target (EvilHack).
+- EvilHack/3.6 `doopen_indir()` auto-picks locks when `autounlock` is set: check `doormask & D_LOCKED` before calling it from explore (EvilHack).
+- 3.6 web window port: no `--More--` exists if `display_nhwindow(WIN_MESSAGE, TRUE)` only redraws; nothing to add for auto_more (EvilHack).
+- Own-SDL game (case O): hook explore in the player-act function next to the game's auto-move, paint with the game's draw + present + `SDL_Delay(40)` (a `SDL_GetTicks` busy-wait never yields under Asyncify), key stop via `SDL_PumpEvents` + `SDL_HasEvent(SDL_KEYDOWN)`; stairs that trigger on bump (player never stands on them) count as "on the stairs" when adjacent (Infra Arcana).
+- A stuck door's bump message may stop explore before its after-step code runs: mark skipped doors even when the walk is already off, or the next run kicks/bashes it (Infra Arcana).
 
 ## 5.7 Enter menu and item menus
 
@@ -996,6 +1028,10 @@ the hero cell so the frontend hides the cursor there.
   must still pop it up for `PICK_ONE`.
 - In a menu test accelerators before cursor keys (`j`/`k` were eaten as moves even
   when they were item letters).
+- NetHack 3.6 has `iflags.force_invmenu` (option `force_invmenu`): set it in the window port and every `getobj()` prompt opens its item menu at once — the cursor list for free (EvilHack).
+- NetHack 3.6 item actions without `itemactions()`: probe `getobj()` itself (global probe object; return right after it builds `lets`) with each command's word and class list, so the game's "ugly checks" decide which actions fit; run via key queue + preselect taken at the top of getobj's prompt loop (EvilHack).
+- NetHack 3.6 `Cmd.dirchars` holds `<` and `>` too: skip only the eight `Cmd.move_*` keys (plus Shift/Ctrl in vi mode) when hiding movement from a command menu (EvilHack).
+- Enter in NetHack 3.6: 13 (`^M`) is free in both keysets and getpos; open the menu only while `iflags.in_parse` (getpos also reads through `nh_poskey`) (EvilHack).
 
 ## 5.8 Tiles
 
@@ -1092,6 +1128,8 @@ the hero cell so the frontend hides the cursor there.
 - Read the stored tile-set name in the IDBFS `syncfs` callback and only then set
   `img.src`; a generation counter in `onload` keeps a late sheet from re-enabling
   tiles after "None".
+- EvilHack keeps `win/share/*.txt` complete (upstream copies vanilla tiles as stand-ins): measure "real" coverage by comparing tile pixels by name with NetHack-3.6's txt files (80 % distinct art, 100 % with same-set stand-ins) (EvilHack).
+- NetHack 3.6 web tiles: define `USE_TILES` for the web port or `shuffle_tiles()` never runs and flavoured items show their unshuffled tile (kind leaks); build `tilemap` with `STATUES_LOOK_LIKE_MONSTERS` so statues use tile2bmp's grey monster tiles; crop tile2bmp's padded BMP to `total_tiles_used` (EvilHack).
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
@@ -1140,6 +1178,8 @@ the hero cell so the frontend hides the cursor there.
   a centring camera use the sheet size while about 12 rows fit. One-window mode:
   draw the prompt and status rows on the map canvas and hide `.wm-topl` under
   `.wm-single`.
+- NetHack 3.6 coloured status: own `status_update` that calls `genl_status_update` for field values (fills global `status_vals`) and keeps `color` per field + condition `colormasks`, set WC2_HILITE_STATUS|WC2_FLUSH_STATUS; bake `statushilites` + `hilite_status` lines in `initoptions_finish` before the rc file (EvilHack).
+- Visible objects in NetHack 3.6: `distant_name(vobj_at(x,y), xname)` (what lookat uses; no dknown side effect), but the glyph's type name while hallucinating (EvilHack).
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1203,6 +1243,7 @@ the hero cell so the frontend hides the cursor there.
   `veryold()` in the browser (a 3-day-old checkpoint would be erased; `kill(pid,0)`
   never says ESRCH). Give `HACKDIR` the web name: two NetHack ports on the shared
   origin both used `/nethack`, and IDBFS folders must be unique per game.
+- NetHack 3.6 web autosave: call `save_currentstate()` (INSURANCE) from the window port's idle key poll at the command prompt when `moves` changed; answer `getlock()`'s "Old game in progress" with `r` under `__EMSCRIPTEN__` (recover.c linked with NO_MAIN) — reload lands in the character, twice in a row (EvilHack).
 
 ## 5.11 Audio
 
@@ -1273,6 +1314,7 @@ the hero cell so the frontend hides the cursor there.
   on `ZSND` lines, and count plays by wrapping `RVIPSound.play` plus
   `AudioBufferSourceNode.start`. Sample names with spaces become underscores at
   build time (C names, URLs without escaping).
+- NetHack 3.6 without sndprocs: one `WEB_SOUND("name")` macro in hack.h (no-op off the web) at the action functions (`known_hitum`, `hitmsg`, `missmu`, `xkilled`, `goto_level`, `pluslvl`, `dopray`, …), skipped while `program_state.restoring`; build fails if a name has no wav (EvilHack).
 
 ## 5.12 Docs and help
 
@@ -1295,6 +1337,7 @@ the hero cell so the frontend hides the cursor there.
   Licence of a binary-only freeware game: read its title screen.
 - NetHack 3.6 `cmdhelp`: evaluate its `&?`/`&:`/`&.` conditionals with the web
   defaults (`number_pad` from the rc) instead of listing every variant.
+- NetHack 3.6 `dat/cmdhelp` has `&?`/`&:`/`&.` conditionals (number_pad, debug, suspend, shell): evaluate them for the web build to get the key list, drop "unavailable" rows, and test each key in Playwright — `^C` is "Unknown command" in the browser (no SIGINT) (EvilHack).
 
 ## 5.13 Research (card, tree, shrine)
 
@@ -1342,6 +1385,11 @@ the hero cell so the frontend hides the cursor there.
   descriptions (escaping) and re-shoots `og/*.png`: after running it, revert what
   is not yours (`git checkout`). `order.py` needs a `years.json` entry (`games`)
   for a new card, else `deploy.sh` refuses.
+- og.py from the cloud: copy roguelikes-index to the scratchpad next to a stub `<game>/web/{deploy.sh,index.html}`, insert the card, run only og.py's second loop (drop the Chrome loop) with python3.12; it writes the game's `<!--og-->` block; then drop the page's old `<meta name="description">` (EvilHack).
+- card image without a browser: sample 60 monster tiles evenly from the build's own tile sheet (skip <70 lit px / mean luma <28), 16 px at 2× nearest-neighbour, 12×5 → 384×160 (EvilHack).
+- new card: add the slug to roguelikes `years.json` or `order.py` fails ("no entry for card"); ship the index change as a unified patch (`index.html` + `years.json`) for the Mac (EvilHack).
+- shrine from the cloud: nethackwiki.com and allthetropes.org are blocked; GitHub repo/releases/profile pages via WebFetch give sourced trivia; build the page in the game repo (`web/publish/shrine/`) and test it in a scratch copy of roguelikes-index with Playwright (EvilHack).
+- tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
 
 ## 5.14 Beacon (stage 9)
 
@@ -1387,6 +1435,11 @@ the hero cell so the frontend hides the cursor there.
   size and no resize (`zhsheet()`); can be cut in the cloud into `publish/killers/`.
 - A quit in the built-in pane did not show on graveyard.html (Claude's UA is
   filtered server-side; quits send ev=quit): check with a real death in the user's browser.
+- NetHack 3.6: hook `really_done()` right after `clearlocks()` (how final, before disclose/bones/tombstone key waits); score = u.urexp + the end bonus replicated read-only, and for wins also valuables + `artifact_score` (save/restore u.urexp); pets' HP come after disclosure: a win report may be a few points low (EvilHack).
+- NetHack 3.6 killer: remember `monsndx(champtr)` in `done_in_by()` and send `mons[].mname` only if `killer.name` still contains it (life-saving leaves a stale one); else `killer.name` minus the article (EvilHack).
+- check the beacon score against the game's own `xlogfile` `points=` via `Module.FS.readFile` after the run (EvilHack).
+- test the outbox at the first "possessions identified?" prompt: the report must already be there (tab closed at disclosure) (EvilHack).
+- NetHack 3.6 killer art: `glyph2tile[PM]` + the name at that tile in `monsters.txt`; weres share one name (563 PM → 559 PNGs) (EvilHack).
 
 ## 5.15 Git, deploy, server
 
@@ -1423,6 +1476,9 @@ the hero cell so the frontend hides the cursor there.
   filter it out in the split with `LESSONS.md` and `CLOUD.md`. `git filter-repo`
   refuses a clone that has a second reflog entry (`checkout -B`): `--force` on that
   scratch clone is fine.
+- a cloud clone of a variant is shallow (EvilHack: 49 upstream commits): `git fetch --unshallow` from upstream before the repo split, or the public repo has no upstream history (EvilHack).
+- the NetHack 3.6 native build empties tracked `doc/Guidebook.txt` (no nroff): `git checkout doc/Guidebook.txt` before committing (EvilHack).
+- a `.gitignore` rule named after the binary (`evilhack`) hides `web/publish/killers/evilhack/`: add a `!` negation (EvilHack).
 
 ## 5.16 Testing
 
@@ -1472,6 +1528,13 @@ the hero cell so the frontend hides the cursor there.
   breeders (lemmings) make browser death tests slow — verify death screens natively.
 - Built-in browser pane: the `type` action does not reach `keydown` handlers, use
   `key`; after switching tile sets wait for the redraw before judging a blank map.
+- a stage-1 page can skip rvip-wm.js and expose `window.nhShadow` (map rows, prompt, pop-up, status) so Playwright drives character selection and moves before the real page exists (EvilHack).
+- native NetHack pty tests: Python `pty.fork` + `pyte` screen, `-D` as root (sysconf WIZARDS=root), answer `--More--` with Return; don't name the script `pty.py` (shadows the module) (EvilHack).
+- EvilHack reads `EVILHACKOPTIONS`, not `NETHACKOPTIONS`; set it from a Playwright `addInitScript` Module setter pushing a `preRun` to test keysets (EvilHack).
+- NetHack 3.6 wizard mode in wasm is refused (`get_unix_pw()` NULL in `authorize_wizard_mode`): tests need a temporary unlock (env check), reverted afterwards (EvilHack).
+- the shared smoke/resize tests need the game windows without interaction: ask the player name with `window.prompt` (idbtest answers it), not an in-page form that blocks startup (EvilHack).
+- EvilHack's "Really quit?" is a paranoid yes-prompt (getlin): tests type `yes` + Enter (EvilHack).
+- sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 
 ## 5.17 Cloud runs
 
