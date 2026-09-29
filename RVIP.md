@@ -908,6 +908,15 @@ copy what its API returns (freed after the next call). A custom NetHack window
 port must copy each message into `toplines` (only tty sets it) or explore's
 message stop never fires; 3.4.3 has no "at command" flag: set one in `parse()`.
 
+**Own cell-buffer terminal (Avanor, case O):** route by what the game does, not by
+screen regions alone: the map routine walks the whole level under `__EMSCRIPTEN__`
+(only its viewport goes to the screen) and sends it as the Map pane; `vClrScr`
+clears a "map live" flag the map routine sets; `vStore`/`vRestore` push/pop it
+(snapshot at the outermost store). Pop-up = no map: bbox of non-blank cells;
+menu over the map: bbox of cells differing from the snapshot. Nested menus
+can't break tiles then. Status = rows the status routine marks; Messages = the
+message class's history line (convert its colour escapes in C) (Avanor).
+
 **Graphics framebuffer games** (fbgfx, SDL blits): the game exports its region
 rectangles and a "main prompt" flag; JS blits regions into windows (text parts
 still sent as text), whole screen in a pop-up otherwise. One-line questions: a
