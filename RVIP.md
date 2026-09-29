@@ -177,6 +177,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | Decker | decker | O, Windows MFC → shim on SDL2 |
 | Forays, Grog | forays, grog | O, C# → .NET browser-wasm; Grog decompiled |
 | LambdaRogue | lambdarogue | O, Free Pascal + JEDI-SDL blits |
+| Infra Arcana | ia | O, C++17 own SDL2 GUI on Emscripten's SDL ports; captured status/log panels, game-sized canvas |
 | Selection page | roguelikes-index (repo roguelikes) | index, tree, shrine, killers, server |
 
 ---
@@ -896,6 +897,9 @@ still sent as text), whole screen in a pop-up otherwise. One-line questions: a
 game-side "main screen on screen" flag cleared by clear-screen/menus/boxes over
 the map. Zoom whole multiples only (a 0.98 `pixelated` downscale mangles bitmap fonts).
 
+**Own SDL2 GUI games** (Infra Arcana): keep the SDL canvas as the Map window and let the game resize it to the window body (`_web_resize` -> `SDL_SetWindowSize` + the game's own resize path at the next key poll, clamped to the GUI minimum its full-screen menus need); give the map panel the whole canvas and capture the status/log panels' `draw_text`/`cover_panel` calls as text for HTML windows (overlapping panels, so the screen never grows). Map A−/A+ = the game's integer video scale.
+- List icons from grey tiles the game tints: ship the tile PNGs and draw them as a CSS `mask` (`mask-mode: luminance`) over `currentColor` = the game's colour, no pre-tinting (Infra Arcana).
+
 **Console C# games:** the game's own cell buffer + a JSON per present (panes,
 whole-screen flag, prompt, log delta, lists); `!main` = whole screen as `<pre>`
 pop-up. Games whose curses layer doesn't know the hero: the level render stores
@@ -1231,6 +1235,8 @@ the hero cell so the frontend hides the cursor there.
   keeps saves there). Deletes are blocked while the game page is open: close its
   dbs or run from a plain page on the same origin. Headless save tests need
   `launchPersistentContext`.
+- Games that save only at level changes and regenerate the level on load (Infra Arcana): keep that as the autosave, no prompt autosave (it would change play); a user-dir override for the IDBFS mount via `ENV` set in `preRun`.
+- The C side's "send only on change" cache must start with a sentinel, not `""`, or an empty list is never sent (Infra Arcana Visible stayed blank).
 - Case-sensitive FS: a DOS game saving `NAME.ALF` and opening `NAME.alf`.
 - Games keeping every file in cwd (Larn): `chdir` into the IDBFS mount, symlink
   the data files on every start. Test an autosave early: mid-game saves hit
@@ -1537,6 +1543,7 @@ the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 wizard mode in wasm is refused (`get_unix_pw()` NULL in `authorize_wizard_mode`): tests need a temporary unlock (env check), reverted afterwards (EvilHack).
 - the shared smoke/resize tests need the game windows without interaction: ask the player name with `window.prompt` (idbtest answers it), not an in-page form that blocks startup (EvilHack).
 - EvilHack's "Really quit?" is a paranoid yes-prompt (getlin): tests type `yes` + Enter (EvilHack).
+- Browser pane: a background tab has `document.hidden` (Asyncify sleeps throttled, canvas stale); `tabs_select` your own tab before key tests. `computer` key works for plain keys; shifted keys still need dispatched events (Infra Arcana).
 - SDL/Emscripten canvas games: trusted pane key presses don't reliably arrive; dispatch `KeyboardEvent`s on `window` (Shift keydown, then keydown/keypress/keyup; no keypress for Ctrl combos); pane screenshots lag a frame, compare `canvas.toDataURL()`; header edits need `rm -rf web/obj` (mtime cache); `build.sh` recreates `dist`, restart the server (Infra Arcana).
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 
