@@ -1631,6 +1631,12 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   text (NLarn's help swaps `+`/`-`). Ctrl+key cheats (`^W`) close the tab in a browser: offer
   them through the Enter menu. Node test scripts piped to `tail` lose all output when killed
   by `timeout`: write to a file and end with `process.exit(0)`.
+- Stage 9 (beacon): hook right after the game's own `score_new()` inside the non-wizard branch of
+  `player_die()`: one line covers death, win, quit and time-limit losses, and wizard runs stay
+  unreported like NLarn's own scoreboard. Killer only for `PD_MONSTER` (`monster_type_name`);
+  art names come from the `/* MT_X */ .name = N_("…")` comments in `monster_data[]`. Browser test:
+  dispatched `ctrlKey` keydowns and `Q` do not quit (Q reloaded via save-and-exit); use the Enter
+  menu's `^Q` entry, and patch `RvipWM.report` to capture the URL before the page reloads.
 
 ### R1. Compile
 - **Roguelike Restoration Project games** (Rogue 3.6/5.4, Super-Rogue,
