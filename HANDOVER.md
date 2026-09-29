@@ -27,7 +27,9 @@ game over explicitly, **no localStorage, only IndexedDB**.
   nppangband `master` 7693d5e (original NPP 7.1.0 history), quickband
   `Quickband` 2761ff0 (upstream import), xrogue `main` f16c228 (first port).
 - **tactical-angband:** the only repo is `memmaker/tactical-angband`
-  (`memmaker/tactical-angbandX` deleted on GitHub 2026-09-29, local remote re## Done 2026-09-29
+  (`memmaker/tactical-angbandX` deleted on GitHub 2026-09-29, local remote removed).
+
+## Done 2026-09-29
 
 - **W0 rule 6 live** (text windows are HTML, only the map is a canvas) in umoria,
   arogue5.8, arogue7.7, easyband, larn, nlarn, prime, rogue3.6, rogue5.4, roguepc,
@@ -40,11 +42,26 @@ game over explicitly, **no localStorage, only IndexedDB**.
 
 ## Next steps
 
-1. **Rule-6 ports still running in the "HTML Subwindows" session** (don't touch):
-   frogcomposband, hengband, faangband, nppangband, quickband, sil-q-1.5.0,
-   tactical-angband, tinyangband, tome-2.3.11, then boss, crawl-linley, forays,
-   omega, prospector; sangband and zangband (f58fe98, unpushed) are also its.
-   Progress in `finetuning-todo.md` §10.
+1. **Rule-6 ports (W0 rule 6: HTML text windows, only the map is a canvas).**
+   Also done, committed and **pushed, not deployed**: sangband (4844f5a +
+   ffaf280, Angband pilot: Status window = sidebar + status line, canvas =
+   dungeon only), zangband f58fe98, frogcomposband e752fe6; easyband cbdc2bd is
+   deployed (list above). Still to port, one agent each, in this order:
+   hengband, faangband, nppangband, quickband, sil-q-1.5.0, tactical-angband,
+   tinyangband, tome-2.3.11 (template: sangband + zangband/frog for
+   Zangband-line saved screens), then boss, crawl-linley, forays, omega,
+   prospector (own frontends; templates ularn 6229406, nlarn 9bed18a, prime 0cad3b6).
+   Brief = RVIP.md W0 + the template commits + finetuning-todo.md §10.
+   Open from these ports:
+   - `rvip-wm.js`: `RvipWM.prompt.wait` should re-place a shown pop-up when
+     the prompt line reappears (frog works around it in frogcomposband.js).
+   - sangband: lists may scroll to their end on first fill (only Messages
+     should follow; easyband/zangband/frog already fixed).
+   - Angband family: the map canvas still scales down below 80x24 cells
+     (rule 3 wants it to keep its size and scroll); frog's multi-line
+     message area (rows 1-9 outside pop-ups) is still drawn on the map canvas.
+   - frog: map overview icons tiny; a brief map-as-pop-up flash after item prompts.
+   - Deploy sangband, zangband, frogcomposband after a browser check.
 2. **NLarn stage 9** (graveyard/leaderboard), one stage agent.
 3. **og:image** in forays, mag, zangband, lambdarogue, prospector, nppangband:
    "Fix stale og:image paths" session.
@@ -56,9 +73,8 @@ game over explicitly, **no localStorage, only IndexedDB**.
 6. **Kept on purpose:** forays' `sessionStorage` flag (per-tab guard against
    the cross-origin-isolation service worker reload loop). hack's
    `origin/save-lock` and `origin/windows-port` belong to upstream restoHack.
-7. `repo-status.sh` in rvip-tools is untracked and not this session's.
-
- to us.
+7. `repo-status.sh` (rvip-tools): lists repos that are dirty, ahead/behind or
+   have unmerged origin branches (`-n` = no fetch).
 
 ## Testing
 
