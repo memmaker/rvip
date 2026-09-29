@@ -967,6 +967,11 @@ the hero cell so the frontend hides the cursor there.
   converted like `tile2bmp`). Larn family: the Amiga set (primeau/Larn `src/img`,
   MIT, 8×16; recolour its tiles for missing terrain rather than mix). Look for a
   Windows/graphical port of the same variant first and extract its tiles.
+  Also list the upstream **GitHub release assets** (`gh api
+  repos/<o>/<r>/releases`): Hengband ships its 16x16 sheet only as
+  `heng-graf-16x16.zip` there, twice as wide as the Frog/Zangband copy.
+  Several sets offered = one button cycling them, each with its own `$GRAF`
+  and prefs, its own same-set stand-in file and coverage line (hengband).
 - **Map by name, generated:** a script reads the variant's own tables (edit
   files, C tables, X-macro enums, JSON) and asserts one tile per id; gaps get
   same-set family stand-ins (by `base:` + nearest depth; rings/amulets by
@@ -1184,6 +1189,12 @@ the hero cell so the frontend hides the cursor there.
   at depth 0 (copy in `build.sh` if present; grey the checkbox on Audio `error`).
   Games with music options: turn them on in the web config, the page toggles
   decide; report "playing" truthfully while muted.
+- **Scene-table music (Hengband lineage, `main-unix/unix-music.cpp`):** reuse
+  the game's own picker instead of a JS depth rule: handle `TERM_XTRA_SCENE`
+  and `TERM_XTRA_MUSIC_*` in the web `xtra` hook, `#ifdef USE_WEB` in
+  `play_music()`/`stop_music()` hand the file to the page. Its `CfgReader`
+  keeps only files that exist: preload `music.cfg` plus an **empty file per
+  shipped track**, so unshipped scenes fall through as natively (hengband).
 - **Testing:** a scripted `click()` on Music is blocked by autoplay: real click
   (`page.click()`) and `read_network_requests` / `page.on('request')` (media
   isn't in `performance`); check decoding with `new Audio(u).onloadedmetadata`.
