@@ -60,3 +60,25 @@ Headless Chromium runs were done for nethack13d, mag, umoria and tome2. Every ot
 - The tile scripts in hack, arogue5.8, arogue7.7, urogue, xrogue, nethack13d and mag take `RVIP_TILESETS=<path to rvip/tilesets>`.
 - **Free Pascal (boss-beyond-moria, lambdarogue):** these need the FPC trunk wasm compiler. boss-beyond-moria builds with `LLVM=/usr/bin sh web/build.sh`.
 - **FreeBASIC (prospector):** needs the 1.20 compiler built from source.
+
+## 9. Left over from ~/Games/HANDOVER.md (2026-09-28, file deleted)
+
+- xrogue: GitHub default is `rvip-port` now; delete the old `master` branch.
+- hengband: local `develop` is a stale upstream copy; delete.
+- hack: `save-lock` / `windows-port` branches unmerged; decide.
+- decker: second help doc.
+- larn/ularn: text panes (`be_extent`) deployed but untested in a browser.
+- umoria: saved tile choice is an index (None → DawnLike once after the update).
+- nethack13d: old saves stay in IndexedDB `/hack`.
+
+## 10. Hard rule 6 (RVIP.md W0): text windows as HTML text, no canvas but the map
+
+Done: hack, nethack13d, nethack50, slashem, dynahack (worked example, `<pre class="txt">`).
+To port (text windows drawn in canvases today):
+- Rogue line (curses shim, `port/wcurses.c` + `be_web.c`): rogue3.6, rogue5.4, srogue, arogue5.8, arogue7.7, urogue, xrogue, roguepc, larn, ularn, nlarn, mag, umoria, zapm, prime (msg, stat, inv).
+- z-term Angband line (`main-web.c` sub-terms): easyband, faangband, frogcomposband, hengband, nppangband, quickband, sangband, sil-q, tactical-angband, tinyangband, tome2, zangband (msg, inv, eqp, mon, rec, chr, obj, itm).
+- Others: boss (side, stat), crawl-linley (msg, stat, inv, items), forays (side), omega (side, stat), prospector (stat).
+- Not applicable: decker (whole GUI is one canvas), alphaman/lambdarogue (check).
+Until ported, text canvases are shown at their size (`sc = 1`, windows scroll).
+Progress 2026-09-29 (committed, not pushed/deployed): umoria ebb3b2d, rogue3.6 4d441fb, rogue5.4 cd8d0a1, srogue 1b5c42b, arogue5.8 c57a5a1, arogue7.7 7f541b8, urogue acfdf60+25bf092, xrogue d675221, roguepc 49efd71, larn 0ab3d3c+891322f, ularn 6229406, nlarn 9bed18a, mag daf87df, zapm cfa6edb, prime 0cad3b6.
+Follow-ups done: colour runs n/a for umoria + rogue shims (no per-cell colour there); inventory footer fixed in the 7 rogue shims; nlarn pop-up box colour from C (3253f24); zapm walking verified. roguepc: F12 PC screen as HTML + icon CSS sprites (0adadae), no canvas but the map.

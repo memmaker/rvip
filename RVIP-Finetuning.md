@@ -140,6 +140,15 @@ through `port/`). The JS layer only draws it.
   NetHack 1.3d/5.0, SLASH'EM, DynaHack, Omega and Prospector did: A+ on
   Inventory grew Messages and Status too). Pop-up text follows Messages.
   Old layout files: seed `L.wm.fs` from the old `L.fs` / `font` values once.
+- **Hard rules (RVIP.md W0): every sub-window is an rvip-wm window; a window's
+  size never changes its text size.** Too small = the body scrolls
+  (rvip-wm.js CSS, every window but `t-map`/`t-main`), canvas panes keep `sc = 1`,
+  only a pop-up is scaled to fit. The game trims its sub-window text (no
+  trailing spaces, no empty bottom lines). umoria, prime and zapm scaled their
+  text panes to the window until 2026-09-28.
+- **No canvas except the map (hard rule 6).** Text windows are HTML text
+  (`<pre>` / `.wm-list`) sized by the WM; the game sends each window its own
+  lines. Open ports: `finetuning-todo.md` §10.
 - **Shared app code comes from `../rvip-app.js`** (`RvipApp({...})`): IDBFS
   sync, Export/Import save, New game, crash status, Help panel. The game
   only passes its save-file hooks; it keeps no copy of that code.

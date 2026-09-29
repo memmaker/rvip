@@ -22,7 +22,7 @@
  *     noFont: 'map',                                  // a window without A− / A+
  *     fontMax: { map: 40 }                            // optional: a window's A+ limit (default 28)
  *   });
- *   wm.apply()  after a resize;  wm.shown(id);  wm.reset();  wm.rects
+ *   wm.apply()  re-lays out (the WM does it itself when the area changes size);  wm.shown(id);  wm.reset();  wm.rects
  * A− / A+ on a title bar: the WM keeps one size per window and per mode (multi:
  * state.fs[id], one window: state.fs1[id]; 8..28 px; default: size[id]() if
  * given, else the body's CSS font-size), sets it as the window body's font-size
@@ -45,6 +45,8 @@
 		'border:1px solid var(--line,#2b2b33);border-width:0 1px 1px 0;font:13px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap}' +
 		'.wm-topl[hidden]{display:none}' +
 		'.wm-single .win>.t{display:none!important}' +
+		/* a window's size never changes its text size: too small = it scrolls (the map scrolls with the hero itself) */
+		'.win:not(#t-map):not(#t-main)>.body{overflow:auto!important}' +
 		'.win>.t{cursor:grab;user-select:none}' +
 		'.win>.t .wm-btns{flex:none;display:flex;gap:2px;visibility:hidden}' +
 		'.win>.t:hover .wm-btns{visibility:visible}' +
@@ -109,10 +111,18 @@
 
 		/* ---- placing ---- */
 		function place(e, r) { e.style.left = r[0] + 'px'; e.style.top = r[1] + 'px'; e.style.width = Math.max(0, r[2]) + 'px'; e.style.height = Math.max(0, r[3]) + 'px'; }
+		/* the least length node n needs along direction d: MIN per window, stacked windows add up */
+		function need(n, d, g) {
+			if (typeof n === 'string') return MIN;
+			var a = need(n.a, d, g), b = need(n.b, d, g);
+			return n.d === d ? a + g + b : Math.max(a, b);
+		}
 		function walk(n, r, gut, out) {
 			if (typeof n === 'string') { out[n] = r; return; }
 			var v = n.d === 'v', len = v ? r[3] : r[2], g = gut ? GUT : 0;
-			var sa = Math.round(Math.max(Math.min(MIN, len / 2), Math.min(len - g - Math.min(MIN, len / 2), (len - g) * n.r)));
+			/* each side keeps its subtree's minimum; if both don't fit, the ratio alone decides */
+			var avail = len - g, ma = need(n.a, n.d, g), mb = need(n.b, n.d, g), sa = avail * n.r;
+			sa = Math.round(ma + mb <= avail ? Math.max(ma, Math.min(avail - mb, sa)) : Math.max(0, Math.min(avail, sa)));
 			var ra = v ? [r[0], r[1], r[2], sa] : [r[0], r[1], sa, r[3]];
 			var rb = v ? [r[0], r[1] + sa + g, r[2], r[3] - sa - g] : [r[0] + sa + g, r[1], r[2] - sa - g, r[3]];
 			if (gut) bars.push({ n: n, r: v ? [r[0], r[1] + sa, r[2], g] : [r[0] + sa, r[1], g, r[3]], box: r });
@@ -203,9 +213,11 @@
 		});
 		function fontSet(id) { var b = body(id), f = fs(); if (b) b.style.fontSize = f[id] ? f[id] + 'px' : ''; }
 		function fontBy(id, d) {
-			var f = fs();
+			var f = fs(), b = body(id), end = b && b.scrollTop + b.clientHeight >= b.scrollHeight - 4;
 			f[id] = Math.max(8, Math.min(fmax(id), Math.round(window.RvipWM.fontSize(id)) + d));
-			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](f[id], d); save();
+			fontSet(id); if (o.zoom && o.zoom[id]) o.zoom[id](f[id], d);
+			if (end && id !== 'map' && id !== 'main') b.scrollTop = b.scrollHeight;   /* a window at its end (Messages) stays there */
+			save();
 		}
 		wm.zoomed = function (id) { return fs()[id] || 0; };
 		function drag(id, e0) {
@@ -265,6 +277,15 @@
 		wm.state = function () { return clone(S); };
 		/* 'multi' or 'single'; with m, switch to it */
 		wm.mode = function (m) { if (m && m !== S.mode) { S.mode = m; wm.apply(); save(); } return S.mode; };
+		/* any size change of the area (window, top bar wrapping, panels, zoom) re-lays out (coalesced, also in a hidden tab) */
+		if (window.ResizeObserver) {
+			var raf = 0, seen = '';
+			new ResizeObserver(function () {
+				var k = area.clientWidth + 'x' + area.clientHeight;
+				if (k === seen) return; seen = k;
+				clearTimeout(raf); raf = setTimeout(function () { if (wm.rects) wm.apply(); }, 16);
+			}).observe(area);
+		}
 		return wm;
 	};
 	/* ---- top-bar drop-down: button b opens element menu below it; one open
@@ -379,7 +400,9 @@
 		var body = document.querySelector('#t-map .body, #t-main .body'), par = pop ? pop.offsetParent : body && body.offsetParent;
 		if (!body || !par) return null;
 		var r = body.getBoundingClientRect(), g = par.getBoundingClientRect();
-		return { x: r.left - g.left, y: r.top - g.top, bw: r.width, bh: r.height, w: g.right - r.left, h: g.bottom - r.top };
+		/* the prompt line, while shown, keeps its row: the pop-up starts below it */
+		var tp = body.querySelector('.wm-topl:not([hidden])'), t = tp ? tp.offsetHeight : 0;
+		return { x: r.left - g.left, y: r.top - g.top + t, bw: r.width, bh: r.height - t, w: g.right - r.left, h: g.bottom - r.top - t };
 	}
 	window.RvipWM.popupBox = function () { var r = popRect(); return r ? { w: r.w, h: r.h } : { w: 0, h: 0 }; };
 	window.RvipWM.popup = function (pop, o) {
