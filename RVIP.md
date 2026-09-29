@@ -344,6 +344,11 @@ part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
   box at the Map's top left; a key hides it only at the command prompt.
 - **Map camera keeps the player centred** (clamped; smaller map centred; never
   shrinks or clips when zoomed): the game's own centring, else `RvipWM.center` (5.9).
+- **Fixed-size games** (every level fits one screen, e.g. grog): the Map fits its
+  window instead: cell size from the window, aspect kept, no scroll, no A−/A+
+  (`noFont: 'map'`); whole-screen views (Enter menu, inventory, lists) draw on the
+  Map canvas as in one window, no pop-up. **Default: not fixed-size.** Apply only
+  when the game makes it 100% clear or the user declares it; unsure → ask.
 - **No cursor on the hero** cell.
 - **Pop-ups** (menus, lists, multi-line questions) via `RvipWM.popup(pop, o)`:
   inside the Map body, never over its title bar or offset by the canvas margin;
