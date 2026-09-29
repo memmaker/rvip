@@ -360,6 +360,42 @@
 		if (l.childNodes.length > 500) l.removeChild(l.firstChild);
 	}
 	function logEnd(l, f) { f(); l.scrollTop = l.scrollHeight; }
+	/* Font choosers, the one place for every game's font selects (text windows and map):
+	 * files are roguelikes-index/fonts/<name>.woff (served as ../fonts/), the name is the
+	 * FontFace family. Add a font: drop the .woff there, add its name here. Games fill a
+	 * select with RvipWM.fontOptions(sel) (after its "Default font" option); RvipWM.fonts is
+	 * a promise of all names, for games that wait for the list. */
+	window.RvipWM.FONTS = {
+		modern: ['JetBrains_Mono', 'IBM_Plex_Mono', 'Source_Code_Pro', 'Fira_Mono',            /* monospace */
+			'Inter', 'Atkinson_Hyperlegible', 'Source_Sans_3', 'Noto_Sans'],                   /* proportional */
+		oldSchool: ['Web437_IBM_CGA', 'WebPlus_AST_PremiumExec', 'WebPlus_Amstrad_PC', 'WebPlus_Amstrad_PC-2y',
+			'WebPlus_Cordata_PPC-21', 'WebPlus_Cordata_PPC-400', 'WebPlus_HP_100LX_10x11',
+			'WebPlus_HP_100LX_16x12', 'WebPlus_HP_100LX_6x8', 'WebPlus_HP_100LX_6x8-2x',
+			'WebPlus_HP_100LX_8x8', 'WebPlus_HP_100LX_8x8-2x', 'WebPlus_HP_150_re', 'WebPlus_IBM_BIOS',
+			'WebPlus_IBM_BIOS-2x', 'WebPlus_IBM_BIOS-2y', 'WebPlus_IBM_CGA', 'WebPlus_IBM_CGA-2y',
+			'WebPlus_IBM_CGAthin', 'WebPlus_IBM_CGAthin-2y', 'WebPlus_IBM_EGA_8x14', 'WebPlus_IBM_EGA_8x14-2x',
+			'WebPlus_IBM_EGA_8x8', 'WebPlus_IBM_EGA_8x8-2x', 'WebPlus_IBM_EGA_9x14', 'WebPlus_IBM_EGA_9x14-2x',
+			'WebPlus_IBM_EGA_9x8', 'WebPlus_IBM_EGA_9x8-2x', 'WebPlus_IBM_MDA', 'WebPlus_IBM_VGA_8x14',
+			'WebPlus_IBM_VGA_8x14-2x', 'WebPlus_IBM_VGA_8x16', 'WebPlus_IBM_VGA_8x16-2x',
+			'WebPlus_IBM_VGA_9x14', 'WebPlus_IBM_VGA_9x14-2x', 'WebPlus_IBM_VGA_9x16',
+			'WebPlus_IBM_VGA_9x16-2x', 'WebPlus_IBM_VGA_9x8', 'WebPlus_IBM_VGA_9x8-2x',
+			'WebPlus_IBM_XGA-AI_12x20', 'WebPlus_Rainbow100_re_132', 'WebPlus_Rainbow100_re_40',
+			'WebPlus_Rainbow100_re_66', 'WebPlus_Rainbow100_re_80', 'WebPlus_Tandy1K-II_200L',
+			'WebPlus_Tandy1K-II_200L-2x', 'WebPlus_Tandy1K-II_200L-2y', 'WebPlus_Tandy1K-II_225L',
+			'WebPlus_Tandy1K-II_225L-2y', 'WebPlus_ToshibaSat_8x14', 'WebPlus_ToshibaSat_8x16',
+			'WebPlus_ToshibaSat_8x8', 'WebPlus_ToshibaSat_9x14', 'WebPlus_ToshibaSat_9x16',
+			'WebPlus_ToshibaSat_9x8', 'WebPlus_ToshibaTxL1_8x16', 'WebPlus_ToshibaTxL2_8x16']
+	};
+	window.RvipWM.fonts = Promise.resolve(window.RvipWM.FONTS.modern.concat(window.RvipWM.FONTS.oldSchool));
+	window.RvipWM.fontOptions = function (sel) {
+		var F = window.RvipWM.FONTS;
+		[['Modern', F.modern], ['Old-school', F.oldSchool]].forEach(function (g, i) {
+			if (i) sel.appendChild(document.createElement('hr'));   /* the divider (ignored where unsupported) */
+			var og = document.createElement('optgroup'); og.label = g[0];
+			g[1].forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); og.appendChild(o); });
+			sel.appendChild(og);
+		});
+	};
 	/* The map camera (RVIP.md W4), one for every game: the game sends the player's map cell, the page
 	   calls this with the player's centre (x, y) in the map canvas `cv` (w × h px, shown in a vw × vh
 	   window; default: its parent). Player centred, clamped at the map edges; a map smaller than its
