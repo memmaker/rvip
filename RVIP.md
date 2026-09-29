@@ -167,6 +167,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | Linley's Crawl | crawl-linley | O, X11 tile fork → web |
 | Hack 1.0.3, NetHack 1.3d | hack, nethack13d | O, termcap via VT100 interpreter |
 | NetHack 5.0, SLASH'EM, DynaHack | nethack50 (branch `NetHack-5.0`), slashem, dynahack (branch `unnethack`) | O, window port / NitroHack client |
+| ZeldHack (NetHack 3.6.7 + LSpixel tiles) | zeldhack | O, own window port `win/web/winweb.c` derived from nethack50's |
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
 | Forays, Grog | forays, grog | O, C# → .NET browser-wasm; Grog decompiled |
@@ -556,7 +557,9 @@ Lessons: 5.14.
 - **wasm32 is 32-bit:** `long t; time(&t)` writes 8 bytes into 4 (grep `time(&`);
   pointer-tagging saves (`tag<<48`) overwrite the next field; data tools writing
   native `unsigned long` headers (NetHack `lev_comp`, `makedefs`) must be built
-  with emcc and run under node (`-sNODERAWFS -sENVIRONMENT=node`).
+  with emcc and run under node (`-sNODERAWFS -sENVIRONMENT=node`): native dungeon,
+  `*.lev`, `quest.dat` then read "Dungeon description not valid" (NetHack
+  `web/mkdata.sh`: makedefs, dgn_comp, lev_comp, dlb, tilemap).
 - **Static data below 64K:** `IS_INTRESOURCE(ptr)`-style checks take string
   literals for ints: `-sGLOBAL_BASE=65536` (Decker).
 - `setuid()` fails: undefine `SAFE_SETUID`, guard `safe_setuid_*` under `USE_WEB`.
@@ -604,6 +607,18 @@ Lessons: 5.14.
   random keys, each run ending save → load in a new process; `timeout` exit 124 = hang.
 - DOS-era out-of-bounds reads that worked: emulate them in the helper, don't
   change game logic (AlphaMan).
+- **NetHack 3.6 (`web/mkdata.sh`, `web/b32`):** makedefs numbers objects from the
+  `-D` flags it saw, so emcc gets the same set (`-DNOMAIL` on one side shifts
+  every index: "init-prob error"). `web/b32` is a full copy of the tree that emcc
+  compiles: `build.sh` redoes it when any tracked include/src/dat/win/share file is
+  newer than `nhdat`. wasm-ld turns a 2-arg vs 3-arg definition of one function
+  (`fopen_datafile` in `util/dlb_main.c`) into a trap: fix the signature, native
+  builds hide it. Unix `COMPRESS` is on and `fork` fails: undefine it under
+  `__EMSCRIPTEN__`. `dat/Makefile` is generated (`sys/unix/setup.sh`, ignored):
+  run it when missing.
+- **macOS shell scripts:** BSD `cp` has no `--parents`/`-t` (use `rsync -R
+  --files-from`), BSD `sed` no `-i` without suffix or `\n` in replacements (use
+  `perl -pi -e`).
 
 ## 5.3 Build: other languages and platforms
 
@@ -918,6 +933,12 @@ the hero cell so the frontend hides the cursor there.
 - Test deep levels natively with wizard mode through a pty; wizard modes often
   unlock a fixed seed (`SEED`, `CRAWL_SEED`). With a centred map read the
   position from an exported getter (`web_where()`), not the screen.
+- **Explore in NetHack 3.6:** do not re-baseline the message counter after a step,
+  or the step's own messages (pet swap, pickup) never stop the walk; the one
+  exception is "The door opens." (`context.door_opened`). `test_move(TEST_TRAV)`
+  lets paths through boulders and closed doors: skip remembered boulder glyphs,
+  let autoopen handle doors, mark locked ones. Stop only on hostiles in view;
+  peacefuls (shopkeepers) would block it forever.
 
 ## 5.7 Enter menu and item menus
 
@@ -966,6 +987,15 @@ the hero cell so the frontend hides the cursor there.
   letter; old action keys move into the item menu.
 - After an action that costs a turn, close the list and reopen it (monsters act).
 - Never nest a single saved-screen buffer (Umoria `terminalSaveScreen()`).
+- **NetHack 3.6:** bind Enter as `'\r'` in `extcmdlist` (the page sends Return as
+  13); `Cmd.commands[]` reverse lookup gives the key for the current `number_pad`
+  (3.6 keeps movement out of it). `iflags.force_invmenu` makes every `getobj()`
+  show the item list; a one-shot preselect letter read at the top of its loop
+  runs item actions through the real commands. With `perm_invent`,
+  `display_pickinv(lets=0)` uses `WIN_INVEN`: a port that copies it to the pane
+  must still pop it up for `PICK_ONE`.
+- In a menu test accelerators before cursor keys (`j`/`k` were eaten as moves even
+  when they were item letters).
 
 ## 5.8 Tiles
 
@@ -1054,6 +1084,14 @@ the hero cell so the frontend hides the cursor there.
     compare `toDataURL()` 500 ms apart (Super-Rogue `web/srogue.js`).
 - Extracting tiles from binaries: raw bitmaps found by row-period analysis
   (ClassicRogue `.rdata`); NEUI tile stacks mirrored from the game's Lua (PRIME).
+- **NetHack 3.x tiles:** `USE_TILES` is only defined for X11/Qt/Win32; without it
+  `shuffle_tiles()` never runs and object tiles reveal random appearances: define
+  it for the web port. Windows-build sheets hold grayscale statue tiles after the
+  "other" tiles: run `tilemap` with `-DSTATUES_LOOK_LIKE_MONSTERS`. Tile size =
+  sheet width / 40, so 16/32/64 sheets share code.
+- Read the stored tile-set name in the IDBFS `syncfs` callback and only then set
+  `img.src`; a generation counter in `onload` keeps a late sheet from re-enabling
+  tiles after "None".
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
@@ -1093,6 +1131,15 @@ the hero cell so the frontend hides the cursor there.
 - A `<pre>` rule with `font: inherit` after a monospace rule drops to the body font.
 - Pitfall when patching page JS by anchors: anchor on the full signature
   (`flush: function` also matched RvipApp's).
+- **NetHack 3.6 options and status:** bake the player's rc in as a seed file and
+  point `NETHACKOPTIONS` at `@file`, filtering Windows-only options at build time;
+  `statushilites`/`hitpointbar` need `WC2_HILITE_STATUS|WC2_HITPOINTBAR` in the
+  port. `status_update` text can carry `\G<glyph>` escapes (gold): run
+  `decode_mixed()`.
+- **Map cell:** fitting all 80 columns gives 12 px cells in the default layout; with
+  a centring camera use the sheet size while about 12 rows fit. One-window mode:
+  draw the prompt and status rows on the map canvas and hide `.wm-topl` under
+  `.wm-single`.
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1149,6 +1196,13 @@ the hero cell so the frontend hides the cursor there.
   Saves that `close(fileno(f))` lose the buffered tail: `fclose(f)`.
 - No self-recover (NetHack 3.4.3): port `util/recover.c` into `getlock()`;
   checkpoint once right after restore.
+- **NetHack 3.6:** `-DSELF_RECOVER` + `INSURANCE` checkpoints at the idle command
+  prompt; in `getlock()` call `recover_savefile()` silently, then reset `lock[]`
+  (`set_levelfile_name(lock,0)`) and `fq_lock` (recover leaves it on the last
+  level and `fqname`'s buffer is reused: "Cannot open file for level 0"). Skip
+  `veryold()` in the browser (a 3-day-old checkpoint would be erased; `kill(pid,0)`
+  never says ESRCH). Give `HACKDIR` the web name: two NetHack ports on the shared
+  origin both used `/nethack`, and IDBFS folders must be unique per game.
 
 ## 5.11 Audio
 
@@ -1214,6 +1268,11 @@ the hero cell so the frontend hides the cursor there.
 - **Testing:** a scripted `click()` on Music is blocked by autoplay: real click
   (`page.click()`) and `read_network_requests` / `page.on('request')` (media
   isn't in `performance`); check decoding with `new Audio(u).onloadedmetadata`.
+- **Sounds from a `SOUND=MESG` table (NetHack 3.6):** one `ZSND(name)` macro in
+  `hack.h` at each action site that prints the message; copy only the names found
+  on `ZSND` lines, and count plays by wrapping `RVIPSound.play` plus
+  `AudioBufferSourceNode.start`. Sample names with spaces become underscores at
+  build time (C names, URLs without escaping).
 
 ## 5.12 Docs and help
 
@@ -1234,6 +1293,8 @@ the hero cell so the frontend hides the cursor there.
 - Count data from the game (birth loops, `MAX_*`), not its help text.
 - Credits: when files name one author, take co-maintainers from `git shortlog -sn`.
   Licence of a binary-only freeware game: read its title screen.
+- NetHack 3.6 `cmdhelp`: evaluate its `&?`/`&:`/`&.` conditionals with the web
+  defaults (`number_pad` from the rc) instead of listing every variant.
 
 ## 5.13 Research (card, tree, shrine)
 
@@ -1273,6 +1334,14 @@ the hero cell so the frontend hides the cursor there.
   commit (`git log -i --grep=<name>`), not the repo's first tag.
 - A from-scratch rewrite under its own licence is `<li class="insp">`. Parent
   per the game's own history docs.
+- Long author lists in a shrine table's nowrap first column overflow at 375 px:
+  short label in column 1, names in column 2.
+- Asset authors: `WebSearch` finds itch.io pages from the cloud; link the pack's
+  own page (ZeldHack: `lspixel.itch.io/zeldhack-for-nethack-ready-to-play`) in Help
+  and the shrine. `og.py` rewrites every game's `web/index.html` and other shrines'
+  descriptions (escaping) and re-shoots `og/*.png`: after running it, revert what
+  is not yours (`git checkout`). `order.py` needs a `years.json` entry (`games`)
+  for a new card, else `deploy.sh` refuses.
 
 ## 5.14 Beacon (stage 9)
 
@@ -1307,6 +1376,17 @@ the hero cell so the frontend hides the cursor there.
 - Browser: dispatched Ctrl keys and `Q` may not quit; use the Enter menu's quit
   entry and patch `RvipWM.report` to capture the URL before the page reloads.
 - Licences may forbid sends to the game's own score server only (Hengband): ours is fine.
+- **NetHack 3.x `end.c`:** the old hook right before `topten()` sat behind the
+  tombstone key wait: call `be_run_end()` after the "went to your reward/escaped"
+  score lines, before `display_nhwindow(endwin, TRUE)`. `killer.name` gets " (with
+  the Amulet)" appended before that: strip it. `depth()` is <= 0 on the planes:
+  send `deepest_lev_reached(FALSE)`. `ESCAPED` is also leaving via DL1 upstairs
+  with the Amulet (a win) and celestial disgrace (not a win): test
+  `u.uhave.amulet`.
+- Killer art from a NetHack-order sheet at another tile size: `nhsheet()` with that
+  size and no resize (`zhsheet()`); can be cut in the cloud into `publish/killers/`.
+- A quit in the built-in pane did not show on graveyard.html (Claude's UA is
+  filtered server-side; quits send ev=quit): check with a real death in the user's browser.
 
 ## 5.15 Git, deploy, server
 
@@ -1339,6 +1419,10 @@ the hero cell so the frontend hides the cursor there.
   cloud `/home/user/rvip/web`) and `ROGUELIKES`, linking them with `dist` into
   a gitignored `web/serve/` so a fresh clone serves as on the server.
 - The git proxy refuses deleting remote branches (403) in the cloud: leave them for the user.
+- Cloud runs put card/tree/og image/Mac steps in `publish/` in the game repo:
+  filter it out in the split with `LESSONS.md` and `CLOUD.md`. `git filter-repo`
+  refuses a clone that has a second reflog entry (`checkout -B`): `--force` on that
+  scratch clone is fine.
 
 ## 5.16 Testing
 
@@ -1386,6 +1470,8 @@ the hero cell so the frontend hides the cursor there.
 - Test game specifics that recur: Angband birth quick starts (`b` Beginner +
   RET; autoroller `n` per stat); test items from starting kits and shops; town
   breeders (lemmings) make browser death tests slow — verify death screens natively.
+- Built-in browser pane: the `type` action does not reach `keydown` handlers, use
+  `key`; after switching tile sets wait for the redraw before judging a blank map.
 
 ## 5.17 Cloud runs
 
@@ -1398,3 +1484,7 @@ the hero cell so the frontend hides the cursor there.
   mp3s, self-contained `make-help.py`, Playwright tests. The Mac check in the
   pane afterwards is required (cloud stage 4 used square cells: 6 px grids).
 - Kill by PID (`pkill -f` hit its own shell).
+- A template repo outside the session scope needs `add_repo` first, then one shallow
+  clone; nethack.org and other sites can return proxy 403. emsdk installs in the
+  container (git clone, install latest). `WebSearch` works for asset authors.
+- The cloud clone can be stale on the Mac: `git pull` before building.
