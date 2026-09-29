@@ -1635,7 +1635,7 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   `player_die()`: one line covers death, win, quit and time-limit losses, and wizard runs stay
   unreported like NLarn's own scoreboard. Killer only for `PD_MONSTER` (`monster_type_name`);
   art names come from the `/* MT_X */ .name = N_("…")` comments in `monster_data[]`. Browser test:
-  dispatched `ctrlKey` keydowns and `Q` do not quit (Q reloaded via save-and-exit); use the Enter
+  dispatched `ctrlKey` keydowns and `Q` do not quit (`Q`+`y` ended the session and reloaded without a beacon); use the Enter
   menu's `^Q` entry, and patch `RvipWM.report` to capture the URL before the page reloads.
 
 ### R1. Compile
