@@ -76,10 +76,11 @@ State these in every brief. No exceptions; a port that breaks one is not done.
    sub-windows (Decker).
 2. **Text size is set only by A−/A+, per window, and the WM keeps it**
    (`state.fs[id]`, `RvipWM.fontSize(id)`). No shared size, no size kept by the game.
-3. **A window's size never changes its text size.** Dragging or resizing only
-   changes how much is visible: a too-small window scrolls (every window but
-   `t-map`/`t-main`), a canvas pane keeps `sc = 1`, the map scrolls with the
-   hero. Only a pop-up may be scaled down to fit the map.
+3. **A window's size never changes the size of its text or tiles** (multi-window
+   mode). Font and tile size change only through that window's A−/A+. Dragging
+   or resizing only changes how much is visible: content bigger than its window
+   scrolls (the map scrolls with the hero), a canvas pane keeps `sc = 1`,
+   pop-ups scroll too (never scaled to fit).
 4. **Resizing works at any size.** The WM re-lays out on any area change
    (ResizeObserver); windows never overlap or get negative sizes. The game's
    `layout(rects)` only places content and assumes no minimum size.
@@ -288,6 +289,10 @@ Build the page from the template with `rvip-wm.js` and `rvip-app.js`; all of
 part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
 
 **Layout**
+- **One-window mode** (full screen): no sub-windows at all; the game renders one
+  big canvas (its native full screen, e.g. 80×24 with tiles or glyphs) that
+  scales to the window keeping its aspect ratio (nearest-neighbour), never
+  scrolls, and has no A−/A+ or other size buttons.
 - One-window and multi-window mode, switchable. Multi = tiling WM: no overlap,
   no gaps, fills the screen. Resize/rearrange saved in IndexedDB. Default splits
   follow the browser size until the player customises (assume 1280×720 before
@@ -371,11 +376,16 @@ Then commit, push, `web/deploy.sh`, test the live URL.
   (guides, wikis) allowed, in your own words. Credits: maintainers from the
   splash/news screen, licence from source headers. Check every claim in the web build.
 - **Sound effects and music** with Audio ▾ toggles, **off by default**. Hooks at
-  game actions (never message text). Samples: the game's own, else Dubtrain,
-  else synthesized CC0; music: the game's own if redistributable, else the
-  shared town loop. Details and the melee/bow sample table: 5.11.
+  game actions (never message text). Sources: **Angband family** = the DASP
+  pack (Dubtrain Angband Sound Pack; fill gaps from the variant's own). **Every
+  other game** = only what its upstream supplies (no synthesized or borrowed
+  samples, no shared town loop); no upstream audio → no Audio ▾. Always web-search
+  first for sound effects and music released for the game (official site,
+  ports, fan packs) and note the result in HANDOVER.md; use a find only if it is
+  upstream's or clearly licensed for redistribution. Details and the melee/bow
+  sample table: 5.11.
 
-Checklist: every key in Help exists in the game · sound plays per event after a real click · off after reload by default · music loads only when switched on.
+Checklist: every key in Help exists in the game · sound search noted in HANDOVER · sound plays per event after a real click · off after reload by default · music loads only when switched on.
 
 ## Stage 7 — Publish
 
@@ -1149,9 +1159,10 @@ the hero cell so the frontend hides the cursor there.
 - Shared player `rvip-sound.js`: C names the files, JS plays
   (`RVIPSound.play(['name',...], vol)` → `sound/<name>.wav`, lazy, in order,
   resumes audio on first key/click; a name with extension plays as is).
-- **Samples:** the variant's own (`lib/xtra/sound/sound.cfg`); fill empty events
-  from Dubtrain (DASP, `~/Downloads/Dubtrain Angband Sound Pack v3.1.0`, same
-  event names) or upstream Angband's copy (`lib/sounds/*.mp3` +
+- **Samples (Angband family):** DASP (Dubtrain Angband Sound Pack,
+  `~/Downloads/Dubtrain Angband Sound Pack v3.1.0`; same event names as
+  `lib/xtra/sound/sound.cfg`); events DASP lacks from the variant's own set or
+  upstream Angband's copy (`lib/sounds/*.mp3` +
   `lib/customize/sound.prf`, CC-BY 4.0, sparse clone; vendor used files into
   `web/sound/` so builds need no clone). Copy only used files; skip cfg names
   with no file; match file names case-insensitively (3.0-era cfgs). A set whose
@@ -1176,8 +1187,9 @@ the hero cell so the frontend hides the cursor there.
 - **Games without sound events** (Rogue, DOS, MAG): add `be_sound("<event>")` /
   `SOUND(e)` (in a header every file includes) at game actions: hit/miss, kill,
   gold, level up, hunger, eat, quaff, drop, wield, teleport, stairs, buy, death;
-  one call in the item dispatcher keyed by its verb table. Games with no samples
-  at all: synthesize CC0 wavs at build time (`web/mksounds.py`).
+  one call in the item dispatcher keyed by its verb table (only when upstream
+  supplies samples to play; see Stage 6). Synthesized wavs (`web/mksounds.py`)
+  are no longer allowed.
 - z-term: `sound_hook`/`TERM_XTRA_SOUND` → `js_sound`; force `use_sound` on (the
   page button is the switch; Sangband needed `SOUND_AND_MUSIC` set explicitly).
   Missing actions get new `SOUND_*` ids. Inline `#ifdef` sound blocks (FB): add a
