@@ -363,7 +363,9 @@ part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
 **App and saves**
 - `RvipApp` for IDBFS sync, Export/Import, New game, crash status, Help panel;
   the game keeps none of that code. Own IDBFS folder at `RvipApp.dir`.
-- Autosave at the command prompt only; it must not touch the screen (guard
+- Autosave = once, before going down stairs (plus manual saves). Never every
+  step, turn or timer (a save per move lags every keypress: Grog ~100 ms).
+  It runs at the command prompt only; it must not touch the screen (guard
   save-and-exit screen clears with `#ifndef __EMSCRIPTEN__`). Test: count lit
   map pixels, `requestSave()`, count again, check the save's mtime.
 - Game end → sync → new game (overlay or reload). `beforeunload` warns while a
@@ -1232,9 +1234,11 @@ the hero cell so the frontend hides the cursor there.
 - **Write-back:** `web_sync_files()` (→ `FS.syncfs(false)`) at the end of the
   save function; also every 15 s, on `visibilitychange`, `pagehide`; serialize
   syncfs calls. `EM_ASYNC_JS` exit hooks await the sync.
-- **Autosave:** JS calls exported `_web_request_save()`; C acts only idle at the
-  command prompt with no keys or automatic action pending (and the turn counter
-  changed), every 2 min and on hide. Never from JS while Asyncify is suspended.
+- **Autosave:** only before going down stairs (the game's own level-change
+  save counts). No per-step/per-turn save, no timer, no save on hide. JS calls
+  exported `_web_request_save()`; C acts only at the next idle command prompt
+  after a descent, with no keys or automatic action pending. Never from JS
+  while Asyncify is suspended.
   Rogue-likes that delete the save on restore or refuse to overwrite (O_EXCL):
   save to a temp file, rename; one autosave right after start; delete it when
   the game ends unless the player saved (else the dead come back). Save-and-exit
@@ -1275,7 +1279,7 @@ the hero cell so the frontend hides the cursor there.
   `veryold()` in the browser (a 3-day-old checkpoint would be erased; `kill(pid,0)`
   never says ESRCH). Give `HACKDIR` the web name: two NetHack ports on the shared
   origin both used `/nethack`, and IDBFS folders must be unique per game.
-- NetHack 3.6 web autosave: call `save_currentstate()` (INSURANCE) from the window port's idle key poll at the command prompt when `moves` changed; answer `getlock()`'s "Old game in progress" with `r` under `__EMSCRIPTEN__` (recover.c linked with NO_MAIN) — reload lands in the character, twice in a row (EvilHack).
+- NetHack 3.6 web autosave: call `save_currentstate()` (INSURANCE) from the window port's idle key poll at the command prompt after a descent (not on every `moves` change); answer `getlock()`'s "Old game in progress" with `r` under `__EMSCRIPTEN__` (recover.c linked with NO_MAIN) — reload lands in the character, twice in a row (EvilHack).
 
 ## 5.11 Audio
 
