@@ -1032,6 +1032,8 @@ the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 item actions without `itemactions()`: probe `getobj()` itself (global probe object; return right after it builds `lets`) with each command's word and class list, so the game's "ugly checks" decide which actions fit; run via key queue + preselect taken at the top of getobj's prompt loop (EvilHack).
 - NetHack 3.6 `Cmd.dirchars` holds `<` and `>` too: skip only the eight `Cmd.move_*` keys (plus Shift/Ctrl in vi mode) when hiding movement from a command menu (EvilHack).
 - Enter in NetHack 3.6: 13 (`^M`) is free in both keysets and getpos; open the menu only while `iflags.in_parse` (getpos also reads through `nh_poskey`) (EvilHack).
+- Own-GUI C++ games with a state stack and a `to_cmd(input)` function: the menu is a small overlay State (box sized to content), keys by calling `to_cmd()` on every candidate key; item actions via the game's own select states plus an item-pointer preselect that auto-selects on the first update (Infra Arcana).
+- SDL text-input games: numpad +/- also send a text event (IA resized the window on it): skip the text event after the keydown; Ctrl+letter has no text event, finish on keydown and take Ctrl from `keysym.mod`, not `SDL_GetModState()` (stale when events queue) (Infra Arcana).
 
 ## 5.8 Tiles
 
@@ -1534,6 +1536,7 @@ the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 wizard mode in wasm is refused (`get_unix_pw()` NULL in `authorize_wizard_mode`): tests need a temporary unlock (env check), reverted afterwards (EvilHack).
 - the shared smoke/resize tests need the game windows without interaction: ask the player name with `window.prompt` (idbtest answers it), not an in-page form that blocks startup (EvilHack).
 - EvilHack's "Really quit?" is a paranoid yes-prompt (getlin): tests type `yes` + Enter (EvilHack).
+- SDL/Emscripten canvas games: trusted pane key presses don't reliably arrive; dispatch `KeyboardEvent`s on `window` (Shift keydown, then keydown/keypress/keyup; no keypress for Ctrl combos); pane screenshots lag a frame, compare `canvas.toDataURL()`; header edits need `rm -rf web/obj` (mtime cache); `build.sh` recreates `dist`, restart the server (Infra Arcana).
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 
 ## 5.17 Cloud runs
