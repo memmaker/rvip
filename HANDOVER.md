@@ -38,9 +38,8 @@ game over explicitly, **no localStorage, only IndexedDB**.
   pushed, deployed, live md5 == dist.
 - **rvip-wm.js** 9b06337 (other session): walk() small-region fix (minimum per
   subtree, ratio alone when minimums don't fit) + ResizeObserver etc. Live.
-- **NLarn:** stage 6 live; stages 7 (index card) and 8 (shrine) merged into
-  roguelikes-index/rvip-tools main 2026-09-29 but NOT deployed (card and
-  /shrine/nlarn/ not live yet); old stash dropped.
+- **NLarn:** RVIP complete and live (stages 7-9 deployed 2026-09-29: card,
+  shrine, run report + killer art). Death/win beacon not verified live (only quit).
 
 ## Next steps
 
@@ -64,7 +63,7 @@ game over explicitly, **no localStorage, only IndexedDB**.
      message area (rows 1-9 outside pop-ups) is still drawn on the map canvas.
    - frog: map overview icons tiny; a brief map-as-pop-up flash after item prompts.
    - Deploy sangband, zangband, frogcomposband after a browser check.
-2. **NLarn stage 9** (graveyard/leaderboard), one stage agent.
+2. **NLarn:** play one death and one win in a normal browser; check graveyard/leaderboard.
 3. **og:image** in forays, mag, zangband, lambdarogue, prospector, nppangband:
    "Fix stale og:image paths" session.
 4. **roguepc:** the full-screen PC screen (name prompt, F12) scales its 80x25
