@@ -26,8 +26,8 @@ game over explicitly, **no localStorage, only IndexedDB**.
   nlarn `claude/beautiful-heisenberg-g88r1w` 5d208b9 (superseded stage-5 WIP),
   nppangband `master` 7693d5e (original NPP 7.1.0 history), quickband
   `Quickband` 2761ff0 (upstream import), xrogue `main` f16c228 (first port).
-- **tactical-angband:** the only repo in use is `memmaker/tactical-angband`
-  (the local `memmaker` remote to `tactical-angbandX` was removed).
+- **tactical-angband:** the only repo is `memmaker/tactical-angband`
+  (`memmaker/tactical-angbandX` deleted on GitHub 2026-09-29, local remote removed).
 
 ## Next steps
 
@@ -58,9 +58,7 @@ game over explicitly, **no localStorage, only IndexedDB**.
    ~26-30 px. Rule 4 says resizing works at any size: let the ratio apply below
    2×MIN (keep each side ≥ a few px) and test with `tests/resize.cjs`. Shared
    file: coordinate with the rvip-wm.js change in step 1.
-4. **Decide:** delete or archive the GitHub repo `memmaker/tactical-angbandX`
-   (old 2024 fork; on 2026-09-28 a fast-forward push put tactical-angband's
-   history on it by mistake). uMoria's default tile set is Shockbolt, whose
+4. **Decide:** uMoria's default tile set is Shockbolt, whose
    licence covers Angband variants only; Gervais (CC BY 3.0) would be clean.
 5. **Kept on purpose:** forays' `sessionStorage` flag (a per-tab guard against
    the cross-origin-isolation service worker reload loop, not a setting).
