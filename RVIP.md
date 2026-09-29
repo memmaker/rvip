@@ -1198,8 +1198,11 @@ the hero cell so the frontend hides the cursor there.
 - **Music:** the game's own if its readme allows redistribution (credit it; ship
   the credit file); tracker/MIDI → ogg once (`openmpt123`, timidity + FluidR3,
   ffmpeg vorbis) and port the game's jukebox to the page (danger themes).
-  Else loop `~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg`
-  at depth 0 (copy in `build.sh` if present; grey the checkbox on Audio `error`).
+  Else: no music and no Music toggle for non-Angband games. Angband-family
+  ports that have no music of their own loop the shared town track
+  (`~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg`) at
+  depth 0 (copy in `build.sh` if present; grey the checkbox on Audio `error`)
+  — pending the user's decision whether that stays.
   Games with music options: turn them on in the web config, the page toggles
   decide; report "playing" truthfully while muted.
 - **Scene-table music (Hengband lineage, `main-unix/unix-music.cpp`):** reuse
