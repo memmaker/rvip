@@ -1132,6 +1132,7 @@ the hero cell so the frontend hides the cursor there.
   tiles after "None".
 - EvilHack keeps `win/share/*.txt` complete (upstream copies vanilla tiles as stand-ins): measure "real" coverage by comparing tile pixels by name with NetHack-3.6's txt files (80 % distinct art, 100 % with same-set stand-ins) (EvilHack).
 - NetHack 3.6 web tiles: define `USE_TILES` for the web port or `shuffle_tiles()` never runs and flavoured items show their unshuffled tile (kind leaks); build `tilemap` with `STATUES_LOOK_LIKE_MONSTERS` so statues use tile2bmp's grey monster tiles; crop tile2bmp's padded BMP to `total_tiles_used` (EvilHack).
+- Games with their own complete tile set (one PNG per enum id): coverage = count data entries whose tile is unset, then drop the never-drawn ones (intrinsic attacks, invisible event terrain) and virtual `tile()` overrides; keep the game's own integer scale factor, add `image-rendering:pixelated` to the canvas (Infra Arcana).
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
