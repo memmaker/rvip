@@ -2,7 +2,7 @@
 
 State on 2026-09-27, after the first pass of `RVIP-Finetuning.md` over every hosted game.
 
-Every hosted game except Rogue 3.6 and Super-Rogue has a branch `claude/rvip-finetuning` in `memmaker/<repo>`. Super-Rogue already had every item and needed no branch. Nothing is merged and nothing is deployed. Repo names differ from web names in four cases: `arogue58` → `arogue5.8`, `arogue77` → `arogue7.7`, `boss` → `boss-beyond-moria`, `rogue54` → `rogue5.4`.
+Every hosted game except Rogue 3.6 and Super-Rogue has a branch `claude/rvip-finetuning` in `memmaker/<repo>`. Super-Rogue already had every item and needed no branch. Nothing is merged and nothing is deployed. Grog (added later): branch `claude/rvip-finetuning` @ `2a52d8b`, not merged, not deployed (text-only C#; items in its HANDOVER.md). Repo names differ from web names in four cases: `arogue58` → `arogue5.8`, `arogue77` → `arogue7.7`, `boss` → `boss-beyond-moria`, `rogue54` → `rogue5.4`.
 
 ## 1. Re-run the crash check with the new warning text — done (clean in all ports; arogue7.7 fixed 3d8acc9)
 
