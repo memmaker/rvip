@@ -1,4 +1,4 @@
-# Handover: RVIP ports — next steps (2026-09-29)
+# Handover: RVIP ports — next steps (2026-09-29, evening)
 
 Authoritative files: `RVIP.md` (procedure, W0 hard rules), `RVIP-Finetuning.md`
 (checklist), `finetuning-todo.md` (open finetuning items, kept by the overnight
@@ -27,43 +27,38 @@ game over explicitly, **no localStorage, only IndexedDB**.
   nppangband `master` 7693d5e (original NPP 7.1.0 history), quickband
   `Quickband` 2761ff0 (upstream import), xrogue `main` f16c228 (first port).
 - **tactical-angband:** the only repo is `memmaker/tactical-angband`
-  (`memmaker/tactical-angbandX` deleted on GitHub 2026-09-29, local remote removed).
+  (`memmaker/tactical-angbandX` deleted on GitHub 2026-09-29, local remote re## Done 2026-09-29
+
+- **W0 rule 6 live** (text windows are HTML, only the map is a canvas) in umoria,
+  arogue5.8, arogue7.7, easyband, larn, nlarn, prime, rogue3.6, rogue5.4, roguepc,
+  srogue, ularn, urogue, xrogue, zapm: built, `smoke.cjs` + `resize.cjs` clean
+  (no errors, text size fixed, windows >= 60 px), og:image path committed,
+  pushed, deployed, live md5 == dist.
+- **rvip-wm.js** 9b06337 (other session): walk() small-region fix (minimum per
+  subtree, ratio alone when minimums don't fit) + ResizeObserver etc. Live.
+- **NLarn:** stages 6-8 live (cloud did 7 publish, 8 shrine); old stash dropped.
 
 ## Next steps
 
-1. **Finish the overnight W0 rule-6 rollout** (another session; committed but
-   not pushed or deployed). Per game: build, browser-test (text windows are HTML,
-   resize the browser and the dividers, text size never changes, `tests/resize.cjs`),
-   push, deploy:
-   - Unpushed commits: arogue5.8 (2), arogue7.7 (2), easyband (1), larn (2),
-     nlarn (2: 9bed18a, 3253f24), prime (1), rogue3.6 (2), rogue5.4 (2),
-     roguepc (2), sangband (2), srogue (2), ularn (1), urogue (3), xrogue (2),
-     zapm (1). `finetuning-todo.md` §10 lists what is left to port (z-term Angband
-     line, boss, crawl, forays, omega, prospector).
-   - Uncommitted: `web/index.html` in almost every game = the RVIP 5b
-     `og:image` path `roguelikes/img/<name>.png` (images are live; commit it
-     with the game). zangband `src/main-web.c` (+376 lines, rule-6 work in
-     progress: finish or ask). grog `web/wasm/GrogWeb.csproj` (new game Grog,
-     its session's). rvip-tools: `web/rvip-wm.js` (pop-up starts below a shown
-     prompt line), `RVIP-Finetuning.md`, `finetuning-todo.md`, `repo-status.sh`:
-     commit, then `roguelikes-index/deploy.sh` for the shared JS.
-2. **NLarn: RVIP stages 7-9** (publish/tree entry, shrine, graveyard), one stage
-   agent each (RVIP.md "Stages and checkpoints"). Stage 6 (docs + sound) was done
-   in the cloud (74dca32, 5bb3c6a) but is **not live**: push the two local
-   commits, build, deploy nlarn and roguelikes-index (new `rvip-sound.js`).
-   `git stash list` has a superseded local stage-6 attempt: drop it after a look.
-3. **Window manager, small regions** (`web/rvip-wm.js` `walk()`): a split gets at
-   least `min(MIN=60, len/2)` per side, so inside a region under 120 px both sides
-   are forced to half and the divider cannot move; nested windows can end at
-   ~26-30 px. Rule 4 says resizing works at any size: let the ratio apply below
-   2×MIN (keep each side ≥ a few px) and test with `tests/resize.cjs`. Shared
-   file: coordinate with the rvip-wm.js change in step 1.
-4. **Decide:** uMoria's default tile set is Shockbolt, whose
-   licence covers Angband variants only; Gervais (CC BY 3.0) would be clean.
-5. **Kept on purpose:** forays' `sessionStorage` flag (a per-tab guard against
-   the cross-origin-isolation service worker reload loop, not a setting).
-   hack's `origin/save-lock` and `origin/windows-port` belong to upstream
-   restoHack, not to us.
+1. **Rule-6 ports still running in the "HTML Subwindows" session** (don't touch):
+   frogcomposband, hengband, faangband, nppangband, quickband, sil-q-1.5.0,
+   tactical-angband, tinyangband, tome-2.3.11, then boss, crawl-linley, forays,
+   omega, prospector; sangband and zangband (f58fe98, unpushed) are also its.
+   Progress in `finetuning-todo.md` §10.
+2. **NLarn stage 9** (graveyard/leaderboard), one stage agent.
+3. **og:image** in forays, mag, zangband, lambdarogue, prospector, nppangband:
+   "Fix stale og:image paths" session.
+4. **roguepc:** the full-screen PC screen (name prompt, F12) scales its 80x25
+   grid to the window (fs 9-28 px). Deliberate emulation; decide whether rule 1
+   (text size only by A−/A+) should apply there.
+5. **Decide:** uMoria's default tile set is Shockbolt, whose licence covers
+   Angband variants only; Gervais (CC BY 3.0) would be clean.
+6. **Kept on purpose:** forays' `sessionStorage` flag (per-tab guard against
+   the cross-origin-isolation service worker reload loop). hack's
+   `origin/save-lock` and `origin/windows-port` belong to upstream restoHack.
+7. `repo-status.sh` in rvip-tools is untracked and not this session's.
+
+ to us.
 
 ## Testing
 
