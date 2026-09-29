@@ -1471,6 +1471,9 @@ Worked example: **XRogue** (`~/Games/xrogue`, read `HANDOVER.md` and
   save, drop saves whose stamp differs.
 - Missing data files in a source drop (`help\*`, `pics\*`): rebuild them from
   the game's tables and draw coordinates with a script (`data/mkhelp.py`).
+  Look for the original release zip first (MAG: SourceForge `mikesadvgame`, ask before
+  downloading). DOS text files read with `fopen(,"r")`: convert CRLF -> LF and cut at the
+  `^Z` EOF byte (DOS text mode did both; POSIX/emcc doesn't), keep CP437 bytes.
 - **Cloud run:** one agent did stages 1-3 with handover + commit + push per
   stage; RogueBasin/dosgames/crpgaddict blocked by the egress proxy (search
   result text still gives lineage), GitHub reachable; Ubuntu clang 18 has no
