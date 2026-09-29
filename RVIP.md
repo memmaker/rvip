@@ -368,6 +368,9 @@ part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
   map pixels, `requestSave()`, count again, check the save's mtime.
 - Game end → sync → new game (overlay or reload). `beforeunload` warns while a
   game runs. Crashes show on the page (`unhandledrejection` + `error`).
+- Saves are atomic: write `<file>.tmp`, then rename over the old file; on
+  failure delete the `.tmp`, keep the old save. Multi-file saves write the
+  summary/index last. Fix it once in the game's write routine (5.10).
 
 **Checklist** (also the page test): title → birth → map with tiles → every
 window filled → shop → stairs → Help, Enter menu → drag/zoom/rename, layout
@@ -1203,6 +1206,13 @@ the hero cell so the frontend hides the cursor there.
 
 ## 5.10 Saves, IndexedDB, game end
 
+- **Atomic saves:** a failed write (exception, full disk, crash) must not
+  corrupt the old save; the IDBFS/IndexedDB sync would persist the broken file.
+  Temp file + `rename()` (C) / `File.Move(tmp, path, true)` (.NET) in the one
+  routine every save goes through; delete the temp on failure. Write the slot
+  summary after the game file. Grog: .NET 10 BinaryFormatter can't write
+  `System.Type`, the half-written autosave was synced. Test: save → load in a
+  new process, no `.tmp` left.
 - **Own paths per game:** IDBFS names each database after its mount point and
   all games share the origin (shared `/lib/save` made TinyAngband load
   Quickband's save). Preload to `/<name>/lib` (`--preload-file
