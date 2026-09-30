@@ -177,6 +177,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
 | Forays, Grog | forays, grog | O, C# → .NET browser-wasm; Grog decompiled |
+| TraumaRL | traumarl | O, C# (flend RogueBasin engine) → .NET 10 browser-wasm; BinaryFormatter save; panes from C# JSON |
 | LambdaRogue | lambdarogue | O, Free Pascal + JEDI-SDL blits |
 | Infra Arcana | ia | O, C++17 own SDL2 GUI on Emscripten's SDL ports; captured status/log panels, game-sized canvas |
 | Selection page | roguelikes-index (repo roguelikes) | index, tree, shrine, killers, server |
@@ -703,7 +704,35 @@ plain SDK (`dotnet-install.sh --channel 10.0 --install-dir ~/.dotnet`).
   `<EnableUnsafeBinaryFormatterSerialization>`, surrogates for delegates and
   HashSet/Dictionary, `<TrimmerRootAssembly Include="mscorlib" />` with
   `TrimMode=partial`; `rm -rf obj bin` after toggling trimming; saves name their assembly.
+  Untrimmed browser-wasm publish can ship the runtime pack's *stub*
+  `System.Runtime.Serialization.Formatters` (throws `BinaryFormatter_Removed`; ~55 KB .wasm vs ~125 KB):
+  check the size in `_framework`, `rm -rf obj bin`, and drop `RuntimePackAsset`/`ReferenceCopyLocalPaths`
+  of that name in a target after `_HandlePackageFileConflicts` (TraumaRL `TraumaWeb.csproj`).
+  Whole-graph saves: mark the game's classes `[Serializable]` (a script over the compile list; skip
+  `static` and duplicate `partial` parts) instead of a reflection surrogate for everything: surrogate'd
+  and `IObjectReference` objects in reference cycles fail on load ("object with ID n was referenced in a
+  fixup but does not exist"). Collections (incl. subclasses like QuickGraph `VertexEdgeDictionary`):
+  surrogate that constructs the same instance in place and fills it after `Deserialize`; delegate
+  fields: store a record, rebuild after. Round-trip each top-level field in a native harness to find
+  the failing part. Cost is per object in the Mono interpreter: TraumaRL's 5 MB graph takes 5–8 s in
+  wasm (0.5 s native); pack big `T[,]` of small classes into primitive arrays via
+  `OnSerializing`/`OnDeserialized`.
 - Headless harness: games catch every exception: exit from inside `ReadKey`.
+- Mono wasm also throws ArrayTypeMismatchException storing a `MemberwiseClone()`d
+  object into a `C[,]` (TraumaRL `Map.Clone`); store via `Unsafe.Add(ref
+  MemoryMarshal.GetArrayDataReference(a), i*h+j)`. Games that retry on any
+  exception (level generators) then hang silently: log first-chance exceptions
+  (`AppDomain.FirstChanceException` + `Environment.StackTrace`) and compare the
+  count with a native run.
+- .NET 10 adds `Enumerable.Shuffle`: a game's own `Shuffle()` extension becomes
+  ambiguous outside its namespace → call it by class name.
+- ILLink 10 can crash (IL1012) on old net4 dlls (QuickGraph iterators):
+  `PublishTrimmed=false` (TraumaRL: 25 MB dist).
+- libtcod-net: compile `Enumerations.cs`/`TCODColor.cs` as is, write managed
+  `TCODFov`/`TCODPathFinding`/`TCODLineDrawing`/`Keyboard`; SdlDotNet games:
+  replace the `IMapRenderer`-style class by a same-named cell-buffer class and
+  `Events.Run` by tick + key wait with timeout (TraumaRL `web/shim`).
+- Cloud: dot.net install script is 403; apt `dotnet-sdk-10.0` works.
 
 **DOS / BIOS games** (MAG, Rogue PC): port at the level the game calls (BIOS
 int 10h/16h: two pages, scroll acts on the displayed page, scan codes; or a
@@ -1019,6 +1048,23 @@ the hero cell so the frontend hides the cursor there.
 - Explore's message stop: count only messages that matter. Give the message class an ambient counter (`AddAmbient()` for smells, decay) and compare `count - ambient`; never match message text (Avanor).
 - Engine with a blocking `readKey()` inside a library loop (RL-Shared ConsoleView, case O): make the web `readKey()` return a synthetic key after `emscripten_sleep(40)` while an `extern "C"` flag is set; the game's command handler does one explore step for that key; a queued real key clears the flag and is dropped; clear the flag when a pop-up state takes over (AlienHack).
 - Vision-cone games (AlienHack): "seen" is the recorded-object/visited flag, not recorded terrain (a mapped level records terrain without seeing it).
+- C# SdlDotNet-style tick loop (TraumaRL): make the game class `partial`, put explore in its own file, step from the tick handler right after the turn advance (issue the move, set the game's "waiting for turn" flag); intercept key-down first in the key handler to stop and swallow the matching key-up. Message stop = a counter added in `AddMessage` (TraumaRL).
+- Exits that fire on entry (TraumaRL elevators are features auto-used by `PCMove`): exclude every usable feature from explore paths; the exit walk stops adjacent, the second press steps in (TraumaRL).
+- Headless harness that feeds a key every tick interrupts explore at once: add a script token for "no key this tick" (`_`) and a test switch that clears monsters and prints seen/walkable counts for the known-grid test (TraumaRL).
+- Check the generator's quick/test flags before testing stairs: TraumaRL upstream ships `quickLevelGen = true` (one level, no elevators) (TraumaRL).
+
+- **Debug generation switches and swallowed retry loops (TraumaRL).** Look for
+  flags like `quickLevelGen = true` left on upstream. Turning one off can
+  expose code that was never run in that state (TraumaRL: a commented-out
+  exclusion list made generic levels overwrite the special ones, so quest
+  placement always threw). A `catch` + `while(true)` retry loop then looks
+  like a slow step. First step: print every swallowed exception to stderr
+  (one line in the catch), not a profiler. `dotnet-stack report -p PID`
+  (`dotnet tool install -g dotnet-stack`) shows a snapshot of a hot loop in
+  seconds. Show a "Generating…" status in the page while the worker is busy.
+- **Auto-explore and keyed locks:** allow a path through a known lock when the
+  player already holds its keys; bumping opens it. Cut-scenes or movies that
+  wait for Enter will eat scripted keys in the headless harness.
 
 ## 5.7 Enter menu and item menus
 
@@ -1085,6 +1131,10 @@ the hero cell so the frontend hides the cursor there.
 - One item-prompt function for the whole game (Avanor `XHero::Inventory()` over `XGuiList::Run()`): put the cursor in the list widget (a `>` marker, 8/2 move, 5/Enter/+/-/* pick with the key readable afterwards, Ctrl+letter picks, 0/. close) and every prompt gets it; item actions = the `i` menu returns the command key to the move loop plus a one-shot preselect that `Inventory()` takes without drawing (a list that doesn't hold it returns nothing, so pack-vs-floor commands fall through; later prompts of a drop/sacrifice loop return nothing). Case-insensitive page letters: lowercase = main action, uppercase = drop (Avanor).
 - Own-GUI games whose command loop is a chain of `isFunction(input, "Name")` tests: rename them to a member `isFn()` that, for a synthetic CMD key, compares a global command string instead; menus set the string and queue the CMD key through the console's `readKey`, so every command keeps its prompts. Extra pseudo-commands (`Drop:<fn>`, `Examine:<fn>`, a conditional `Inventory?` reopen cancelled in `exitToChild`) live in the same chain (AlienHack).
 - Games with fixed item slots and one key per item (AlienHack): use the item's own command key as its inventory letter (Shift = drop, Ctrl = examine); the old drop dialog's letters keep working in the cursor list. Keypad and Ctrl need their own page encodings (`0x200|char` by `e.code`, `0x400|letter`) since a console KeyCode can't tell numpad 8 from 8; translate to directions outside menus.
+
+- Own-GUI C# games with an SDL-style key-up handler (TraumaRL): menu = a small partial class hooked before `ProcessKeypress`; run an entry by replacing the event args with the command's own key and falling through, so every command keeps its checks. A game whose 'inventory' is fixed key tables (weapons by digit, wetware by letter) builds the item list from those tables plus the player's items (TraumaRL).
+- Games that redraw only on a dirty flag (`Screen.NeedsUpdate`): set it whenever the menu changes, or the pop-up never reaches the page (TraumaRL).
+- Cheap debug switch for web tests without the game's full debug mode: a page URL flag passed as `runMain` args that appends a config key before the game reads its config (TraumaRL `?rviplocks`).
 
 ## 5.8 Tiles
 
@@ -1186,6 +1236,7 @@ the hero cell so the frontend hides the cursor there.
 - Games with their own complete tile set (one PNG per enum id): coverage = count data entries whose tile is unset, then drop the never-drawn ones (intrinsic attacks, invisible event terrain) and virtual `tile()` overrides; keep the game's own integer scale factor, add `image-rendering:pixelated` to the canvas (Infra Arcana).
 - Content-driven games (string ids in Lua/JSON, no enums): `mkdawn.py` regex-reads the world files for ids (+ monster class), hand table id → DawnLike name, fallback by class / item kind, writes a slot sheet + a C `{"key", slot}` include; C looks up `prefix:id` at draw time (Avanor `web/mkdawn.py`, `port/rvip_tiles.cpp`).
 - Tiles set in the map draw function but a whole-screen buffer sent to JS: keep per cell the char+colour the tile was set with, send it only while the cell still shows them, and suspend tiles between the screen-save/restore calls menus use (`vStore`/`vRestore`), so overlays are text without per-menu hooks (Avanor).
+- Sprite-native games whose sprite id *is* the object's representation (TraumaRL: `Representation` char, sheet rows 0–15 = CP437 font, ≥256 = pictures): coverage = reflect over the dungeon after generation (placed monsters/items/features/locks + terrain) and over every constructible type; legacy engine kinds the game never places don't count. No ASCII alternative in the data → no text mode (would be guessing). Scale by cell size (backing store = cols×cell, `imageSmoothingEnabled=false`), not CSS, so TTF overlay text stays sharp (TraumaRL).
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
@@ -1236,6 +1287,11 @@ the hero cell so the frontend hides the cursor there.
   `.wm-single`.
 - NetHack 3.6 coloured status: own `status_update` that calls `genl_status_update` for field values (fills global `status_vals`) and keeps `color` per field + condition `colormasks`, set WC2_HILITE_STATUS|WC2_FLUSH_STATUS; bake `statushilites` + `hilite_status` lines in `initoptions_finish` before the rc file (EvilHack).
 - Visible objects in NetHack 3.6: `distant_name(vobj_at(x,y), xname)` (what lookat uses; no dknown side effect), but the glyph's type name while hallucinating (EvilHack).
+
+- Canvas-only games (TraumaRL, SDL renderer shim): split panes in the renderer shim by the game's own screen-area fields (expose `Screen.RvipMapRect/StatsRect/MsgRect`), not by coordinates in JS; a whole-screen view = the game's own `DrawFrame(clear:true)` since the last `Clear()` → draw the full screen on the map canvas (TraumaRL).
+- Map cells in whole multiples of the sheet size with the WM keeping the size: let the map's WM value be a step (`size: {map: () => 8}`, `fontMax.map = 8 + n - 1`, cell = sprite × (step − 7)); `wm.state()` is a clone, you cannot write a snapped size back (TraumaRL).
+- Status panels that mix sprites and text: send rows of `[text, rgb]` / `[spriteId, rgb]` segments; the page shows sprites as 1em inline `<img>` of the recoloured sprite (follows A−/A+) (TraumaRL).
+- Cloud: the real shared `rvip-wm.js`/`rvip-app.js` are in `/home/user/rvip/web/`; a www dir with `<web name>` → `dist` plus those three symlinks serves `../` like the server (TraumaRL).
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1315,6 +1371,15 @@ the hero cell so the frontend hides the cursor there.
   origin both used `/nethack`, and IDBFS folders must be unique per game.
 - NetHack 3.6 web autosave: call `save_currentstate()` (INSURANCE) from the window port's idle key poll at the command prompt after a descent (not on every `moves` change); answer `getlock()`'s "Old game in progress" with `r` under `__EMSCRIPTEN__` (recover.c linked with NO_MAIN) — reload lands in the character, twice in a row (EvilHack).
 
+- Games whose save freezes for seconds (wasm interpreter): save only on `visibilitychange` hidden,
+  `pagehide` and Export; the pane JSON carries `unsaved` (time moved since the last save) and
+  `beforeunload` shows "Leave site?" only then, asking for a save meanwhile (TraumaRL). A save after
+  `pagehide` alone rarely reaches IndexedDB before the worker dies.
+- Growing the game's own map viewport for big windows is not cheap when the map sits inside a fixed
+  full-screen cell buffer next to the status area (buffer size, present cost per frame, status rect
+  overlap, one-window mode): record it as open (TraumaRL).
+- Check the save routine natively before stage 5: legacy RogueBasin `SaveGame()` (XmlSerializer) throws "error reflecting type SaveGameInfo" in TraumaRL; a game without a working save gets no resume on reload, record it as a user decision (TraumaRL).
+
 ## 5.11 Audio
 
 - **Never `fetch()` a `.cfg`/`.prf`/non-web file:** served as
@@ -1387,6 +1452,14 @@ the hero cell so the frontend hides the cursor there.
 - **Own SDL_mixer audio (case O):** gate the game's `play()`/`play_music()` under `__EMSCRIPTEN__` with flags set by an exported `web_set_audio(sfx, music)`; remember a blocked music request so switching Music on starts it. Exclude the music file from `--preload-file` (`--exclude-file`), ship it in `dist/`, and have the page fetch it into the FS on first Music on (Infra Arcana).
 - Game with an event interface (AlienHack `IGameEvents`/`GameEvents.cpp`): one `RVIP_SOUND(name)` line (EM_ASM → `Module.rvipSound`) at the top of each handler covers every action; define `Module.rvipSound` inside the `var Module = {…}` literal (a `Module.x =` above the `var` hits undefined).
 - NetHack 3.6 without sndprocs: one `WEB_SOUND("name")` macro in hack.h (no-op off the web) at the action functions (`known_hitum`, `hitmsg`, `missmu`, `xkilled`, `goto_level`, `pluslvl`, `dopray`, …), skipped while `program_state.restoring`; build fails if a name has no wav (EvilHack).
+
+- C# games with an `IRvipBackend`-style interface: add `Sound(name)` to it (headless: print under an env
+  var, so native runs count events), one static `RvipInput.Sound` for game code; play `fire` *before*
+  the shot call so hit/kill follow in order (TraumaRL).
+- Page settings loaded async: set the Sound checkbox after the settings read, not in the bar setup
+  (it showed off after reload although saved) (TraumaRL).
+- Playwright sound test: wrap `window.Worker` in an init script to log `{t:'sound'}` messages, then
+  drive a known action (TraumaRL: `2 f Enter` shoots the start-room camera) instead of random keys.
 
 ## 5.12 Docs and help
 
@@ -1500,6 +1573,10 @@ the hero cell so the frontend hides the cursor there.
   (`http.server` 404s fail "no 4xx" checks).
 - Browser: dispatched Ctrl keys and `Q` may not quit; use the Enter menu's quit
   entry and patch `RvipWM.report` to capture the URL before the page reloads.
+- **Testing the outbox behind a COI service worker** (C#/.NET pages with `coi-sw.js`): the beacon goes through
+  the SW; Playwright `context.route` still sees it (TraumaRL). Blocking the SW breaks SharedArrayBuffer, so keep it.
+  Headless shield/grace mechanics can swallow a forced death: zero the shield first (TraumaRL `ShieldWasDamagedThisTurn`).
+- Game with a fixed hero name (TraumaRL "Dave"): page `window.prompt` once, stored in its settings file, passed as a worker arg.
 - Licences may forbid sends to the game's own score server only (Hengband): ours is fine.
 - **NetHack 3.x `end.c`:** the old hook right before `topten()` sat behind the
   tombstone key wait: call `be_run_end()` after the "went to your reward/escaped"
@@ -1640,4 +1717,14 @@ the hero cell so the frontend hides the cursor there.
 - A template repo outside the session scope needs `add_repo` first, then one shallow
   clone; nethack.org and other sites can return proxy 403. emsdk installs in the
   container (git clone, install latest). `WebSearch` works for asset authors.
-- The cloud clone can be stale on the Mac: `git pull` before building.
+- The cloud clone can be stale on the Mac: `git pull` before building.- og.py in the cloud (TraumaRL): no Chrome, so set `pages={}` and point the
+  gameplay loop at the one game's `web/deploy.sh`; run with python3.12+ (the
+  f-string with `\"` fails on 3.10/3.11), then `git checkout og.py`.
+- Card images without a live site: crop 12×5 tiles from a stage-5 shot and
+  scale 2× nearest (`pip install pillow`). roguebasin.com can be unreachable
+  from the proxy; the game's own git history is a lineage source (TraumaRL:
+  "DDRogue as release at the end of the 7DRL" 2009 → flatlinerl 2013 → trauma 2014).
+- (TraumaRL, stage 8) From the cloud, roguetemple.com, its forums and blogspot are egress-blocked; WebSearch
+  snippets still summarise them (RogueBasin text, reviews). Use snippets only for facts the linked page is known
+  to hold, and note the unfetched pages in HANDOVER for a local check. A multi-game repo's git log + README give
+  release dates and lineage (v1.0 commits) cheaply.
