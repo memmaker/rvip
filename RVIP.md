@@ -197,7 +197,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | 4 Tiles | sprites checked at cell size, coverage measured | tile set and source, loader, prefs, scale, coverage |
 | 5 Web page | window checklist passes, page live via `deploy.sh` | live URL |
 | 6 Docs + sound | help built, sound off by default | — |
-| 7 Publish | pushed, `git status` clean, card + tree entry + og deployed, RVIP.md updated | — |
+| 7 Publish | pushed, `git status` clean, card + tree entry + unlock family + og deployed, RVIP.md updated | — |
 | 8 Shrine | shrine deployed, Info button + tree ✦ + title link live | missing manual/walkthrough |
 | 9 Graveyard | beacon seen for quit (and death/win if reachable), killer PNGs deployed | fields sent, missing and why |
 
@@ -442,9 +442,13 @@ Checklist: every key in Help exists in the game · sound search noted in HANDOVE
 - **Link preview:** `python3 ~/Games/roguelikes-index/og.py` writes a
   `<!--og-->` block into `web/index.html` and the shrine page (5.14 caveats).
   Rebuild `dist` before deploying; check `curl -s <url> | grep og:image`.
+- **Unlock family:** add the web name to `FAMILIES` in
+  `roguelikes-index/unlock.js` (Rogue, Moria, Hack, 2nd Generation, Modern), or
+  the card and tree entry stay hidden even after F5 (unlock all). Standalone
+  `insp` games go by age: to 1995 = 2nd Generation, later = Modern.
 - Commit + push both repos, both `deploy.sh`, check live.
 
-Checklist: README + compare link · version line in card/Help/Docs · tree entry · og tags live · `git status` clean in both repos · lessons added here.
+Checklist: README + compare link · version line in card/Help/Docs · tree entry · unlock family · og tags live · `git status` clean in both repos · lessons added here.
 
 ## Stage 8 — Shrine
 
