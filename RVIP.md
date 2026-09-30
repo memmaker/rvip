@@ -1540,6 +1540,7 @@ the hero cell so the frontend hides the cursor there.
 - tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
 - local branch named differently from its upstream (avanor `main-rvip` → `memmaker/main`): push with plain `git push` or `HEAD:main`; `git push memmaker HEAD` creates a stray remote branch and deploy.sh still says "commit + push first" (Avanor).
 - card image from the cloud without a pane: Playwright screenshot of the running page after auto-explore, PIL crop 384x160 of the map window (48x10 cells at 8x16) (AlienHack).
+- after a full og.py run on the Mac: other games' `web/index.html` get og-only diffs (description escaping); check each with `git diff -U0 web/index.html` that only og/description lines changed before `git checkout`, so another session's uncommitted edits survive; keep the index's `og/index.png` + description when the card count changed; macOS emsdk is `~/tools/emsdk/emsdk_env.sh` (AlienHack).
 
 ## 5.14 Beacon (stage 9)
 
