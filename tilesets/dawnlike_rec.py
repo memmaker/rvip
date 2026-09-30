@@ -119,3 +119,33 @@ def scene_lines(sid, name, categories, cells, ground=None, mnemonic=None):
     if ground:
         out += ['ground:'] + rows(ground)
     return out
+
+
+def render(rec_path, cells, ground=None, scale=2):
+    """cells (and ground under them) drawn with a runtime rec's sheet, cutting and icons, scaled up nearest
+    neighbour: the tiles as the game shows them (index card images)"""
+    ts, icons, typ, rid = {}, {}, None, None
+    for line in open(rec_path).read().splitlines():
+        if line.startswith('%rec:'):
+            typ = line[5:].strip()
+        elif ':' in line and not line.startswith(('#', '%')):
+            k, v = (p.strip() for p in line.split(':', 1))
+            if typ == 'Tileset':
+                ts[k] = v
+            elif k == 'id':
+                rid = v
+            elif k == 'icon':
+                icons['%s/%s' % (typ, rid)] = int(v)
+    sheet = Image.open(os.path.join(os.path.dirname(rec_path), ts['file'])).convert('RGBA')
+    w, h, ox, oy, gx, gy = (int(ts.get(k, d)) for k, d in (('tile_w', 16), ('tile_h', 16), ('off_x', 0),
+                                                           ('off_y', 0), ('gap_x', 0), ('gap_y', 0)))
+    cols = (sheet.width - ox + gx) // (w + gx)
+    out = Image.new('RGBA', (len(cells[0]) * w, len(cells) * h), (0, 0, 0, 255))
+    for y, row in enumerate(cells):
+        for x, key in enumerate(row):
+            for k in ((ground[y][x] if ground else None), key):
+                c = icons.get(k, -1) if k else -1
+                if c >= 0:
+                    sx, sy = ox + c % cols * (w + gx), oy + c // cols * (h + gy)
+                    out.alpha_composite(sheet.crop((sx, sy, sx + w, sy + h)), (x * w, y * h))
+    return out.resize((out.width * scale, out.height * scale), Image.NEAREST).convert('RGB')
