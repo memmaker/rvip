@@ -1497,6 +1497,7 @@ the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 killer art: `glyph2tile[PM]` + the name at that tile in `monsters.txt`; weres share one name (563 PM → 559 PNGs) (EvilHack).
 - Games that keep no killer: record the attacker's name in the damage function when the target is the player (a hit with no monster attacker clears it), send it only for deaths (Infra Arcana `actor::hit`).
 - White-on-black tile sets tinted at run time: killer art = tile multiplied by the monster's data colour, black made transparent (Infra Arcana).
+- End routine that computes the score while filling the achievements list and waits for keys in between: give it a report-only mode (compute, report, return) and call it before the first key wait of death, win and quit (Avanor `XHero::EndGame(msg, ev, killer)`).
 
 ## 5.15 Git, deploy, server
 
@@ -1536,6 +1537,7 @@ the hero cell so the frontend hides the cursor there.
 - a cloud clone of a variant is shallow (EvilHack: 49 upstream commits): `git fetch --unshallow` from upstream before the repo split, or the public repo has no upstream history (EvilHack).
 - the NetHack 3.6 native build empties tracked `doc/Guidebook.txt` (no nroff): `git checkout doc/Guidebook.txt` before committing (EvilHack).
 - a `.gitignore` rule named after the binary (`evilhack`) hides `web/publish/killers/evilhack/`: add a `!` negation (EvilHack).
+- local branch named differently from the remote's (`main-rvip` → `memmaker/main`): plain `git push` refuses (push.default simple); use `git push memmaker HEAD:main` (Avanor).
 
 ## 5.16 Testing
 
