@@ -1015,6 +1015,8 @@ the hero cell so the frontend hides the cursor there.
 - A stuck door's bump message may stop explore before its after-step code runs: mark skipped doors even when the walk is already off, or the next run kicks/bashes it (Infra Arcana).
 - Own terminal-class game (case O, Avanor): the explore step returns a direction key in place of the key read in the hero's move loop; `vRefresh()` + `vDelay(40)` before returning paints it; add `vRefresh()` after a stop message or it shows only after the next key. Shop wares (cells with a shop `place`) are not item targets (Avanor).
 - Explore's message stop: count only messages that matter. Give the message class an ambient counter (`AddAmbient()` for smells, decay) and compare `count - ambient`; never match message text (Avanor).
+- Engine with a blocking `readKey()` inside a library loop (RL-Shared ConsoleView, case O): make the web `readKey()` return a synthetic key after `emscripten_sleep(40)` while an `extern "C"` flag is set; the game's command handler does one explore step for that key; a queued real key clears the flag and is dropped; clear the flag when a pop-up state takes over (AlienHack).
+- Vision-cone games (AlienHack): "seen" is the recorded-object/visited flag, not recorded terrain (a mapped level records terrain without seeing it).
 
 ## 5.7 Enter menu and item menus
 
@@ -1575,6 +1577,7 @@ the hero cell so the frontend hides the cursor there.
   `naturalWidth`; a small screenshot makes `draw()` run. For speed wrap
   `window.setTimeout` so ≤20 ms delays use a `MessageChannel`. Tall pages
   screenshot black. Synthetic pointer events can't drag dividers (use `computer`).
+- A game loop that paces frames with `std::clock()` and sleeps the difference: under Emscripten `CLOCKS_PER_SEC` is 1e6, so ticks passed as ms freeze input for ~20 s after any multi-frame action; convert to ms (AlienHack). If moves "stop working" after the first one, look for this.
 - Asyncify yields every ~50 ms: test a key interrupt by queueing the key before the walk.
 - **Playwright** (headless, cloud): matching version for the preinstalled
   Chromium (`npm i playwright@<v>` in a scratch dir, `NODE_PATH`); local copy in
