@@ -101,15 +101,21 @@ def read_ids(path):
     return out
 
 
-def scene_lines(sid, name, categories, under, cells, mnemonic=None):
-    """A "%rec: Scene" record (remapper preview): cells are rows of "category/id" or None; each id gets one
-    legend character, mnemonic ones first ({"world/door": "+"}), a space is an empty cell"""
+def scene_lines(sid, name, categories, cells, ground=None, mnemonic=None):
+    """A "%rec: Scene" record (remapper preview): cells are rows of "category/id" or None, the tile on top;
+    ground the same for the tile the game draws under it (None: nothing). Each id gets one legend character,
+    mnemonic ones first ({"world/door": "+"}); a space is an empty cell"""
     mnemonic = mnemonic or {}
-    keys = sorted({c for row in cells for c in row if c})
+    keys = sorted({c for grid in (cells, ground or []) for row in grid for c in row if c})
     pool = iter(c for c in [chr(i) for i in range(33, 127)] + [chr(i) for i in range(0xc0, 0x2af)]
                 if c not in mnemonic.values() and c != '\\')   # rec joins a line ending in a backslash to the next
     ch = {k: mnemonic.get(k) or next(pool) for k in keys}
-    out = ['id: ' + sid, 'name: ' + name, 'category: ' + ' '.join(categories), 'under: ' + under]
+
+    def rows(grid):
+        return ['+ ' + ''.join(ch[c] if c else ' ' for c in row).rstrip() for row in grid]
+    out = ['id: ' + sid, 'name: ' + name, 'category: ' + ' '.join(categories)]
     out += ['legend: %s %s' % (ch[k], k) for k in keys]
-    out += ['map:'] + ['+ ' + ''.join(ch[c] if c else ' ' for c in row).rstrip() for row in cells]
+    out += ['map:'] + rows(cells)
+    if ground:
+        out += ['ground:'] + rows(ground)
     return out
