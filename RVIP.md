@@ -1222,6 +1222,9 @@ the hero cell so the frontend hides the cursor there.
 
 ## 5.10 Saves, IndexedDB, game end
 
+- **Every reported end drops the autosave**, not only death: key the delete
+  off "the beacon was sent" (a flag set in the report function), or a reload
+  resumes a quit/won run and reports it twice (Avanor).
 - **Atomic saves:** a failed write (exception, full disk, crash) must not
   corrupt the old save; the IDBFS/IndexedDB sync would persist the broken file.
   Temp file + `rename()` (C) / `File.Move(tmp, path, true)` (.NET) in the one
