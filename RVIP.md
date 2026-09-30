@@ -651,6 +651,17 @@ Lessons: 5.14.
 - EvilHack-style SYSCF builds need a `sysconf` in HACKDIR; the upstream server one carries options a plain build rejects: ship a minimal web `sysconf` (EvilHack).
 - NetHack 3.6 web builds with `-DNOMAIL` need their own `pm.h`/`onames.h` (`makedefs -o -p` with the web DEFS) and a full copy of `include/` first on the path: quoted includes find the native (MAIL) `pm.h` next to `hack.h`, and every monster/object after the mail daemon/scroll of mail is one off (gold shows as `*`) (EvilHack).
 
+- **Boost that needs compiled libs** (serialization, filesystem): `-sUSE_BOOST_HEADERS=1`
+  plus `git clone --depth 1 -b boost-1.83.0 github.com/boostorg/<lib>` and compile its
+  `src/*.cpp` into the game (boost.io downloads are proxy-blocked). Use C++17: under C++14
+  `uncaught_exceptions` falls back to `__cxa_get_globals`, undefined in the ASan link.
+- **External dependency repos not in the fork** (AlienHack's RL-Shared): the auto-mode
+  classifier refuses committing a vendored copy; clone it pinned in `build.sh` into a
+  gitignored `web/deps/` and keep fixes as `web/<dep>.patch`.
+- **MSVC-only sources**: `-include web/prefix.hpp` for headers MSVC pulled in implicitly
+  (`boost/serialization/base_object.hpp`); `void main`, `<xutility>`, case-wrong includes,
+  `std::exception(msg)`, temporaries bound to non-const refs need small patches.
+
 ## 5.3 Build: other languages and platforms
 
 **Free Pascal** (BOSS, LambdaRogue): FPC trunk → `wasm32-wasip1`, built once
