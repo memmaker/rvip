@@ -1444,6 +1444,7 @@ the hero cell so the frontend hides the cursor there.
 - manual as sections: split a plain `manual.txt` on its `----` banner lines into `<section id>` + `<pre>` (TOC from the headings); cheat keys under `#ifndef NDEBUG` are gone from a `-DNDEBUG` web build: say so (Infra Arcana).
 - card image from a live https page: `fetch` to a localhost receiver is blocked (private network) and hand-copying a returned dataURL corrupts it; serve `web/dist` + shared JS from a scratch root with a tiny Python server that also takes a POST of `canvas.toDataURL()`, open that in the pane, map A+ to a 2x cell (32 for 16 px tiles), post the whole canvas, crop 384x160 in PIL (Avanor).
 - tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
+- local branch named differently from its upstream (avanor `main-rvip` → `memmaker/main`): push with plain `git push` or `HEAD:main`; `git push memmaker HEAD` creates a stray remote branch and deploy.sh still says "commit + push first" (Avanor).
 
 ## 5.14 Beacon (stage 9)
 
