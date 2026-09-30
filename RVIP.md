@@ -357,6 +357,9 @@ Build the page from the template with `rvip-wm.js` and `rvip-app.js`; all of
 part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
 
 **Layout**
+- **Back button:** top left of the top bar, left of the game's name, a `<` link to
+  the index: `<h1><a href="../" title="All games">&lt;</a> <a href="../shrine/<game>.html" …>Name</a></h1>`
+  (DynaHack).
 - **One-window mode** (full screen): no sub-windows at all; the game's native full
   screen (e.g. 80×24) is HTML text: one `<pre>` of the whole screen with
   coloured spans (W0 rule 6), font fitted to the window keeping the aspect
@@ -434,7 +437,7 @@ part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
   failure delete the `.tmp`, keep the old save. Multi-file saves write the
   summary/index last. Fix it once in the game's write routine (5.10).
 
-**Checklist** (also the page test): title → birth → map with tiles → every
+**Checklist** (also the page test): `<` back to the index → title → birth → map with tiles → every
 window filled → shop → stairs → Help, Enter menu → drag/zoom/rename, layout
 survives reload, A+ on one window changes only it, zoomed map follows the player
 → options entries don't crash → no `-more-` → save, reload, character loads,
