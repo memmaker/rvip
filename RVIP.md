@@ -1461,6 +1461,11 @@ the hero cell so the frontend hides the cursor there.
   the shot call so hit/kill follow in order (TraumaRL).
 - Page settings loaded async: set the Sound checkbox after the settings read, not in the bar setup
   (it showed off after reload although saved) (TraumaRL).
+- Synthesized sets: level every sound to one RMS (−18 dBFS, peak cap −3 dBFS) in `mksounds.py`, not per-sound
+  volumes; check with Python `wave` (duration, peak, RMS, clipping): AlienHack's raw set spread 15 dB.
+- Events that fire per monster move (noise nearby, monster seen): count them in play by wrapping
+  `Module.rvipSound` (log name + `performance.now()`); bursts → a per-call-site real-time gap in C
+  (`RVIP_SOUND_GAP(n, ms)`, static `emscripten_get_now()`), never a JS throttle (AlienHack hiss: 3 in 1.7 s).
 - Playwright sound test: wrap `window.Worker` in an init script to log `{t:'sound'}` messages, then
   drive a known action (TraumaRL: `2 f Enter` shoots the start-room camera) instead of random keys.
 
@@ -1479,7 +1484,9 @@ the hero cell so the frontend hides the cursor there.
   `***** <Tag>`); one `<pre>` per file in the help index order.
 - Cloud runs (no Docs folder): a self-contained `make-help.py` / `docs_entry.py`
   shaped like a `GAMES`/`GUIDES` entry; on the Mac generate the Docs entry from
-  it and let `make-help.py` prefer the Docs entry.
+  it and let `make-help.py` prefer the Docs entry. Generating it: `runpy.run_path(make-help.py)` gives its
+  rows/keys/page; split the page at `<h2>` into Tips/In the browser/Credits (GAMES) and guide/Saving
+  (guides.py `GUIDES`/`SAVING`), literal lists (AlienHack).
 - Count data from the game (birth loops, `MAX_*`), not its help text.
 - Credits: when files name one author, take co-maintainers from `git shortlog -sn`.
   Licence of a binary-only freeware game: read its title screen.
