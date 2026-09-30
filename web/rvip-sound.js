@@ -2,11 +2,12 @@
  * this only plays them.  RVIPSound.play(['sound_Bell', ...], vol 0..1)
  * plays the files <base><name>.wav (or .ogg, .mp3 if no .wav exists) one
  * after another (a name with its own extension, 'hit.mp3', is used as is;
- * an array in place of a name plays one of its names at random).  Every
- * sound plays at a random pitch within ±5% (playbackRate), so repeats vary.  Browsers start
+ * an array in place of a name plays one of its names at random).
+ * RVIPSound.pitch(0.05) (opt-in, default 0) plays every sound at a random
+ * pitch within ±5% (playbackRate), so repeats vary.  Browsers start
  * audio only after a user gesture, so the context resumes on first input. */
 var RVIPSound = (function () {
-	var ctx, base = 'sound/', cache = {}, end = 0;
+	var ctx, base = 'sound/', cache = {}, end = 0, jit = 0;
 
 	function audio() {
 		if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -33,6 +34,7 @@ var RVIPSound = (function () {
 	}
 	return {
 		base: function (b) { base = b; },
+		pitch: function (p) { jit = p; },
 		play: function (names, vol) {
 			var a = audio(), bufs = names.map(function (n) {
 				return load(Array.isArray(n) ? n[Math.floor(Math.random() * n.length)] : n);
@@ -44,7 +46,7 @@ var RVIPSound = (function () {
 				bs.forEach(function (b) {
 					if (!b) return;
 					var s = a.createBufferSource();
-					s.buffer = b; s.playbackRate.value = 0.95 + Math.random() * 0.1;
+					s.buffer = b; s.playbackRate.value = 1 + (Math.random() * 2 - 1) * jit;
 					s.connect(g); s.start(t); t += b.duration / s.playbackRate.value;
 				});
 				end = t;
