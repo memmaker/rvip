@@ -1502,7 +1502,7 @@ the hero cell so the frontend hides the cursor there.
 - a port whose SFX are Web Audio recipes (tsl-go `sfx`: oscillator glide + biquad-filtered noise + exp envelope) can be rendered to wav at build time with the same parameters (stdlib Python, RBJ biquad), keeping the one-wav-per-event player (TSL `web/mksounds.py`).
 - level music from C: send the level index on change from the map draw (`web_level`), page maps index -> track and creates the Audio only when Music is on (TSL).
 - auto-equip that equips weapon and ammo in one action plays the equip sound twice: gate it to once per game turn (TSL).
-- Repeated sounds: `RVIPSound.play` takes an array in place of a name (random pick) and plays every sound at ±5% random pitch; render 3 variants per effect at build time (frequency/length factors, fresh noise), list them in `sounds.json` (TSL).
+- Repeated sounds: `RVIPSound.play` takes an array in place of a name (random pick); `RVIPSound.pitch(0.05)` (opt-in per game) adds ±5% random pitch; render 3 variants per effect at build time (frequency/length factors, fresh noise), list them in `sounds.json` (TSL).
 
 ## 5.12 Docs and help
 
