@@ -112,7 +112,8 @@ State these in every brief. No exceptions; a port that breaks one is not done.
 - **One tile set, never mixed.** Every sprite a game shows comes from one set;
   a set is offered only if it covers ~95% (stand-ins from the same set are
   fine), else the fallback set alone or text. Ask before using a fallback set
-  for a game with a different theme (sci-fi ZAPM: text only).
+  for a game with a different theme (sci-fi ZAPM: text only, user's choice; AlienHack: text only, agent's
+  decision after a tile search).
 - Nearest-neighbour scaling only, never smooth/bilinear.
 - **Tiles are only ever scaled at run time, never beforehand.** Ship a tile set at
   its original size (BMP → lossless PNG if the size is the issue, the page must
@@ -122,7 +123,8 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   ends a won run (test that it is reached). Never write code or run commands
   that overwrite, move or delete the server's win files
   (`/var/lib/roguelikes-stats/wins/<g>/`).
-- Text only (user's choice, no tiles switch): BOSS, ZAPM, AlienHack (sci-fi, no shipped tiles, no licensed sci-fi set near 95%). Exempt from
+- Text only (user's choice, no tiles switch): BOSS, ZAPM. AlienHack: text only, agent's decision (not the user's)
+  after a tile search (OGA, itch.io, Kenney) found no sci-fi set with ~95% coverage. Exempt from
   the window layout: Decker (its MFC dialogs are the game).
 
 ---
