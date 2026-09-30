@@ -1592,6 +1592,8 @@ the hero cell so the frontend hides the cursor there.
 - Browser pane: a background tab has `document.hidden` (Asyncify sleeps throttled, canvas stale); `tabs_select` your own tab before key tests. `computer` key works for plain keys; shifted keys still need dispatched events (Infra Arcana).
 - SDL/Emscripten canvas games: trusted pane key presses don't reliably arrive; dispatch `KeyboardEvent`s on `window` (Shift keydown, then keydown/keypress/keyup; no keypress for Ctrl combos); pane screenshots lag a frame, compare `canvas.toDataURL()`; header edits need `rm -rf web/obj` (mtime cache); `build.sh` recreates `dist`, restart the server (Infra Arcana).
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
+- Death test without a wizard mode: a temporary key that sets `HP = 1` (marked `// RVIPTEST`, reverted before commit), then a JS loop that reads the map from a wrapped `Module.av.map` and steps toward the nearest hostile glyph (Avanor).
+- Lazy `sounds.json`: if sound is saved on, fetch it at page load too; else the first events after a reload are silently dropped while it loads (Avanor).
 
 ## 5.17 Cloud runs
 
