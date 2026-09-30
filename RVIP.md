@@ -122,7 +122,7 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   ends a won run (test that it is reached). Never write code or run commands
   that overwrite, move or delete the server's win files
   (`/var/lib/roguelikes-stats/wins/<g>/`).
-- Text only (user's choice, no tiles switch): BOSS, ZAPM. Exempt from
+- Text only (user's choice, no tiles switch): BOSS, ZAPM, AlienHack (sci-fi, no shipped tiles, no licensed sci-fi set near 95%). Exempt from
   the window layout: Decker (its MFC dialogs are the game).
 
 ---
@@ -172,6 +172,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | Hack 1.0.3, NetHack 1.3d | hack, nethack13d | O, termcap via VT100 interpreter |
 | NetHack 5.0, SLASH'EM, DynaHack | nethack50 (branch `NetHack-5.0`), slashem, dynahack (branch `unnethack`) | O, window port / NitroHack client |
 | ZeldHack (NetHack 3.6.7 + LSpixel tiles) | zeldhack | O, own window port `win/web/winweb.c` derived from nethack50's |
+| AlienHack 0.9.1 | alienhack (repo Alienhack) | O, Win32 console C++ game; `Console-web.cpp` grid + ASYNCIFY readKey; text only |
 | EvilHack 0.9.3 (NetHack 3.6 variant) | evilhack | O, NetHack 3.6 window port (`win/web/winweb.c` from slashem's); 64 px community tile set + sound pack hooked in the code |
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
@@ -651,6 +652,17 @@ Lessons: 5.14.
 - EvilHack-style SYSCF builds need a `sysconf` in HACKDIR; the upstream server one carries options a plain build rejects: ship a minimal web `sysconf` (EvilHack).
 - NetHack 3.6 web builds with `-DNOMAIL` need their own `pm.h`/`onames.h` (`makedefs -o -p` with the web DEFS) and a full copy of `include/` first on the path: quoted includes find the native (MAIL) `pm.h` next to `hack.h`, and every monster/object after the mail daemon/scroll of mail is one off (gold shows as `*`) (EvilHack).
 
+- **Boost that needs compiled libs** (serialization, filesystem): `-sUSE_BOOST_HEADERS=1`
+  plus `git clone --depth 1 -b boost-1.83.0 github.com/boostorg/<lib>` and compile its
+  `src/*.cpp` into the game (boost.io downloads are proxy-blocked). Use C++17: under C++14
+  `uncaught_exceptions` falls back to `__cxa_get_globals`, undefined in the ASan link.
+- **External dependency repos not in the fork** (AlienHack's RL-Shared): the auto-mode
+  classifier refuses committing a vendored copy; clone it pinned in `build.sh` into a
+  gitignored `web/deps/` and keep fixes as `web/<dep>.patch`.
+- **MSVC-only sources**: `-include web/prefix.hpp` for headers MSVC pulled in implicitly
+  (`boost/serialization/base_object.hpp`); `void main`, `<xutility>`, case-wrong includes,
+  `std::exception(msg)`, temporaries bound to non-const refs need small patches.
+
 ## 5.3 Build: other languages and platforms
 
 **Free Pascal** (BOSS, LambdaRogue): FPC trunk → `wasm32-wasip1`, built once
@@ -933,6 +945,7 @@ pop-up. Games whose curses layer doesn't know the hero: the level render stores
 the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 window port: start from slashem's `win/web/winweb.c` and change only the 3.6 struct differences (`has_color[]`, `putmixed`, 5-arg `print_glyph`, `mapglyph` 7 args, `iflags.perm_invent`, `program_state.restoring`, `nh_terminate`, `genl_status_*`, `genl_getmsghistory`, `genl_can_suspend_no`); declare procs with `CHAR_P`/`BOOLEAN_P`/`XCHAR_P` so the initializer types match (EvilHack).
 - a menu with group accelerators (gch, class symbols in pick-up menus) still needs item letters; don't derive "no letters" from gch (EvilHack).
+- State-stack console games (RL-Shared, AlienHack): an RAII guard in the main screen's `draw()` marks cells as base; cells drawn later in the same frame (dialogs, menus) are the pop-up (their bounding box), a frame with no base cells is a whole-screen pop-up. Panes are fixed regions of the base cells; one-window mode draws the full grid on a canvas (AlienHack).
 
 ## 5.6 Explore and stairs
 
@@ -1004,6 +1017,8 @@ the hero cell so the frontend hides the cursor there.
 - A stuck door's bump message may stop explore before its after-step code runs: mark skipped doors even when the walk is already off, or the next run kicks/bashes it (Infra Arcana).
 - Own terminal-class game (case O, Avanor): the explore step returns a direction key in place of the key read in the hero's move loop; `vRefresh()` + `vDelay(40)` before returning paints it; add `vRefresh()` after a stop message or it shows only after the next key. Shop wares (cells with a shop `place`) are not item targets (Avanor).
 - Explore's message stop: count only messages that matter. Give the message class an ambient counter (`AddAmbient()` for smells, decay) and compare `count - ambient`; never match message text (Avanor).
+- Engine with a blocking `readKey()` inside a library loop (RL-Shared ConsoleView, case O): make the web `readKey()` return a synthetic key after `emscripten_sleep(40)` while an `extern "C"` flag is set; the game's command handler does one explore step for that key; a queued real key clears the flag and is dropped; clear the flag when a pop-up state takes over (AlienHack).
+- Vision-cone games (AlienHack): "seen" is the recorded-object/visited flag, not recorded terrain (a mapped level records terrain without seeing it).
 
 ## 5.7 Enter menu and item menus
 
@@ -1068,6 +1083,8 @@ the hero cell so the frontend hides the cursor there.
 - Own-GUI C++ games with a state stack and a `to_cmd(input)` function: the menu is a small overlay State (box sized to content), keys by calling `to_cmd()` on every candidate key; item actions via the game's own select states plus an item-pointer preselect that auto-selects on the first update (Infra Arcana).
 - SDL text-input games: numpad +/- also send a text event (IA resized the window on it): skip the text event after the keydown; Ctrl+letter has no text event, finish on keydown and take Ctrl from `keysym.mod`, not `SDL_GetModState()` (stale when events queue) (Infra Arcana).
 - One item-prompt function for the whole game (Avanor `XHero::Inventory()` over `XGuiList::Run()`): put the cursor in the list widget (a `>` marker, 8/2 move, 5/Enter/+/-/* pick with the key readable afterwards, Ctrl+letter picks, 0/. close) and every prompt gets it; item actions = the `i` menu returns the command key to the move loop plus a one-shot preselect that `Inventory()` takes without drawing (a list that doesn't hold it returns nothing, so pack-vs-floor commands fall through; later prompts of a drop/sacrifice loop return nothing). Case-insensitive page letters: lowercase = main action, uppercase = drop (Avanor).
+- Own-GUI games whose command loop is a chain of `isFunction(input, "Name")` tests: rename them to a member `isFn()` that, for a synthetic CMD key, compares a global command string instead; menus set the string and queue the CMD key through the console's `readKey`, so every command keeps its prompts. Extra pseudo-commands (`Drop:<fn>`, `Examine:<fn>`, a conditional `Inventory?` reopen cancelled in `exitToChild`) live in the same chain (AlienHack).
+- Games with fixed item slots and one key per item (AlienHack): use the item's own command key as its inventory letter (Shift = drop, Ctrl = examine); the old drop dialog's letters keep working in the cursor list. Keypad and Ctrl need their own page encodings (`0x200|char` by `e.code`, `0x400|letter`) since a console KeyCode can't tell numpad 8 from 8; translate to directions outside menus.
 
 ## 5.8 Tiles
 
@@ -1368,6 +1385,7 @@ the hero cell so the frontend hides the cursor there.
   `AudioBufferSourceNode.start`. Sample names with spaces become underscores at
   build time (C names, URLs without escaping).
 - **Own SDL_mixer audio (case O):** gate the game's `play()`/`play_music()` under `__EMSCRIPTEN__` with flags set by an exported `web_set_audio(sfx, music)`; remember a blocked music request so switching Music on starts it. Exclude the music file from `--preload-file` (`--exclude-file`), ship it in `dist/`, and have the page fetch it into the FS on first Music on (Infra Arcana).
+- Game with an event interface (AlienHack `IGameEvents`/`GameEvents.cpp`): one `RVIP_SOUND(name)` line (EM_ASM → `Module.rvipSound`) at the top of each handler covers every action; define `Module.rvipSound` inside the `var Module = {…}` literal (a `Module.x =` above the `var` hits undefined).
 - NetHack 3.6 without sndprocs: one `WEB_SOUND("name")` macro in hack.h (no-op off the web) at the action functions (`known_hitum`, `hitmsg`, `missmu`, `xkilled`, `goto_level`, `pluslvl`, `dopray`, …), skipped while `program_state.restoring`; build fails if a name has no wav (EvilHack).
 
 ## 5.12 Docs and help
@@ -1448,6 +1466,7 @@ the hero cell so the frontend hides the cursor there.
 - card image from a live https page: `fetch` to a localhost receiver is blocked (private network) and hand-copying a returned dataURL corrupts it; serve `web/dist` + shared JS from a scratch root with a tiny Python server that also takes a POST of `canvas.toDataURL()`, open that in the pane, map A+ to a 2x cell (32 for 16 px tiles), post the whole canvas, crop 384x160 in PIL (Avanor).
 - tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
 - local branch named differently from its upstream (avanor `main-rvip` → `memmaker/main`): push with plain `git push` or `HEAD:main`; `git push memmaker HEAD` creates a stray remote branch and deploy.sh still says "commit + push first" (Avanor).
+- card image from the cloud without a pane: Playwright screenshot of the running page after auto-explore, PIL crop 384x160 of the map window (48x10 cells at 8x16) (AlienHack).
 
 ## 5.14 Beacon (stage 9)
 
@@ -1501,6 +1520,9 @@ the hero cell so the frontend hides the cursor there.
 - Games that keep no killer: record the attacker's name in the damage function when the target is the player (a hit with no monster attacker clears it), send it only for deaths (Infra Arcana `actor::hit`).
 - White-on-black tile sets tinted at run time: killer art = tile multiplied by the monster's data colour, black made transparent (Infra Arcana).
 - End routine that computes the score while filling the achievements list and waits for keys in between: give it a report-only mode (compute, report, return) and call it before the first key wait of death, win and quit (Avanor `XHero::EndGame(msg, ev, killer)`).
+- No single end function: hook every place that writes the run's outcome/mortem (death frame before its key wait, explosion, escape) and keep the values in statics set where the outcome text is written; no score list/turn counter/char level → send only g, ev, name, killer, depth (AlienHack).
+- Temp death/win test patch keyed on the name must sit in code that runs every turn (the model-advance notify), not the key handler: movement keys may bypass it (AlienHack).
+- Text-only killer art in the cloud: no Menlo; `make.py` falls back to DejaVu Sans Mono Bold, rerun on the Mac (AlienHack).
 
 ## 5.15 Git, deploy, server
 
@@ -1567,6 +1589,7 @@ the hero cell so the frontend hides the cursor there.
   `naturalWidth`; a small screenshot makes `draw()` run. For speed wrap
   `window.setTimeout` so ≤20 ms delays use a `MessageChannel`. Tall pages
   screenshot black. Synthetic pointer events can't drag dividers (use `computer`).
+- A game loop that paces frames with `std::clock()` and sleeps the difference: under Emscripten `CLOCKS_PER_SEC` is 1e6, so ticks passed as ms freeze input for ~20 s after any multi-frame action; convert to ms (AlienHack). If moves "stop working" after the first one, look for this.
 - Asyncify yields every ~50 ms: test a key interrupt by queueing the key before the walk.
 - **Playwright** (headless, cloud): matching version for the preinstalled
   Chromium (`npm i playwright@<v>` in a scratch dir, `NODE_PATH`); local copy in
@@ -1601,6 +1624,7 @@ the hero cell so the frontend hides the cursor there.
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 - Death test without a wizard mode: a temporary key that sets `HP = 1` (marked `// RVIPTEST`, reverted before commit), then a JS loop that reads the map from a wrapped `Module.av.map` and steps toward the nearest hostile glyph (Avanor).
 - Lazy `sounds.json`: if sound is saved on, fetch it at page load too; else the first events after a reload are silently dropped while it loads (Avanor).
+- After a real click on a top-bar checkbox, focus stays in the dropdown and the game gets no keys: blur + click the map before key tests. Playwright `keyboard.press` works where dispatched arrows didn't move the player (AlienHack).
 
 ## 5.17 Cloud runs
 
