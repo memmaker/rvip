@@ -1381,6 +1381,7 @@ the hero cell so the frontend hides the cursor there.
   `AudioBufferSourceNode.start`. Sample names with spaces become underscores at
   build time (C names, URLs without escaping).
 - **Own SDL_mixer audio (case O):** gate the game's `play()`/`play_music()` under `__EMSCRIPTEN__` with flags set by an exported `web_set_audio(sfx, music)`; remember a blocked music request so switching Music on starts it. Exclude the music file from `--preload-file` (`--exclude-file`), ship it in `dist/`, and have the page fetch it into the FS on first Music on (Infra Arcana).
+- Game with an event interface (AlienHack `IGameEvents`/`GameEvents.cpp`): one `RVIP_SOUND(name)` line (EM_ASM → `Module.rvipSound`) at the top of each handler covers every action; define `Module.rvipSound` inside the `var Module = {…}` literal (a `Module.x =` above the `var` hits undefined).
 - NetHack 3.6 without sndprocs: one `WEB_SOUND("name")` macro in hack.h (no-op off the web) at the action functions (`known_hitum`, `hitmsg`, `missmu`, `xkilled`, `goto_level`, `pluslvl`, `dopray`, …), skipped while `program_state.restoring`; build fails if a name has no wav (EvilHack).
 
 ## 5.12 Docs and help
@@ -1615,6 +1616,7 @@ the hero cell so the frontend hides the cursor there.
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 - Death test without a wizard mode: a temporary key that sets `HP = 1` (marked `// RVIPTEST`, reverted before commit), then a JS loop that reads the map from a wrapped `Module.av.map` and steps toward the nearest hostile glyph (Avanor).
 - Lazy `sounds.json`: if sound is saved on, fetch it at page load too; else the first events after a reload are silently dropped while it loads (Avanor).
+- After a real click on a top-bar checkbox, focus stays in the dropdown and the game gets no keys: blur + click the map before key tests. Playwright `keyboard.press` works where dispatched arrows didn't move the player (AlienHack).
 
 ## 5.17 Cloud runs
 
