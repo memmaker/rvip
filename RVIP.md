@@ -5,7 +5,7 @@ so it plays like the others. No local macOS build (no X11/Cocoa/SDL frontend,
 no `play.sh`, no Desktop shortcut); native builds exist only for ASan/test runs.
 
 Contents: **1** Orchestration · **2** Hard rules · **3** Cases and worked
-examples · **4** Stages 1–9 with checklists · **5** Lessons by topic.
+examples · **4** Stages 1–9 with checklists (+ 4R tile remapping, only on request) · **5** Lessons by topic.
 
 This file improves itself: when an import teaches something reusable (a trap,
 a fix, a faster way, a new user rule), add it to the right topic in part 5 (or
@@ -195,6 +195,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | 2 Explore + stairs | both tested in a running game, no `-more-` stops | explore key, file, main-loop hook, "known grid" test |
 | 3 Enter menu + inventory | menu lists every command, item menus tested | files, how item actions run (direct call or key queue), menu functions |
 | 4 Tiles | sprites checked at cell size, coverage measured | tile set and source, loader, prefs, scale, coverage |
+| 4R Tile remapping (**optional, only on the user's explicit request**) | game reads its runtime rec, `remap.sh` opens it, every id in a preview scene | rec, scenes, remap.sh, how slots map to ids |
 | 5 Web page | window checklist passes, page live via `deploy.sh` | live URL |
 | 6 Docs + sound | help built, sound off by default | — |
 | 7 Publish | pushed, `git status` clean, card + tree entry + unlock family + og deployed, RVIP.md updated | — |
@@ -295,6 +296,58 @@ Lessons: 5.7.
 
 Checklist: coverage numbers in the handover · one set · nearest-neighbour · None works and sticks over reload · no identical slots leaked from another sheet.
 Lessons: 5.8.
+
+## Stage 4R — Tile remapping (optional)
+
+**Only when the user explicitly asks for it for this game** ("enable tile
+remapping for X"). Never as part of a normal import, never offered unasked.
+Needs stage 4 done. Worked examples: MAG (`port/mkdawn.py`, `port/fe_web.c`
+`load_tiles()`), Avanor (`web/mkdawn.py`, `port/be_web.cpp` `load_tile_rec()`).
+
+Tools, all used by path, never copied: the remapper (`~/Projects/remapper`,
+Go, `deploy.sh` → `~/bin/remapper`), c-rec (`~/Projects/c-rec`, the C rec
+reader; format in its README), `tilesets/dawnlike_rec.py` (stacked DawnLike
+atlas, rec and scene writing). Build scripts take `CREC=` (default
+`~/Projects/c-rec`).
+
+- **One slot per entity.** The game's tile slots (what its C code sends per
+  cell) must be one per thing the user may remap: split slots that several
+  keys share, keep autotiled styles as 16 consecutive slots. The generator
+  emits a slot → `"<category>/<id>"` table next to the existing slot tables
+  (`tiles.h` `tile_id[]`, `dawn_ids.inc`).
+- **Ids and names:** categories `world` (terrain, walls, doors, stairs, traps,
+  map objects), `monster` (incl. the player), `object`; id = slug of the
+  game's own name (lowercase, non-alphanumerics → `_`, `_2` on a clash);
+  display name = the game's name plus what tells it apart (class, `(border n
+  e)`, `potion`). Random appearances are ids of their own; never-drawn slots
+  get none.
+- **Runtime rec** (`<game>-dawnlike.rec`, written by `mkdawn.py` via
+  `dawnlike_rec.write_rec`): a Tileset record (sheet, cutting, `anim_file`,
+  `scenes`) and one section per category. Icons are cells of `dawnlike-0.png`
+  (`dawnlike_rec.stack`: every DawnLike sheet stacked + the game's "a+b"
+  composites). Re-running `mkdawn.py` keeps every icon in the rec and every
+  tile the remapper composed into an empty cell.
+- **Game side:** at startup read the preloaded rec with c-rec (`rec_load`,
+  `rec_get(f, "Tileset", NULL, …)`, `rec_icon` per slot id), hand the sheet
+  name, the cutting and a slot → cell array to the page; the page draws cell
+  (x = off + col·(w+gap)) instead of slot and cuts list icons the same way.
+  No rec or no Tileset → the stage 4 sheet with slot = cell, unchanged.
+  Pack codes as before: the remap happens in JS, cells can pass 12 bits.
+  `build.sh`: compile `$CREC/rec.c`, `--preload-file <rec>@/…`, copy the
+  rec's `file:` sheet to dist, export `HEAP16`/`HEAP32` as needed.
+- **Preview scenes** (`mkscenes.py` → `<game>-scenes.rec`, design time
+  only): generated, never hand-drawn. A level as the game builds them (and
+  an overworld if it has one), an "all terrain" scene with all 16 autotile
+  variants of every style (room, one-row strip, one-column strip, single
+  cell; wall lattice + stubs + lone block), one gallery per other category.
+  Tiles and layers **exactly as the game draws them**: the same autotile
+  rule, and a `ground:` layer with what the game draws under each thing.
+  Each scene asserts every id of its category appears. No legend char `\`
+  (rec joins the line).
+- **`remap.sh`** in the game root: builds the remapper if missing, opens the
+  rec in the remapper, rebuilds `web/dist` after.
+
+Checklist: game draws from the rec in the browser pane (sheet request, no console errors) · no rec still works · remapper opens the rec, F2 shows every scene · every id shown · `mkdawn.py` re-run keeps icons (rec unchanged) · handover names rec, scenes, remap.sh.
 
 ## Stage 5 — Web page and windows
 
