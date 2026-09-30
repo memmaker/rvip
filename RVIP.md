@@ -344,6 +344,8 @@ atlas, rec and scene writing). Build scripts take `CREC=` (default
   rule, and a `ground:` layer with what the game draws under each thing.
   Each scene asserts every id of its category appears. No legend char `\`
   (rec joins the line).
+  `mkscenes.py` also redraws the index card (`roguelikes-index/img/<game>.png`,
+  12×5 tiles at 2×) from the rec (`dawnlike_rec.render`), so it shows the mapping.
 - **`remap.sh`** in the game root: builds the remapper if missing, opens the
   rec in the remapper, rebuilds `web/dist` after.
 
