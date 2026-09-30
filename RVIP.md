@@ -770,6 +770,7 @@ and write `.emscripten_url`.
 - macOS has no `as --32`: commit the assembled boot ROM and let `build.sh` fall back to it.
 - `og.py` rewrites every game's `web/index.html` and every shrine (it once flipped 18 repos' og:image path): for one game exec it with the static `pages` dict emptied, then `git checkout` whatever else changed.
 - A font select needs the FontFace loaded (`new FontFace(n,'url(../fonts/n.woff)')`) and a CSS var on the text windows; setting only a variable does nothing.
+- .NET trimming blocked by an old net4 dependency (ILLink IL1012): swap in a maintained netstandard fork (QuickGraph → QuikGraph, namespace sed) and use `TrimMode=partial` so game code stays whole for reflection saves; root the facades BinaryFormatter loads by name (`mscorlib`, `System`, `System.Core`, `System.Collections`). Test save *and* load in the trimmed build: missing members show only at run time (TraumaRL: 25 → 8.9 MB).
 
 ## 5.4 z-term frontend and Angband ports (case A)
 
@@ -1078,6 +1079,7 @@ the hero cell so the frontend hides the cursor there.
 - in a Playwright bot, test explore with a local immortal build (health reset each turn, copied tree in scratch, never committed) so walks reach stairs; a mortal bot dies to archers before the level is done (TSL).
 - a curses shim with a JS key queue gives the "any key stops" check for free: a non-blocking `web_poll_key()` popping the queue, plus `web_pause(ms)` = `emscripten_sleep` for the 40 ms paint (TSL).
 - explore's new-message stop: skip messages identical to one of the last flush's texts (status repeated each turn, TSL "You are bleeding!"); swap a first step onto stairs/items for an equal-length plain one via a reverse BFS from the target (TSL).
+- Exit walks (`<`/`>`) must plan through closed doors (bumping opens them); only explore stops at doors. Let `>` also target the game's final exit (TraumaRL escape pod).
 
 ## 5.7 Enter menu and item menus
 
@@ -1323,6 +1325,9 @@ the hero cell so the frontend hides the cursor there.
 - the game page's own CSS must not hide the File/Audio menu elements (`display:none`): `RvipWM.dropdown` toggles `hidden` and the smoke test reports NOOPEN (TSL).
 - A game page rule `.win canvas { display: block }` beats the `hidden` attribute: add `canvas[hidden] { display: none }` or the tile canvas covers the text map in tile set None (TSL).
 - One-window mode for a curses shim: keep `newwin` positions, copy each refreshed window into an 80×24 terminal grid and send it as its own pane (a real terminal: last refresh wins); `single: 'term'`, `noFont: 'term'`, JS only fits the font (TSL).
+- Map view that follows the Map window in a fixed-buffer renderer shim: the page sends a view-size key (cells that fit at the current zoom, the game's own size in one-window mode), the game moves its map region clear of the original screen and grows the buffer; send the buffer stride in the JSON (TraumaRL `RvipView`).
+- `window.prompt` throws in some embedded browsers (desktop app pane): wrap it, or the page never starts (TraumaRL).
+- Status/side panes cut from screen areas must not be rebuilt while a whole-screen view covers them (TraumaRL).
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1412,6 +1417,7 @@ the hero cell so the frontend hides the cursor there.
 - Check the save routine natively before stage 5: legacy RogueBasin `SaveGame()` (XmlSerializer) throws "error reflecting type SaveGameInfo" in TraumaRL; a game without a working save gets no resume on reload, record it as a user decision (TraumaRL).
 - a game that finds its save and config through `$HOME` (TSL `get_file_path`) needs only `ENV.HOME = RvipApp.dir` in the mount callback; save-and-quit/death paths that `exit(0)` get an `EM_ASYNC_JS` hook that awaits the sync and never returns (page reloads) (TSL).
 - a save-deleted-on-load game (TSL) gets a web autosave by splitting the save routine into write-only + exit; save at the idle prompt after start and each level change (flag + no queued keys), delete it right after the run report on death/quit/win (TSL).
+- Check that a packing hook is actually called: a helper that exists but is never wired leaves the slow path (TraumaRL `Map.RvipPack`: 200k objects, 3–8 s → 1.2 s once wired). Measure per-field time natively before redesigning the format.
 
 ## 5.11 Audio
 
@@ -1763,6 +1769,8 @@ the hero cell so the frontend hides the cursor there.
 - RvipApp.dir follows the URL folder: a scratch build served as `slimyt/` saves under `/slimyt`, not `/slimy`; read paths via `RvipApp.dir` in tests (TSL).
 - scratch test hooks via a JS flag read with `EM_ASM_INT` at the start of the player's turn (immortal, wound + give item, move a monster adjacent, put the hero on stairs, eat a lethal item) reach every sound/end path in seconds (TSL).
 - A real win through a map feature (TSL's Chapel win trap): the scratch hook changes to that level and puts the hero next to the trap; the bot steps onto it, so the game's own win path runs and sends `ev=win` (TSL).
+- Hidden browser pane = throttled timers (about once a minute): drive long playthroughs with headless Playwright, keep the pane for looks (TraumaRL).
+- URL test flags that append to a config file: no blank lines (a strict `key=value` parser stops there); check the flag actually changes something (TraumaRL `?rviplocks` was dead). Debug keys for a win test: reveal map, heal, all weapons.
 
 ## 5.17 Cloud runs
 

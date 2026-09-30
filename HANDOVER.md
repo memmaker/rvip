@@ -23,7 +23,7 @@ uncommitted work without taking the game over explicitly.
 
 ## Next steps
 
-0. **TraumaRL** (C# 7DRL, `memmaker/traumaRL`, web name `traumarl`): stages 1-9 done in a cloud run, merged into the default branches (traumaRL `traumarl`, roguelikes/rvip `main`), NOT deployed. Local agent: pull, check against the local `rvip-wm.js`/`rvip-app.js`/`rvip-sound.js` in the browser pane, then follow the deploy/check steps in traumaRL `HANDOVER.md`. Open: 5-8 s save freeze, fixed 37x27 map viewport, name asked via `window.prompt`, unread roguetemple sources on the shrine.
+0. **TraumaRL**: done and game deployed (see traumaRL `HANDOVER.md` "Local finish"). Left: roguelikes-index `./deploy.sh` for the shrine sources commit (blocked by another session's uncommitted `index.html`: Prospector button text).
 1. **W0 rule 6** (text windows are HTML, only the map is a canvas). Done in
    umoria, the Hack family, the Rogue line (rogue3.6, rogue5.4, srogue,
    arogue5.8, arogue7.7, urogue, xrogue, roguepc), larn, ularn, nlarn, mag,
