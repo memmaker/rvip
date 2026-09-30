@@ -1274,6 +1274,7 @@ the hero cell so the frontend hides the cursor there.
 - **List markers:** never start a marker with `#` when colours are CSS hex
   strings; use `=` for section headers.
 - A `<pre>` rule with `font: inherit` after a monospace rule drops to the body font.
+- One-window mode of a grid game as text: the game sends all rows (keep leading blank rows, trim only trailing) as a colour-marked pane into a `<pre>`; JS only fits the font so cols×rows fit (AlienHack).
 - Pitfall when patching page JS by anchors: anchor on the full signature
   (`flush: function` also matched RvipApp's).
 - **NetHack 3.6 options and status:** bake the player's rc in as a seed file and
@@ -1291,6 +1292,8 @@ the hero cell so the frontend hides the cursor there.
 - Canvas-only games (TraumaRL, SDL renderer shim): split panes in the renderer shim by the game's own screen-area fields (expose `Screen.RvipMapRect/StatsRect/MsgRect`), not by coordinates in JS; a whole-screen view = the game's own `DrawFrame(clear:true)` since the last `Clear()` → draw the full screen on the map canvas (TraumaRL).
 - Map cells in whole multiples of the sheet size with the WM keeping the size: let the map's WM value be a step (`size: {map: () => 8}`, `fontMax.map = 8 + n - 1`, cell = sprite × (step − 7)); `wm.state()` is a clone, you cannot write a snapped size back (TraumaRL).
 - Status panels that mix sprites and text: send rows of `[text, rgb]` / `[spriteId, rgb]` segments; the page shows sprites as 1em inline `<img>` of the recoloured sprite (follows A−/A+) (TraumaRL).
+- Side windows go stale on the title: the game sends every pane empty when its title/main menu draws (C sentinel caches reset too), not a JS reset on some screen guess (AlienHack).
+- Mouse for grid menus without a mouse API: the page sends a clicked pop-up line (`0x800|line`) or whole-screen row (`0x1000|row`) as a key; C adds the pop-up's top row, returns a reserved ext key, and each menu maps the screen row through what its last draw recorded (first row, scroll top, shown rows) (AlienHack).
 - Cloud: the real shared `rvip-wm.js`/`rvip-app.js` are in `/home/user/rvip/web/`; a www dir with `<web name>` → `dist` plus those three symlinks serves `../` like the server (TraumaRL).
 
 ## 5.10 Saves, IndexedDB, game end
@@ -1702,6 +1705,8 @@ the hero cell so the frontend hides the cursor there.
 - sound tests: spy `RVIPSound.play` after load plus `page.on('request')` for `/sound/`; enable by a real `page.click` on the checkbox (EvilHack).
 - Death test without a wizard mode: a temporary key that sets `HP = 1` (marked `// RVIPTEST`, reverted before commit), then a JS loop that reads the map from a wrapped `Module.av.map` and steps toward the nearest hostile glyph (Avanor).
 - Lazy `sounds.json`: if sound is saved on, fetch it at page load too; else the first events after a reload are silently dropped while it loads (Avanor).
+- Splitting one working tree into topic commits with `git apply --cached`: use `-U1` hunks, never `--unidiff-zero` (zero-context additions land at wrong lines) (AlienHack).
+- Browser-pane bots: run the loop as a background promise and poll a window variable; a single `javascript_tool` call times out at 45 s, more so with the pane hidden (AlienHack).
 - After a real click on a top-bar checkbox, focus stays in the dropdown and the game gets no keys: blur + click the map before key tests. Playwright `keyboard.press` works where dispatched arrows didn't move the player (AlienHack).
 
 ## 5.17 Cloud runs
