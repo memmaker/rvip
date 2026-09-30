@@ -944,6 +944,7 @@ pop-up. Games whose curses layer doesn't know the hero: the level render stores
 the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 window port: start from slashem's `win/web/winweb.c` and change only the 3.6 struct differences (`has_color[]`, `putmixed`, 5-arg `print_glyph`, `mapglyph` 7 args, `iflags.perm_invent`, `program_state.restoring`, `nh_terminate`, `genl_status_*`, `genl_getmsghistory`, `genl_can_suspend_no`); declare procs with `CHAR_P`/`BOOLEAN_P`/`XCHAR_P` so the initializer types match (EvilHack).
 - a menu with group accelerators (gch, class symbols in pick-up menus) still needs item letters; don't derive "no letters" from gch (EvilHack).
+- State-stack console games (RL-Shared, AlienHack): an RAII guard in the main screen's `draw()` marks cells as base; cells drawn later in the same frame (dialogs, menus) are the pop-up (their bounding box), a frame with no base cells is a whole-screen pop-up. Panes are fixed regions of the base cells; one-window mode draws the full grid on a canvas (AlienHack).
 
 ## 5.6 Explore and stairs
 
