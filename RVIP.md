@@ -175,6 +175,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | NetHack 5.0, SLASH'EM, DynaHack | nethack50 (branch `NetHack-5.0`), slashem, dynahack (branch `unnethack`) | O, window port / NitroHack client |
 | ZeldHack (NetHack 3.6.7 + LSpixel tiles) | zeldhack | O, own window port `win/web/winweb.c` derived from nethack50's |
 | AlienHack 0.9.1 | alienhack (repo Alienhack) | O, Win32 console C++ game; `Console-web.cpp` grid + ASYNCIFY readKey; text only |
+| The Slimy Lichmummy 0.40 | slimy (repo slimy-cloud, private until published) | O, own thin UI (`console.c`) on a curses subset routed by window; own tiles + tsl-go set; one-window = shim's 80×24 terminal |
 | EvilHack 0.9.3 (NetHack 3.6 variant) | evilhack | O, NetHack 3.6 window port (`win/web/winweb.c` from slashem's); 64 px community tile set + sound pack hooked in the code |
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
@@ -977,6 +978,10 @@ the hero cell so the frontend hides the cursor there.
 - NetHack 3.6 window port: start from slashem's `win/web/winweb.c` and change only the 3.6 struct differences (`has_color[]`, `putmixed`, 5-arg `print_glyph`, `mapglyph` 7 args, `iflags.perm_invent`, `program_state.restoring`, `nh_terminate`, `genl_status_*`, `genl_getmsghistory`, `genl_can_suspend_no`); declare procs with `CHAR_P`/`BOOLEAN_P`/`XCHAR_P` so the initializer types match (EvilHack).
 - a menu with group accelerators (gch, class symbols in pick-up menus) still needs item letters; don't derive "no letters" from gch (EvilHack).
 - State-stack console games (RL-Shared, AlienHack): an RAII guard in the main screen's `draw()` marks cells as base; cells drawn later in the same frame (dialogs, menus) are the pop-up (their bounding box), a frame with no base cells is a whole-screen pop-up. Panes are fixed regions of the base cells; one-window mode draws the full grid on a canvas (AlienHack).
+- a game with its own thin UI layer over a few curses windows (TSL `console.c`: board/status/message windows + stdscr) needs no own frontend: a ~250-line curses subset routing `wrefresh` by window identity gives one pane per window (TSL).
+- a minimal `port/curses.h` must include `<stdio.h>` — frontends call `printf` relying on real curses.h pulling it in (TSL).
+- TSL's `ST_NW`..`ST_SE` corner names mean the opening side (`ST_NW` = `┘`): check a box corner in the text shadow, don't trust the name (TSL).
+- A curses shim's `getch` must `wrefresh(stdscr)` when stdscr was written since its last refresh (curses: `getch` = `wgetch(stdscr)`); else screens drawn with `erase`/`printw` then read with `getch` (game over) stay blank (TSL).
 
 ## 5.6 Explore and stairs
 
@@ -1067,6 +1072,11 @@ the hero cell so the frontend hides the cursor there.
 - **Auto-explore and keyed locks:** allow a path through a known lock when the
   player already holds its keys; bumping opens it. Cut-scenes or movies that
   wait for Enter will eat scripted keys in the headless harness.
+- games whose stairs are branch links, not up/down (TSL `tile_stair0..3` + `level->link[]`): define `<`/`>` by link distance from the start level (BFS over links); a `<` on a down-stair must not fall back to taking it, or `<`/`>` ping-pong between two levels (TSL).
+- stair walks and explore should path around creatures in view and only go through them when nothing else is reachable (then the bump attack stops the walk); otherwise a monster in a corridor turns every press into "You can not attack yet!" (TSL).
+- in a Playwright bot, test explore with a local immortal build (health reset each turn, copied tree in scratch, never committed) so walks reach stairs; a mortal bot dies to archers before the level is done (TSL).
+- a curses shim with a JS key queue gives the "any key stops" check for free: a non-blocking `web_poll_key()` popping the queue, plus `web_pause(ms)` = `emscripten_sleep` for the 40 ms paint (TSL).
+- explore's new-message stop: skip messages identical to one of the last flush's texts (status repeated each turn, TSL "You are bleeding!"); swap a first step onto stairs/items for an equal-length plain one via a reverse BFS from the target (TSL).
 
 ## 5.7 Enter menu and item menus
 
@@ -1137,6 +1147,9 @@ the hero cell so the frontend hides the cursor there.
 - Own-GUI C# games with an SDL-style key-up handler (TraumaRL): menu = a small partial class hooked before `ProcessKeypress`; run an entry by replacing the event args with the command's own key and falling through, so every command keeps its checks. A game whose 'inventory' is fixed key tables (weapons by digit, wetware by letter) builds the item list from those tables plus the player's items (TraumaRL).
 - Games that redraw only on a dirty flag (`Screen.NeedsUpdate`): set it whenever the menu changes, or the pop-up never reaches the page (TraumaRL).
 - Cheap debug switch for web tests without the game's full debug mode: a page URL flag passed as `runMain` args that appends a config key before the game reads its config (TraumaRL `?rviplocks`).
+- check first whether the game already has a cursor item browser (TSL `browse()` + item submenu): then stage 3 is key additions in its key loop (letter = main action, Shift = drop, Enter = submenu), not a new widget (TSL).
+- a command menu that returns the *key* (not the action) into the main loop keeps key-dependent commands right (TSL `<`/`>` share one action and read `last_key`) (TSL).
+- browsers read the numpad as digits unless the page sends `e.code` Numpad keys as own codes (TSL: 0x1000+digit -> `kt_np*`); otherwise numpad 8/2/5 hit digit shortcuts (TSL).
 
 ## 5.8 Tiles
 
@@ -1239,6 +1252,14 @@ the hero cell so the frontend hides the cursor there.
 - Content-driven games (string ids in Lua/JSON, no enums): `mkdawn.py` regex-reads the world files for ids (+ monster class), hand table id → DawnLike name, fallback by class / item kind, writes a slot sheet + a C `{"key", slot}` include; C looks up `prefix:id` at draw time (Avanor `web/mkdawn.py`, `port/rvip_tiles.cpp`).
 - Tiles set in the map draw function but a whole-screen buffer sent to JS: keep per cell the char+colour the tile was set with, send it only while the cell still shows them, and suspend tiles between the screen-save/restore calls menus use (`vStore`/`vRestore`), so overlays are text without per-menu hooks (Avanor).
 - Sprite-native games whose sprite id *is* the object's representation (TraumaRL: `Representation` char, sheet rows 0–15 = CP437 font, ≥256 = pictures): coverage = reflect over the dungeon after generation (placed monsters/items/features/locks + terrain) and over every constructible type; legacy engine kinds the game never places don't count. No ASCII alternative in the data → no text mode (would be guessing). Scale by cell size (backing store = cols×cell, `imageSmoothingEnabled=false`), not CSS, so TTF overlay text stays sharp (TraumaRL).
+- a game whose own enum indexes its sheet (TSL `gent_t`, slot = gent%16/gent/16) needs no mapping script: C sends the gent (+ floor under it, + dim/rev sheet) per cell; measure coverage by pixel-checking every enum slot in the browser (no PIL in the cloud), preprocess the header (`gcc -E`) to get real enum values — commented-out entries and explicit `= N` break a grep (TSL).
+- pack tile codes with enough bits: TSL gents run past 255, an 8-bit field silently drew wrong sprites (TSL).
+- the original GUI drew empty-slot gents as bare floor (items invisible); send those as text glyphs instead (TSL).
+- same-sheet stand-ins by a C `{gent, stand-in}` table in the tile hook; take names from the preprocessed enum (`gcc -E`), several names in the header were commented out (TSL).
+- tile sheets with palette transparency (magenta key): `convert('RGBA')` in PIL before cropping killer/card art, or the key colour shows (TSL).
+- a second tile set with a different grid (TSL own 20 px vs tsl-go 32 px atlas): C computes one code per set in the same map hook and the shim sends both arrays; JS picks by the stored set name, so switching needs no C round trip (TSL).
+- a port's atlas index (tsl-go `sprites.js`: name -> x,y, level themes) is a ready name table: vendor it unchanged as generator input, map gent -> name by hand, emit a C header (TSL `web/mktslgo.py`).
+- check a third-party port's asset licences per directory: tsl-go mixes CC0 (DCSS) with unlicensed AI-generated sprites and music (TSL).
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
@@ -1297,6 +1318,10 @@ the hero cell so the frontend hides the cursor there.
 - Side windows go stale on the title: the game sends every pane empty when its title/main menu draws (C sentinel caches reset too), not a JS reset on some screen guess (AlienHack).
 - Mouse for grid menus without a mouse API: the page sends a clicked pop-up line (`0x800|line`) or whole-screen row (`0x1000|row`) as a key; C adds the pop-up's top row, returns a reserved ext key, and each menu maps the screen row through what its last draw recorded (first row, scroll top, shown rows) (AlienHack).
 - Cloud: the real shared `rvip-wm.js`/`rvip-app.js` are in `/home/user/rvip/web/`; a www dir with `<web name>` → `dist` plus those three symlinks serves `../` like the server (TraumaRL).
+- per-window A−/A+ for a tile map with integer zoom: read the WM size as a step (TSL: scale = size-15, `fontMax.map` 19) so the text-mode map uses the same size as its font (TSL).
+- the game page's own CSS must not hide the File/Audio menu elements (`display:none`): `RvipWM.dropdown` toggles `hidden` and the smoke test reports NOOPEN (TSL).
+- A game page rule `.win canvas { display: block }` beats the `hidden` attribute: add `canvas[hidden] { display: none }` or the tile canvas covers the text map in tile set None (TSL).
+- One-window mode for a curses shim: keep `newwin` positions, copy each refreshed window into an 80×24 terminal grid and send it as its own pane (a real terminal: last refresh wins); `single: 'term'`, `noFont: 'term'`, JS only fits the font (TSL).
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1384,6 +1409,8 @@ the hero cell so the frontend hides the cursor there.
   full-screen cell buffer next to the status area (buffer size, present cost per frame, status rect
   overlap, one-window mode): record it as open (TraumaRL).
 - Check the save routine natively before stage 5: legacy RogueBasin `SaveGame()` (XmlSerializer) throws "error reflecting type SaveGameInfo" in TraumaRL; a game without a working save gets no resume on reload, record it as a user decision (TraumaRL).
+- a game that finds its save and config through `$HOME` (TSL `get_file_path`) needs only `ENV.HOME = RvipApp.dir` in the mount callback; save-and-quit/death paths that `exit(0)` get an `EM_ASYNC_JS` hook that awaits the sync and never returns (page reloads) (TSL).
+- a save-deleted-on-load game (TSL) gets a web autosave by splitting the save routine into write-only + exit; save at the idle prompt after start and each level change (flag + no queued keys), delete it right after the run report on death/quit/win (TSL).
 
 ## 5.11 Audio
 
@@ -1470,6 +1497,12 @@ the hero cell so the frontend hides the cursor there.
   (`RVIP_SOUND_GAP(n, ms)`, static `emscripten_get_now()`), never a JS throttle (AlienHack hiss: 3 in 1.7 s).
 - Playwright sound test: wrap `window.Worker` in an init script to log `{t:'sound'}` messages, then
   drive a known action (TraumaRL: `2 f Enter` shoots the start-room camera) instead of random keys.
+- hook a "consume" sound after the game's own can/can't check, not at function entry (TSL `eat()` refuses non-food at the end of its type chain; the first hook played on "You can't eat that!") (TSL).
+- a web search for game sounds can surface third-party ports with their own audio (TSL: c0ze/tsl-go); not upstream and licence unknown, so synthesize instead and note it (TSL).
+- a port whose SFX are Web Audio recipes (tsl-go `sfx`: oscillator glide + biquad-filtered noise + exp envelope) can be rendered to wav at build time with the same parameters (stdlib Python, RBJ biquad), keeping the one-wav-per-event player (TSL `web/mksounds.py`).
+- level music from C: send the level index on change from the map draw (`web_level`), page maps index -> track and creates the Audio only when Music is on (TSL).
+- auto-equip that equips weapon and ammo in one action plays the equip sound twice: gate it to once per game turn (TSL).
+- Repeated sounds: `RVIPSound.play` takes an array in place of a name (random pick) and plays every sound at ±5% random pitch; render 3 variants per effect at build time (frequency/length factors, fresh noise), list them in `sounds.json` (TSL).
 
 ## 5.12 Docs and help
 
@@ -1554,6 +1587,7 @@ the hero cell so the frontend hides the cursor there.
 - card image from the cloud without a pane: Playwright screenshot of the running page after auto-explore, PIL crop 384x160 of the map window (48x10 cells at 8x16) (AlienHack).
 - after a full og.py run on the Mac: other games' `web/index.html` get og-only diffs (description escaping); check each with `git diff -U0 web/index.html` that only og/description lines changed before `git checkout`, so another session's uncommitted edits survive; keep the index's `og/index.png` + description when the card count changed; macOS emsdk is `~/tools/emsdk/emsdk_env.sh` (AlienHack).
 - shrine screenshots of a text-window game: headless Playwright (`~/.npm/_npx/*/node_modules/playwright`) on a scratch root (`<game>` → `web/dist`, `rvip-*.js` from rvip-tools/web, `fonts` → roguelikes-index/fonts); real `keyboard.press` reaches the game there (unlike the pane); take a named screenshot between key steps, crop windows with PIL. RogueBasin `action=raw` gives developer/game infobox facts for trivia (AlienHack).
+- happyponyland.net (DNS/403) and archive.org Wayback (403) are blocked from the cloud; WebSearch snippets (backloggd, Roguetemple) still give a year (TSL).
 
 ## 5.14 Beacon (stage 9)
 
@@ -1614,6 +1648,9 @@ the hero cell so the frontend hides the cursor there.
 - No single end function: hook every place that writes the run's outcome/mortem (death frame before its key wait, explosion, escape) and keep the values in statics set where the outcome text is written; no score list/turn counter/char level → send only g, ev, name, killer, depth (AlienHack).
 - Temp death/win test patch keyed on the name must sit in code that runs every turn (the model-advance notify), not the key handler: movement keys may bypass it (AlienHack).
 - Text-only killer art in the cloud: no Menlo; `make.py` falls back to DejaVu Sans Mono Bold, rerun on the Mac (AlienHack).
+- `name_only`-style species fields can be junk ("bah" for TSL's wolves): take the killer from the article form minus a/an/the and check every monster's name fields in the data (TSL).
+- ask the player name at the first game start (EM_JS reading the IDBFS name file, `window.prompt` once) and pass it into the game's own name setter, so in-game texts and the beacon agree (TSL, replaced `web_user`).
+- `window.prompt` throws in embedded panes/iframes ("prompt() is not supported"): wrap it in try/catch, use no name, and don't store the blank so a real browser asks later (TSL).
 
 ## 5.15 Git, deploy, server
 
@@ -1718,6 +1755,12 @@ the hero cell so the frontend hides the cursor there.
 - Splitting one working tree into topic commits with `git apply --cached`: use `-U1` hunks, never `--unidiff-zero` (zero-context additions land at wrong lines) (AlienHack).
 - Browser-pane bots: run the loop as a background promise and poll a window variable; a single `javascript_tool` call times out at 45 s, more so with the pane hidden (AlienHack).
 - After a real click on a top-bar checkbox, focus stays in the dropdown and the game gets no keys: blur + click the map before key tests. Playwright `keyboard.press` works where dispatched arrows didn't move the player (AlienHack).
+- Playwright is preinstalled globally in the cloud (`/opt/node22/lib/node_modules`, 1.56.1, matches `/opt/pw-browsers/chromium-1194`): `NODE_PATH=/opt/node22/lib/node_modules`, no npm install needed (TSL).
+- death test in a scratch copy: one line setting health to 1 at the top of the player's turn plus explore keys reaches a real death in ~a minute; check hurt+death sounds and the web_end reload together (TSL).
+- intercept the beacon in Playwright with `page.route('**/roguelikes/beacon**', r => r.fulfill({status: 204}))`: no local beacon route needed, and the URL is captured before the page reloads (TSL).
+- RvipApp.dir follows the URL folder: a scratch build served as `slimyt/` saves under `/slimyt`, not `/slimy`; read paths via `RvipApp.dir` in tests (TSL).
+- scratch test hooks via a JS flag read with `EM_ASM_INT` at the start of the player's turn (immortal, wound + give item, move a monster adjacent, put the hero on stairs, eat a lethal item) reach every sound/end path in seconds (TSL).
+- A real win through a map feature (TSL's Chapel win trap): the scratch hook changes to that level and puts the hero next to the trap; the bot steps onto it, so the game's own win path runs and sends `ev=win` (TSL).
 
 ## 5.17 Cloud runs
 
