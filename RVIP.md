@@ -172,6 +172,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | Hack 1.0.3, NetHack 1.3d | hack, nethack13d | O, termcap via VT100 interpreter |
 | NetHack 5.0, SLASH'EM, DynaHack | nethack50 (branch `NetHack-5.0`), slashem, dynahack (branch `unnethack`) | O, window port / NitroHack client |
 | ZeldHack (NetHack 3.6.7 + LSpixel tiles) | zeldhack | O, own window port `win/web/winweb.c` derived from nethack50's |
+| AlienHack 0.9.1 | alienhack (repo Alienhack) | O, Win32 console C++ game; `Console-web.cpp` grid + ASYNCIFY readKey; text only |
 | EvilHack 0.9.3 (NetHack 3.6 variant) | evilhack | O, NetHack 3.6 window port (`win/web/winweb.c` from slashem's); 64 px community tile set + sound pack hooked in the code |
 | AlphaMan, Prospector | alphaman, prospector | O, QuickBASIC → FreeBASIC; fbgfx graphics |
 | Decker | decker | O, Windows MFC → shim on SDL2 |
@@ -1462,6 +1463,7 @@ the hero cell so the frontend hides the cursor there.
 - card image from a live https page: `fetch` to a localhost receiver is blocked (private network) and hand-copying a returned dataURL corrupts it; serve `web/dist` + shared JS from a scratch root with a tiny Python server that also takes a POST of `canvas.toDataURL()`, open that in the pane, map A+ to a 2x cell (32 for 16 px tiles), post the whole canvas, crop 384x160 in PIL (Avanor).
 - tile crops for the shrine: take indices from the generated `src/tile.c` `glyph2tile[PM_x]`, not the `PM_` number (they differ after skipped entries, e.g. tortle 464 → tile 465), and skip stand-in tiles (EvilHack).
 - local branch named differently from its upstream (avanor `main-rvip` → `memmaker/main`): push with plain `git push` or `HEAD:main`; `git push memmaker HEAD` creates a stray remote branch and deploy.sh still says "commit + push first" (Avanor).
+- card image from the cloud without a pane: Playwright screenshot of the running page after auto-explore, PIL crop 384x160 of the map window (48x10 cells at 8x16) (AlienHack).
 
 ## 5.14 Beacon (stage 9)
 
