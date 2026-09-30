@@ -1517,6 +1517,9 @@ the hero cell so the frontend hides the cursor there.
 - Games that keep no killer: record the attacker's name in the damage function when the target is the player (a hit with no monster attacker clears it), send it only for deaths (Infra Arcana `actor::hit`).
 - White-on-black tile sets tinted at run time: killer art = tile multiplied by the monster's data colour, black made transparent (Infra Arcana).
 - End routine that computes the score while filling the achievements list and waits for keys in between: give it a report-only mode (compute, report, return) and call it before the first key wait of death, win and quit (Avanor `XHero::EndGame(msg, ev, killer)`).
+- No single end function: hook every place that writes the run's outcome/mortem (death frame before its key wait, explosion, escape) and keep the values in statics set where the outcome text is written; no score list/turn counter/char level → send only g, ev, name, killer, depth (AlienHack).
+- Temp death/win test patch keyed on the name must sit in code that runs every turn (the model-advance notify), not the key handler: movement keys may bypass it (AlienHack).
+- Text-only killer art in the cloud: no Menlo; `make.py` falls back to DejaVu Sans Mono Bold, rerun on the Mac (AlienHack).
 
 ## 5.15 Git, deploy, server
 
