@@ -299,10 +299,10 @@ Build the page from the template with `rvip-wm.js` and `rvip-app.js`; all of
 part 2's presentation rules apply. Details: 5.9 (windows), 5.10 (saves).
 
 **Layout**
-- **One-window mode** (full screen): no sub-windows at all; the game renders one
-  big canvas (its native full screen, e.g. 80×24 with tiles or glyphs) that
-  scales to the window keeping its aspect ratio (nearest-neighbour), never
-  scrolls, and has no A−/A+ or other size buttons.
+- **One-window mode** (full screen): no sub-windows at all; the game's native full
+  screen (e.g. 80×24) is HTML text: one `<pre>` of the whole screen with
+  coloured spans (W0 rule 6), font fitted to the window keeping the aspect
+  ratio, never scrolls, and has no A−/A+ or other size buttons.
 - One-window and multi-window mode, switchable. Multi = tiling WM: no overlap,
   no gaps, fills the screen. Resize/rearrange saved in IndexedDB. Default splits
   follow the browser size until the player customises (assume 1280×720 before
