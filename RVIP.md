@@ -1553,6 +1553,7 @@ the hero cell so the frontend hides the cursor there.
 - local branch named differently from its upstream (avanor `main-rvip` → `memmaker/main`): push with plain `git push` or `HEAD:main`; `git push memmaker HEAD` creates a stray remote branch and deploy.sh still says "commit + push first" (Avanor).
 - card image from the cloud without a pane: Playwright screenshot of the running page after auto-explore, PIL crop 384x160 of the map window (48x10 cells at 8x16) (AlienHack).
 - after a full og.py run on the Mac: other games' `web/index.html` get og-only diffs (description escaping); check each with `git diff -U0 web/index.html` that only og/description lines changed before `git checkout`, so another session's uncommitted edits survive; keep the index's `og/index.png` + description when the card count changed; macOS emsdk is `~/tools/emsdk/emsdk_env.sh` (AlienHack).
+- shrine screenshots of a text-window game: headless Playwright (`~/.npm/_npx/*/node_modules/playwright`) on a scratch root (`<game>` → `web/dist`, `rvip-*.js` from rvip-tools/web, `fonts` → roguelikes-index/fonts); real `keyboard.press` reaches the game there (unlike the pane); take a named screenshot between key steps, crop windows with PIL. RogueBasin `action=raw` gives developer/game infobox facts for trivia (AlienHack).
 
 ## 5.14 Beacon (stage 9)
 
