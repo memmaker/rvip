@@ -1677,6 +1677,10 @@ the hero cell so the frontend hides the cursor there.
 - shrine screenshots of a text-window game: headless Playwright (`~/.npm/_npx/*/node_modules/playwright`) on a scratch root (`<game>` → `web/dist`, `rvip-*.js` from rvip-tools/web, `fonts` → roguelikes-index/fonts); real `keyboard.press` reaches the game there (unlike the pane); take a named screenshot between key steps, crop windows with PIL. RogueBasin `action=raw` gives developer/game infobox facts for trivia (AlienHack).
 - happyponyland.net (DNS/403) and archive.org Wayback (403) are blocked from the cloud; WebSearch snippets (backloggd, Roguetemple) still give a year (TSL).
 
+- card claims about a long-developed game: check against the current code, not the author's old posts (Hauberk "skills that grow by use" was an old discipline mechanic; now experience is spent in a dialog); fix the og description in the game page too (Hauberk).
+- cheats: grep the debug flag's value, upstream may ship it on (Hauberk `Debug.enabled = true`: wizard menu Shift+Alt+W live) (Hauberk).
+- upstream HTML docs copied as the manual: rewrite their "Play" link to `../../<game>/`, `http://` fonts to `https://`, copy their stylesheet; the 375 px check applies to the shrine page, not the copied manual (Hauberk).
+
 ## 5.14 Beacon (stage 9)
 
 - Hook the **one** place every finished run passes — typically `close_game()`
