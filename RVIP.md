@@ -183,6 +183,7 @@ each has `HANDOVER.md`; web at `/roguelikes/<web name>/`):
 | TraumaRL | traumarl | O, C# (flend RogueBasin engine) → .NET 10 browser-wasm; BinaryFormatter save; panes from C# JSON |
 | LambdaRogue | lambdarogue | O, Free Pascal + JEDI-SDL blits |
 | Infra Arcana | ia | O, C++17 own SDL2 GUI on Emscripten's SDL ports; captured status/log panels, game-sized canvas |
+| Hauberk | hauberk | O, Dart → `dart compile js`; own Malison canvas terminal and panels |
 | Selection page | roguelikes-index (repo roguelikes) | index, tree, shrine, killers, server |
 
 ---
@@ -816,6 +817,8 @@ mousemove before each click; Ctrl arrives as a separate keydown.
 **Lua 4 + tolua** (Zangband): build the host `tolua` with `cc` to generate
 `l-*.c`; Lua builds for wasm unchanged.
 
+**Dart** (Hauberk): SDK zip from `storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/` into `~/Games/dart-sdk` (brew refuses the untrusted `dart-lang/dart` tap); `dart compile js -O2 web/main.dart` + copy `web/*.html|css|png` replaces `build_runner`; `dart test` is the ASan stand-in. Hauberk saves to localStorage (`heroes`): IndexedDB move is a later-stage job.
+
 **Cloud:** emsdk at `/home/user/emsdk` while `$HOME` is `/root`; `emsdk_env.sh`
 fails under dash and doesn't persist: `build.sh` puts
 `${EMSDK:-/home/user/emsdk}/upstream/emscripten` on `PATH`. `apt-get install
@@ -1142,6 +1145,9 @@ the hero cell so the frontend hides the cursor there.
 - a curses shim with a JS key queue gives the "any key stops" check for free: a non-blocking `web_poll_key()` popping the queue, plus `web_pause(ms)` = `emscripten_sleep` for the 40 ms paint (TSL).
 - explore's new-message stop: skip messages identical to one of the last flush's texts (status repeated each turn, TSL "You are bleeding!"); swap a first step onto stairs/items for an equal-length plain one via a reverse BFS from the target (TSL).
 - Exit walks (`<`/`>`) must plan through closed doors (bumping opens them); only explore stops at doors. Let `>` also target the game's final exit (TraumaRL escape pod).
+- Games with a hero `Behavior`/auto-action system (Hauberk `RunBehavior`/`RestBehavior`, Dart): explore is one more behavior; `canPerform()` does the stop checks and picks the step (cache it: the game loop may call it twice per turn), `getAction()` returns a walk; `disturb()` cancels for free. Messages logged from `canPerform()` need an explicit redraw (Hauberk).
+- When the native stairs key collides (`<`/`>` are Shift+`,`/`.` laptop run keys in Hauberk), put the stairs walk on the game's own take-stairs key (`q`): on the stairs it takes them, else walks there (Hauberk).
+- Dart/canvas games pace by `requestAnimationFrame`: with the pane hidden nothing runs; test explore with a `dart test` on a real generated level (lit, monsters removed) instead (Hauberk).
 
 ## 5.7 Enter menu and item menus
 
@@ -1215,6 +1221,8 @@ the hero cell so the frontend hides the cursor there.
 - check first whether the game already has a cursor item browser (TSL `browse()` + item submenu): then stage 3 is key additions in its key loop (letter = main action, Shift = drop, Enter = submenu), not a new widget (TSL).
 - a command menu that returns the *key* (not the action) into the main loop keeps key-dependent commands right (TSL `<`/`>` share one action and read `last_key`) (TSL).
 - browsers read the numpad as digits unless the page sends `e.code` Numpad keys as own codes (TSL: 0x1000+digit -> `kt_np*`); otherwise numpad 8/2/5 hit digit shortcuts (TSL).
+- Key-to-input frameworks that hide the raw key (Malison `KeyBindings`: Enter and `l` both map to `Input.ok`, `o` to `Input.n`): record `keyCode`/`ctrlKey` in a capture-phase `document` keydown listener into globals; the game screen opens the Enter menu only for raw 13, and item lists skip cursor handling when the raw key is a letter (Hauberk).
+- Item dialogs as classes with a `selectItem()` (Hauberk `ItemDialog`): run inventory actions by `ui.goTo(dialog)` then a public `choose(item, location)` on it (preselect after bind), so count and target prompts stay the game's own; a reopen flag checked in the game screen's `update()` once the hero needs input (Hauberk).
 
 ## 5.8 Tiles
 
@@ -1325,6 +1333,9 @@ the hero cell so the frontend hides the cursor there.
 - a second tile set with a different grid (TSL own 20 px vs tsl-go 32 px atlas): C computes one code per set in the same map hook and the shim sends both arrays; JS picks by the stored set name, so switching needs no C round trip (TSL).
 - a port's atlas index (tsl-go `sprites.js`: name -> x,y, level themes) is a ready name table: vendor it unchanged as generator input, map gent -> name by hand, emit a C header (TSL `web/mktslgo.py`).
 - check a third-party port's asset licences per directory: tsl-go mixes CC0 (DCSS) with unlicensed AI-generated sprites and music (TSL).
+- Glyph-only games in a managed language (Dart/Malison): dump the ids with a tiny program run against the game's own content (`dart run tool/rvip_ids.dart` -> TSV of breed/item resource ids), map them in `mkdawn.py`, and key terrain by the content's static fields (`Tiles.<field>` regex) so the generated Dart table maps `TileType` objects, not names (Hauberk).
+- Malison panels get a sub-terminal: `terminal.size` inside `renderPanel` is the panel's size, not the screen's; take the full size from `Screen.resize`. Malison has no "is top screen": subclass `UserInterface` (push/pop/goTo) to mirror the stack and hide the tile canvas while another screen is on top (Hauberk).
+- In `mkdawn.py` emit Dart/C string keys with `json.dumps`, never `%r` + quote swapping (`"Adventurer's Map"` broke) (Hauberk).
 
 ## 5.9 Windows and page code (rvip-wm.js, rvip-app.js)
 
@@ -1390,6 +1401,11 @@ the hero cell so the frontend hides the cursor there.
 - Map view that follows the Map window in a fixed-buffer renderer shim: the page sends a view-size key (cells that fit at the current zoom, the game's own size in one-window mode), the game moves its map region clear of the original screen and grows the buffer; send the buffer stride in the JSON (TraumaRL `RvipView`).
 - `window.prompt` throws in some embedded browsers (desktop app pane): wrap it, or the page never starts (TraumaRL).
 - Status/side panes cut from screen areas must not be rebuilt while a whole-screen view covers them (TraumaRL).
+- Canvas-terminal games with their own panels (Malison, Hauberk): implement the terminal interface once as an HTML terminal (records glyphs, emits trimmed `<pre>` spans) and render each of the game's own panels into it at the width the page measures; panes keep the game's colours and layout with no per-panel port (Hauberk `RvipHtmlTerminal`).
+- Map A−/A+ over fixed bitmap glyph sheets: treat the WM size as a sheet index (`size: {map: () => 8 + default}`, `fontMax.map = 8 + n − 1`); the old font buttons and their stored pref go (Hauberk).
+- Whole-screen title/creation screens need the game's old minimum terminal; once in game, let the terminal shrink to the Map window or the camera centres the hero off-view (Hauberk: 80x34 before, 40x16 in game).
+- Malison dialogs as pop-ups without touching each dialog: subclass `UserInterface`, hook `dirty()`/`refresh()`/`push`/`pop`/`goTo`; after Malison's render clear the canvas and re-render only the map screens, render the screens above into the HTML terminal and send it cropped (drop blank top rows/left columns, close long blank gaps: the key-help box sits at the terminal bottom) (Hauberk).
+- Icons in HTML text rows: the item renderer marks the glyph cell on the HTML terminal; emit a 1em span with the sheet as `background-size: 16em` and `background-position: -col em -row em` (scales with A−/A+, pixelated) (Hauberk).
 
 ## 5.10 Saves, IndexedDB, game end
 
@@ -1479,6 +1495,7 @@ the hero cell so the frontend hides the cursor there.
 - Check the save routine natively before stage 5: legacy RogueBasin `SaveGame()` (XmlSerializer) throws "error reflecting type SaveGameInfo" in TraumaRL; a game without a working save gets no resume on reload, record it as a user decision (TraumaRL).
 - a game that finds its save and config through `$HOME` (TSL `get_file_path`) needs only `ENV.HOME = RvipApp.dir` in the mount callback; save-and-quit/death paths that `exit(0)` get an `EM_ASYNC_JS` hook that awaits the sync and never returns (page reloads) (TSL).
 - a save-deleted-on-load game (TSL) gets a web autosave by splitting the save routine into write-only + exit; save at the idle prompt after start and each level change (flag + no queued keys), delete it right after the run report on death/quit/win (TSL).
+- Games that store saves as one JSON string (localStorage): read every key of the game's own IndexedDB store before loading the game script and hand it over as a global; writes are one `put` per transaction (atomic); RvipApp `save/read/put/clear/sync` hooks over it give Export/Import (Hauberk).
 - Check that a packing hook is actually called: a helper that exists but is never wired leaves the slow path (TraumaRL `Map.RvipPack`: 200k objects, 3–8 s → 1.2 s once wired). Measure per-field time natively before redesigning the format.
 
 ## 5.11 Audio
@@ -1571,6 +1588,7 @@ the hero cell so the frontend hides the cursor there.
 - a port whose SFX are Web Audio recipes (tsl-go `sfx`: oscillator glide + biquad-filtered noise + exp envelope) can be rendered to wav at build time with the same parameters (stdlib Python, RBJ biquad), keeping the one-wav-per-event player (TSL `web/mksounds.py`).
 - level music from C: send the level index on change from the map draw (`web_level`), page maps index -> track and creates the Audio only when Music is on (TSL).
 - auto-equip that equips weapon and ammo in one action plays the equip sound twice: gate it to once per game turn (TSL).
+- Engine shared by VM tests and the web (Dart): a nullable global hook (`rvipSoundHook`) in the engine core, set only by the web `main`; engine actions call `rvipSound('x')`, tests stay silent; the game's own event list (bolt/cone/die/heal) maps to sounds in the UI, deduped per update since bolts emit one event per tile (Hauberk).
 - Repeated sounds: `RVIPSound.play` takes an array in place of a name (random pick); `RVIPSound.pitch(0.05)` (opt-in per game) adds ±5% random pitch; render 3 variants per effect at build time (frequency/length factors, fresh noise), list them in `sounds.json` (TSL).
 
 ## 5.12 Docs and help
@@ -1591,6 +1609,7 @@ the hero cell so the frontend hides the cursor there.
   it and let `make-help.py` prefer the Docs entry. Generating it: `runpy.run_path(make-help.py)` gives its
   rows/keys/page; split the page at `<h2>` into Tips/In the browser/Credits (GAMES) and guide/Saving
   (guides.py `GUIDES`/`SAVING`), literal lists (AlienHack).
+- Game without a usable help key list (Hauberk's quick reference was stale): parse the port's own Enter menu table and assert every entry against the key bindings; add move rows to pass the >30 check (Hauberk).
 - Count data from the game (birth loops, `MAX_*`), not its help text.
 - Credits: when files name one author, take co-maintainers from `git shortlog -sn`.
   Licence of a binary-only freeware game: read its title screen.
@@ -1833,6 +1852,8 @@ the hero cell so the frontend hides the cursor there.
 - A real win through a map feature (TSL's Chapel win trap): the scratch hook changes to that level and puts the hero next to the trap; the bot steps onto it, so the game's own win path runs and sends `ev=win` (TSL).
 - Hidden browser pane = throttled timers (about once a minute): drive long playthroughs with headless Playwright, keep the pane for looks (TraumaRL).
 - URL test flags that append to a config file: no blank lines (a strict `key=value` parser stops there); check the flag actually changes something (TraumaRL `?rviplocks` was dead). Debug keys for a win test: reveal map, heal, all weapons.
+- Malison (Dart) games: dispatched `KeyboardEvent`s carry `keyCode` 0 and do nothing; use the pane's real `key` action (`shift+b` works). Pane screenshots lag one action behind (Hauberk).
+- Browser pane rAF can run at ~1.5 fps even when visible: a rAF-paced walk looks like "one step per key"; measure frames before calling it a bug and prove the engine walk with a unit test (Hauberk town `q`).
 
 ## 5.17 Cloud runs
 
