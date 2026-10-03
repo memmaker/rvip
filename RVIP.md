@@ -1744,6 +1744,9 @@ the hero cell so the frontend hides the cursor there.
 - `name_only`-style species fields can be junk ("bah" for TSL's wolves): take the killer from the article form minus a/an/the and check every monster's name fields in the data (TSL).
 - ask the player name at the first game start (EM_JS reading the IDBFS name file, `window.prompt` once) and pass it into the game's own name setter, so in-game texts and the beacon agree (TSL, replaced `web_user`).
 - `window.prompt` throws in embedded panes/iframes ("prompt() is not supported"): wrap it in try/catch, use no name, and don't store the blank so a real browser asks later (TSL).
+- A game with no win screen whose goal is a final boss (Hauberk's Nameless Unmaker): send `ev=win` from the monster's own death hook keyed on its breed, prove it with a unit test that kills the spawned boss through `takeDamage` (Hauberk).
+- Killer for a game whose hero death callback gets only the attack: record the attacking monster's breed in the shared damage function when the victim is the hero (Hauberk `Actor.takeDamage`).
+- Upstream debug/wizard flags compiled in (`const enabled = true`): make them `bool.fromEnvironment(...)` so the web build is cheat-free and a dev build can still opt in (Hauberk).
 
 ## 5.15 Git, deploy, server
 
