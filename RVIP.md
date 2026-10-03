@@ -71,8 +71,9 @@ State these in every brief. No exceptions; a port that breaks one is not done.
 **Presentation rules (W0)**
 1. **Every sub-window is an rvip-wm window** (`../rvip-wm.js`, `RvipWM({...})`):
    map, status, messages, inventory, visible and other lists. No own layout,
-   drag bars, title bars or resize code in the game. Pop-ups go through
-   `RvipWM.popup`. Only exception: a game whose whole GUI is one canvas with no
+   drag bars, title bars or resize code in the game. Pop-ups that are not
+   drawn over the map go through `RvipWM.popup` (dialogs over the map: see
+   "Other user rules"). Only exception: a game whose whole GUI is one canvas with no
    sub-windows (Decker).
 2. **Text size is set only by A−/A+, per window, and the WM keeps it**
    (`state.fs[id]`, `RvipWM.fontSize(id)`). No shared size, no size kept by the game.
@@ -92,8 +93,8 @@ State these in every brief. No exceptions; a port that breaks one is not done.
    its body's font-size: never a canvas, never an off-screen canvas copied or
    scaled in, never a composited screen cut up in JS. The game (shim/frontend/
    window hooks) sends each window its own lines. A full-screen game screen
-   (character sheet, store, death screen) may be a fixed cols×rows grid in a
-   pop-up, as monospaced HTML text. Example: Hack family (`<pre class="txt">`).
+   (character sheet, store, death screen) is a fixed cols×rows grid of
+   monospaced HTML text over the map (see the next rule). Example: Hack family (`<pre class="txt">`).
 7. **Presentation originates in the game's native/WASM code; JS stays dumb.**
    C decides each cell's tile (tile + floor under it, or glyph) and hands JS a
    finished array; colours for every cell, line and message come from the game;
@@ -106,6 +107,18 @@ State these in every brief. No exceptions; a port that breaks one is not done.
    too: hook game actions, never message text (the user rejected it).
 
 **Other user rules**
+- **Pop-ups over the map are laid out as the game does in its one-window mode,
+  never forced into windows.** Dialogs, menus, shops, inspect boxes and
+  full-screen screens (hero sheet, death) that the game draws over the map
+  appear over the Map window exactly where and how the game draws them in
+  one-window mode: same positions relative to each other, same sizes, the
+  game's own frames; no own window chrome, no cropping/trimming/resizing, no
+  added borders, no repositioning. Send them as HTML text (W0.6): the game's
+  whole one-window screen as a transparent monospaced `<pre>` grid over the
+  Map body (cells the dialog leaves alone stay transparent; an opaque screen
+  clears it), one text cell per map cell, sized by the map's A−/A+ (or the
+  WM's), never scaled; the Map body scrolls when it is smaller (Hauberk
+  `#pop` in `#map`).
 - **No localStorage, only IndexedDB.** Every page setting (layout, fonts, tile
   set by name, player name, sound, run-report outbox) lives in the game's own
   IDBFS folder. All games share one origin; localStorage keys collided.
@@ -1405,9 +1418,9 @@ the hero cell so the frontend hides the cursor there.
 - Canvas-terminal games with their own panels (Malison, Hauberk): implement the terminal interface once as an HTML terminal (records glyphs, emits trimmed `<pre>` spans) and render each of the game's own panels into it at the width the page measures; panes keep the game's colours and layout with no per-panel port (Hauberk `RvipHtmlTerminal`).
 - Map A−/A+ over fixed bitmap glyph sheets: treat the WM size as a sheet index (`size: {map: () => 8 + default}`, `fontMax.map = 8 + n − 1`); the old font buttons and their stored pref go (Hauberk).
 - Whole-screen title/creation screens need the game's old minimum terminal; once in game, let the terminal shrink to the Map window or the camera centres the hero off-view (Hauberk: 80x34 before, 40x16 in game).
-- Malison dialogs as pop-ups without touching each dialog: subclass `UserInterface`, hook `dirty()`/`refresh()`/`push`/`pop`/`goTo`; after Malison's render clear the canvas and re-render only the map screens, render the screens above into the HTML terminal and send it cropped (drop blank top rows/left columns, close long blank gaps: the key-help box sits at the terminal bottom) (Hauberk).
+- Dialogs over the map without touching each dialog: subclass the UI stack (Malison `UserInterface`: hook `dirty()`/`refresh()`/`push`/`pop`/`goTo`); after the game's render clear the canvas and re-render only the map screens, render the screens above into an HTML terminal of the game's one-window screen size (multi-window: lay the game screen out as one window while rendering, then back) and send the whole grid uncropped, undrawn cells transparent (Hauberk).
 - Icons in HTML text rows: the item renderer marks the glyph cell on the HTML terminal; emit a 1em span with the sheet as `background-size: 16em` and `background-position: -col em -row em` (scales with A−/A+, pixelated) (Hauberk).
-- Malison glyph sheets are custom art: non-ASCII `Glyph.char`s are Unicode letters whose CP437 slot (`unicodeMap`, `package:malison/src/unicode_map.dart`) holds an item icon; in HTML emit that sheet cell as a 1ch CSS mask tinted with the fore colour (box drawing U+2500..259F stays text). Inline icons must be 1ch wide or box borders drift. `Draw.helpKeys` boxes run off the canvas bottom by design: close them in the pop-up HTML; trim inventory pop-ups to the items (Hauberk).
+- Malison glyph sheets are custom art: non-ASCII `Glyph.char`s are Unicode letters whose CP437 slot (`unicodeMap`, `package:malison/src/unicode_map.dart`) holds an item icon; in HTML emit that sheet cell as a 1ch CSS mask tinted with the fore colour (box drawing U+2500..259F stays text). Inline icons must be 1ch wide or box borders drift. Boxes the game lets run off the screen edge stay open, as the game draws them (Hauberk).
 
 ## 5.10 Saves, IndexedDB, game end
 
