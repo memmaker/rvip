@@ -1373,6 +1373,7 @@ the hero cell so the frontend hides the cursor there.
 - **List markers:** never start a marker with `#` when colours are CSS hex
   strings; use `=` for section headers.
 - A `<pre>` rule with `font: inherit` after a monospace rule drops to the body font.
+- Font menu: bitmap faces (Web437/WebPlus/Easyband) need `line-height: 1` on the text panes or box-drawing `│` rows break; keep vector fonts at their own line height (Hauberk).
 - One-window mode of a grid game as text: the game sends all rows (keep leading blank rows, trim only trailing) as a colour-marked pane into a `<pre>`; JS only fits the font so cols×rows fit (AlienHack).
 - Pitfall when patching page JS by anchors: anchor on the full signature
   (`flush: function` also matched RvipApp's).
