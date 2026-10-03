@@ -1779,6 +1779,9 @@ the hero cell so the frontend hides the cursor there.
 - a cloud clone of a variant is shallow (EvilHack: 49 upstream commits): `git fetch --unshallow` from upstream before the repo split, or the public repo has no upstream history (EvilHack).
 - the NetHack 3.6 native build empties tracked `doc/Guidebook.txt` (no nroff): `git checkout doc/Guidebook.txt` before committing (EvilHack).
 - a `.gitignore` rule named after the binary (`evilhack`) hides `web/publish/killers/evilhack/`: add a `!` negation (EvilHack).
+- check `.gitignore` for glued lines (Hauberk `out/web/dist/`: missing newline kept `web/dist` tracked); `git rm -r --cached web/dist` after fixing (Hauberk).
+- no `main` on the public repo (default branch `rvip-port`): the README/Help compare link uses that branch, `…/compare/<upstream>...rvip-port` (Hauberk).
+- og.py for one game only, locally: exec its setup + second loop with the `if not g or g[1] not in repo` guard narrowed to the slug (and `__file__` set); no Chrome, no other repos touched (Hauberk).
 - local branch named differently from the remote's (`main-rvip` → `memmaker/main`): plain `git push` refuses (push.default simple); use `git push memmaker HEAD:main` (Avanor).
 
 ## 5.16 Testing
