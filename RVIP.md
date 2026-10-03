@@ -1423,6 +1423,8 @@ the hero cell so the frontend hides the cursor there.
 - Malison glyph sheets are custom art: non-ASCII `Glyph.char`s are Unicode letters whose CP437 slot (`unicodeMap`, `package:malison/src/unicode_map.dart`) holds an item icon; in HTML emit that sheet cell as a 1ch CSS mask tinted with the fore colour (box drawing U+2500..259F stays text). Inline icons must be 1ch wide or box borders drift. Boxes the game lets run off the screen edge stay open, as the game draws them (Hauberk).
 - Overlay grids over a bitmap-font canvas: never a web font sized to the cell (a 9x12 cell gets ~15 px glyphs: rows overlap, tops clip). Emit one fixed-size element per cell masked by the game's own sheet at the map's cell size (`mask: url(sheet) -x*cw -y*ch / 32cw 8ch`, `image-rendering: pixelated`), background = fore colour, back colour on the run wrapper: pixel-identical to the canvas, follows A−/A+ (Hauberk).
 
+- A port terminal taller/wider than upstream's wakes upstream scroll bugs: Dart `x.clamp(0, len - view)` throws `Invalid argument: 0` when the content is shorter than the view; grep `clamp(0, .* - ` and wrap the bound in `max(0, …)` (Hauberk Help). UI tests that import Malison need `@TestOn('browser')` + `dart test -p chrome`.
+
 ## 5.10 Saves, IndexedDB, game end
 
 - **Every reported end drops the autosave**, not only death: key the delete
