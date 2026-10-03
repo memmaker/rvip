@@ -74,7 +74,8 @@ State these in every brief. No exceptions; a port that breaks one is not done.
    drag bars, title bars or resize code in the game. Pop-ups that are not
    drawn over the map go through `RvipWM.popup` (dialogs over the map: see
    "Other user rules"). Only exception: a game whose whole GUI is one canvas with no
-   sub-windows (Decker).
+   sub-windows (Decker), or whose whole GUI is the game's own multi-panel
+   canvas (Hauberk, user's choice): no RvipWM windows, the canvas fills the page.
 2. **Text size is set only by A−/A+, per window, and the WM keeps it**
    (`state.fs[id]`, `RvipWM.fontSize(id)`). No shared size, no size kept by the game.
 3. **A window's size never changes the size of its text or tiles** (multi-window
@@ -117,8 +118,8 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   whole one-window screen as a transparent monospaced `<pre>` grid over the
   Map body (cells the dialog leaves alone stay transparent; an opaque screen
   clears it), one text cell per map cell, sized by the map's A−/A+ (or the
-  WM's), never scaled; the Map body scrolls when it is smaller (Hauberk
-  `#pop` in `#map`).
+  WM's), never scaled; the Map body scrolls when it is smaller. Games exempt
+  from W0.1 (Decker, Hauberk) draw their dialogs on their own canvas.
 - **No localStorage, only IndexedDB.** Every page setting (layout, fonts, tile
   set by name, player name, sound, run-report outbox) lives in the game's own
   IDBFS folder. All games share one origin; localStorage keys collided.
@@ -138,7 +139,7 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   (`/var/lib/roguelikes-stats/wins/<g>/`).
 - Text only (user's choice, no tiles switch): BOSS, ZAPM, Hauberk. AlienHack: text only, agent's decision (not the user's)
   after a tile search (OGA, itch.io, Kenney) found no sci-fi set with ~95% coverage. Exempt from
-  the window layout: Decker (its MFC dialogs are the game).
+  the window layout: Decker (its MFC dialogs are the game), Hauberk (its own multi-panel Malison canvas, user's choice).
 
 ---
 
@@ -1386,7 +1387,7 @@ the hero cell so the frontend hides the cursor there.
 - **List markers:** never start a marker with `#` when colours are CSS hex
   strings; use `=` for section headers.
 - A `<pre>` rule with `font: inherit` after a monospace rule drops to the body font.
-- Font menu: bitmap faces (Web437/WebPlus/Easyband) need `line-height: 1` on the text panes or box-drawing `│` rows break; keep vector fonts at their own line height (Hauberk).
+- Font menu: bitmap faces (Web437/WebPlus/Easyband) need `line-height: 1` on the text panes or box-drawing `│` rows break; keep vector fonts at their own line height.
 - One-window mode of a grid game as text: the game sends all rows (keep leading blank rows, trim only trailing) as a colour-marked pane into a `<pre>`; JS only fits the font so cols×rows fit (AlienHack).
 - Pitfall when patching page JS by anchors: anchor on the full signature
   (`flush: function` also matched RvipApp's).
@@ -1415,13 +1416,7 @@ the hero cell so the frontend hides the cursor there.
 - Map view that follows the Map window in a fixed-buffer renderer shim: the page sends a view-size key (cells that fit at the current zoom, the game's own size in one-window mode), the game moves its map region clear of the original screen and grows the buffer; send the buffer stride in the JSON (TraumaRL `RvipView`).
 - `window.prompt` throws in some embedded browsers (desktop app pane): wrap it, or the page never starts (TraumaRL).
 - Status/side panes cut from screen areas must not be rebuilt while a whole-screen view covers them (TraumaRL).
-- Canvas-terminal games with their own panels (Malison, Hauberk): implement the terminal interface once as an HTML terminal (records glyphs, emits trimmed `<pre>` spans) and render each of the game's own panels into it at the width the page measures; panes keep the game's colours and layout with no per-panel port (Hauberk `RvipHtmlTerminal`).
-- Map A−/A+ over fixed bitmap glyph sheets: treat the WM size as a sheet index (`size: {map: () => 8 + default}`, `fontMax.map = 8 + n − 1`); the old font buttons and their stored pref go (Hauberk).
-- Whole-screen title/creation screens need the game's old minimum terminal; once in game, let the terminal shrink to the Map window or the camera centres the hero off-view (Hauberk: 80x34 before, 40x16 in game).
-- Dialogs over the map without touching each dialog: subclass the UI stack (Malison `UserInterface`: hook `dirty()`/`refresh()`/`push`/`pop`/`goTo`); after the game's render clear the canvas and re-render only the map screens, render the screens above into an HTML terminal of the game's one-window screen size (multi-window: lay the game screen out as one window while rendering, then back) and send the whole grid uncropped, undrawn cells transparent (Hauberk).
-- Icons in HTML text rows: the item renderer marks the glyph cell on the HTML terminal; emit a 1em span with the sheet as `background-size: 16em` and `background-position: -col em -row em` (scales with A−/A+, pixelated) (Hauberk).
-- Malison glyph sheets are custom art: non-ASCII `Glyph.char`s are Unicode letters whose CP437 slot (`unicodeMap`, `package:malison/src/unicode_map.dart`) holds an item icon; in HTML emit that sheet cell as a 1ch CSS mask tinted with the fore colour (box drawing U+2500..259F stays text). Inline icons must be 1ch wide or box borders drift. Boxes the game lets run off the screen edge stay open, as the game draws them (Hauberk).
-- Overlay grids over a bitmap-font canvas: never a web font sized to the cell (a 9x12 cell gets ~15 px glyphs: rows overlap, tops clip). Emit one fixed-size element per cell masked by the game's own sheet at the map's cell size (`mask: url(sheet) -x*cw -y*ch / 32cw 8ch`, `image-rendering: pixelated`), background = fore colour, back colour on the run wrapper: pixel-identical to the canvas, follows A−/A+ (Hauberk).
+- Malison games (Hauberk) are W0.1-exempt: the game's own canvas is the whole GUI (sidebar, log, item panels, dialogs drawn natively). The canvas fills the page below the bar; the game re-lays out its terminal on window resize (upstream minimum, area scrolls below it); A−/A+ on the top bar step through the game's fixed glyph sheets (one IndexedDB key), never scaled. Load `../rvip-wm.js` only for `RvipWM.dropdown`/`report`, as Decker. An earlier multi-window attempt (HTML terminal panes, a transparent overlay grid for dialogs) was removed at the user's request: Hauberk git history before 098d968c.
 
 - A port terminal taller/wider than upstream's wakes upstream scroll bugs: Dart `x.clamp(0, len - view)` throws `Invalid argument: 0` when the content is shorter than the view; grep `clamp(0, .* - ` and wrap the bound in `max(0, …)` (Hauberk Help). UI tests that import Malison need `@TestOn('browser')` + `dart test -p chrome`.
 
