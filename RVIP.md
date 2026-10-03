@@ -123,7 +123,7 @@ State these in every brief. No exceptions; a port that breaks one is not done.
   ends a won run (test that it is reached). Never write code or run commands
   that overwrite, move or delete the server's win files
   (`/var/lib/roguelikes-stats/wins/<g>/`).
-- Text only (user's choice, no tiles switch): BOSS, ZAPM. AlienHack: text only, agent's decision (not the user's)
+- Text only (user's choice, no tiles switch): BOSS, ZAPM, Hauberk. AlienHack: text only, agent's decision (not the user's)
   after a tile search (OGA, itch.io, Kenney) found no sci-fi set with ~95% coverage. Exempt from
   the window layout: Decker (its MFC dialogs are the game).
 
